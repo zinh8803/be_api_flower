@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ImportReceipt extends Model
 {
-    protected $fillable = ['supplier_id', 'import_date', 'total_amount'];
+    protected $fillable = ['no_receipt','import_date','total_price','user_id'];
 
  public function user()
 {

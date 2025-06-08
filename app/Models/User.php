@@ -42,6 +42,19 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+
+    /**
+     * Get the orders for the user.
+     *
+     */
+    public function order()
+    {
+        return $this->hasMany(Order::class);
+    }
+    public function importReceipt(){
+        return $this->hasMany(ImportReceipt::class);
+    }
+
     protected function casts(): array
     {
         return [

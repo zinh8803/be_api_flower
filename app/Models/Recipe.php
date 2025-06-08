@@ -6,17 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Recipe extends Model
 {
-    protected $fillable = ['name', 'description', 'ingredients', 'instructions', 'image_url'];
-
-  
+    protected $fillable = ['quantity', 'product_id', 'flower_id'];
 
     public function product()
-{
-    return $this->belongsTo(Product::class);
-}
+    {
+        return $this->belongsTo(Product::class);
+    }
 
-public function flower()
-{
-    return $this->belongsTo(Flower::class);
-}
+    public function flower()
+    {
+        return $this->belongsTo(Flower::class);
+    }
 }
