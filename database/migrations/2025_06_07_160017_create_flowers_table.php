@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('flowers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->decimal('price', 10, 2);
             $table->boolean('status')->default(1);
             $table->string('color')->nullable();
             $table->foreignId('flower_type_id')->constrained('flower_types');
