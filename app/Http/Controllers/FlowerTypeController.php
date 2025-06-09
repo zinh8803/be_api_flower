@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\FlowerType\StoreFlowerTypeRequest;
 use App\Http\Requests\FlowerType\UpdateFlowerTypeRequest;
-use App\Http\Resources\FlowerResource;
 use App\Http\Resources\FlowerTypeResource;
 use App\Models\FlowerType;
 use App\Repositories\Eloquent\FlowerTypeRepository;
@@ -63,7 +62,7 @@ class FlowerTypeController extends Controller
     public function store(StoreFlowerTypeRequest $request)
     {
         $flowerType = $this->flowerTypeRepository->create($request->validated());
-        return new FlowerResource($flowerType);
+        return new FlowerTypeResource($flowerType);
     }
 
     /**
@@ -91,7 +90,7 @@ class FlowerTypeController extends Controller
         if (!$flowerType) {
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
-        return new FlowerResource($flowerType);
+        return new FlowerTypeResource($flowerType);
     }
 
     /**
@@ -124,7 +123,7 @@ class FlowerTypeController extends Controller
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
         $flowerType = $this->flowerTypeRepository->update($id, $request->validated());
-        return new FlowerResource($flowerType);
+        return new FlowerTypeResource($flowerType);
     }
 
     /**

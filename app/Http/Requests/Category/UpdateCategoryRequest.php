@@ -3,7 +3,16 @@
 namespace App\Http\Requests\Category;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+/**
+ * @OA\Schema(
+ *     schema="CategoryUpdateRequest",
+ *     required={"name"},
+ *     required={"image_url"},
+ *     @OA\Property(property="name", type="string", example="Hoa tặng mẹ"),
+ *     @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/image.jpg"),
+ *     
+ * )
+ */
 class UpdateCategoryRequest extends FormRequest
 {
     /**
@@ -11,7 +20,7 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +31,8 @@ class UpdateCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|required|string|max:255',
+            'image_url' => 'sometimes|nullable|url|max:2048',
         ];
     }
 }

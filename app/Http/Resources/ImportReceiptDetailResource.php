@@ -4,7 +4,19 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-
+use Carbon\Carbon; 
+/**
+ * @OA\Schema(
+ *     schema="ImportReceiptDetailResource",
+ *     @OA\Property(property="id", type="integer", example=15),
+ *     @OA\Property(property="flower_id", type="integer", example=3),
+ *     @OA\Property(property="flower_name", type="string", example="Hoa hồng đỏ"),
+ *     @OA\Property(property="quantity", type="integer", example=100),
+ *     @OA\Property(property="import_price", type="number", format="double", example=9000),
+ *      @OA\Property(property="import_date", type="string", format="date", example="2025-06-09"),
+ *     @OA\Property(property="subtotal", type="number", format="double", example=900000)
+ * )
+ */
 class ImportReceiptDetailResource extends JsonResource
 {
     /**
@@ -14,6 +26,22 @@ class ImportReceiptDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        $now = Carbon::now();
+        $status = 'hoa tươi';
+        if ($now->hour >= 22) {
+            $status = 'hoa ép';
+        }
+
+        return [
+             'id'          => $this->id,
+            'flower_id'   => $this->flower_id,
+            'flower_name' => $this->flower->name,
+            'quantity'    => $this->quantity,
+            'import_price'  => $this->import_price,
+            'subtotal'    => $this->subtotal,
+            'import_date' => $this->import_date ,
+            'status' => $status,
+          
+        ];
     }
 }

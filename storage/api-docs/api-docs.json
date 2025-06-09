@@ -12,8 +12,62 @@
         }
     ],
     "paths": {
+        "/categories": {},
         "/flower": {},
         "/flower-types": {},
+        "/api/categories": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Lấy danh sách danh mục hoa",
+                "operationId": "3f5817a34833d0a1f4af4548dd3aeaba",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách danh mục hoa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Category"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Tạo mới danh mục hoa",
+                "operationId": "71fcad552bb0eaba9fb191fd8d8dcab0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/flower": {
             "get": {
                 "tags": [
@@ -309,10 +363,265 @@
                     }
                 }
             }
+        },
+        "/api/import-receipts": {
+            "get": {
+                "tags": [
+                    "Import Receipts"
+                ],
+                "summary": "Danh sách phiếu nhập",
+                "operationId": "a1945e1b528a25e955d0e37c46848eb6",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ImportReceiptResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Import Receipts"
+                ],
+                "summary": "Tạo mới phiếu nhập",
+                "operationId": "6b9a5a76d7eb7f5ca5695936fe675fa8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImportReceiptStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportReceiptResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/import-receipts/{id}": {
+            "get": {
+                "tags": [
+                    "Import Receipts"
+                ],
+                "summary": "Chi tiết phiếu nhập",
+                "operationId": "6905b85316ab3b6d6596e3cc74c50f09",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportReceiptResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Import Receipts"
+                ],
+                "summary": "Cập nhật phiếu nhập (ghi chú hoặc thay đổi toàn bộ chi tiết)",
+                "operationId": "7ba69c4cc53c34c374b945829290a583",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImportReceiptUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportReceiptResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Import Receipts"
+                ],
+                "summary": "Xóa phiếu nhập",
+                "operationId": "f780d6b0a89c5b019a8d9689862b8f99",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/api/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lấy danh sách sản phẩm",
+                "operationId": "1bfaa78d1c2c3848ab8165c5dadcad3e",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Tạo sản phẩm mới",
+                "operationId": "e8185e307706e2cd84bbcf5171e2f09d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "CategoryStoreRequest": {
+                "required": [
+                    "image_url"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa tặng mẹ"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "binary",
+                        "example": "https://example.com/image.jpg"
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryUpdateRequest": {
+                "required": [
+                    "image_url"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa tặng mẹ"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/image.jpg"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
+                    }
+                },
+                "type": "object"
+            },
             "FlowerStoreRequest": {
                 "required": [
                     "color",
@@ -328,10 +637,6 @@
                     "color": {
                         "type": "string",
                         "example": "Đỏ"
-                    },
-                    "status": {
-                        "type": "boolean",
-                        "example": 1
                     },
                     "price": {
                         "type": "number",
@@ -361,10 +666,6 @@
                         "type": "string",
                         "example": "Đỏ"
                     },
-                    "status": {
-                        "type": "boolean",
-                        "example": 1
-                    },
                     "price": {
                         "type": "number",
                         "format": "float",
@@ -377,26 +678,175 @@
                 },
                 "type": "object"
             },
-            "FlowerTypeStoreRequest": {
+            "ImportReceiptStoreRequest": {
                 "required": [
-                    "name"
+                    "import_date",
+                    "details"
                 ],
                 "properties": {
-                    "name": {
+                    "import_date": {
                         "type": "string",
-                        "example": "Hoa ngày Tết"
+                        "format": "date",
+                        "example": "2025-06-09"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Nhập lô hoa hồng"
+                    },
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "flower_id": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 100
+                                },
+                                "import_price": {
+                                    "type": "number",
+                                    "format": "double",
+                                    "example": 9000
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "example": "hoa tươi"
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"
             },
-            "FlowerTypeUpdateRequest": {
+            "ImportReceiptUpdateRequest": {
+                "properties": {
+                    "import_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-06-10"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Chỉnh sửa ghi chú"
+                    },
+                    "details": {
+                        "description": "Nếu gửi, sẽ thay thế toàn bộ chi tiết bằng mảng mới",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "flower_id": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 80
+                                },
+                                "import_price": {
+                                    "type": "number",
+                                    "format": "double",
+                                    "example": 8800
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ProductStoreRequest": {
                 "required": [
-                    "name"
+                    "name",
+                    "recipes"
                 ],
                 "properties": {
                     "name": {
                         "type": "string",
-                        "example": "Hoa sen"
+                        "example": "Bó hoa cưới hồng đỏ"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Bó hoa cưới được kết từ 10 bông hồng đỏ và 5 hoa baby"
+                    },
+                    "image": {
+                        "description": "Ảnh sản phẩm",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 500000
+                    },
+                    "status": {
+                        "description": "Trạng thái sản phẩm",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "size": {
+                        "type": "string",
+                        "example": "Lớn"
+                    },
+                    "category_id": {
+                        "description": "ID danh mục hoa",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "recipes": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "flower_id",
+                                "quantity"
+                            ],
+                            "properties": {
+                                "flower_id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 10
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Category": {
+                "title": "FlowerType",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa tặng mẹ"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/image.jpg"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
                     }
                 },
                 "type": "object"
@@ -419,10 +869,6 @@
                     "color": {
                         "type": "string",
                         "example": "Đỏ"
-                    },
-                    "status": {
-                        "type": "string",
-                        "example": "available"
                     },
                     "price": {
                         "type": "number",
@@ -472,10 +918,152 @@
                     }
                 },
                 "type": "object"
+            },
+            "ImportReceiptDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "flower_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "flower_name": {
+                        "type": "string",
+                        "example": "Hoa hồng đỏ"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "import_price": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 9000
+                    },
+                    "import_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-06-09"
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 900000
+                    }
+                },
+                "type": "object"
+            },
+            "ImportReceiptResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 9
+                    },
+                    "import_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-06-09"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Nhập lô hoa hồng"
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 900000
+                    },
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ImportReceiptDetailResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ProductResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 9
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa hồng"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Nhập lô hoa hồng"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 900000
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": 1
+                    },
+                    "image": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/image.jpg"
+                    },
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RecipeDetailResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "flower_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "flower_name": {
+                        "type": "string",
+                        "example": "Hoa hồng đỏ"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "import_price": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 9000
+                    },
+                    "import_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-06-09"
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 900000
+                    }
+                },
+                "type": "object"
             }
         }
     },
     "tags": [
+        {
+            "name": "Category",
+            "description": "Quản lý danh mục hoa"
+        },
         {
             "name": "Flower",
             "description": "Quản lý hoa"
@@ -483,6 +1071,14 @@
         {
             "name": "Flower Types",
             "description": "Quản lý loại hoa"
+        },
+        {
+            "name": "Import Receipts",
+            "description": "Quản lý phiếu nhập hoa"
+        },
+        {
+            "name": "Products",
+            "description": "Quản lý sản phẩm hoa"
         }
     ]
 }

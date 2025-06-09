@@ -2,8 +2,12 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Models\ImportReceiptDetail;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -39,5 +43,52 @@ class ProductRepository implements ProductRepositoryInterface
     public function delete($id)
     {
         return $this->model->destroy($id);
+    }
+     public function createWithRecipes(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            if (isset($data['image'])) {
+                $path = $data['image']->store('products', 'public');
+                $data['image_path'] = $path;
+                unset($data['image']);
+            }
+
+            $recipes = $data['recipes'];
+            unset($data['recipes']);
+
+            $totalPrice = 0;
+            foreach ($recipes as $recipe) {
+                $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])->orderByDesc('import_date')->value('import_price') ?? 0;
+                $totalPrice += $recipe['quantity'] * $importPrice;
+            }
+            $data['price'] = $totalPrice * 1.5;
+
+            $product = $this->model->create($data);
+
+            foreach ($recipes as $recipe) {
+                $product->recipes()->create([
+                    'product_id' => $product->id,
+                    'flower_id' => $recipe['flower_id'],
+                    'quantity' => $recipe['quantity'],
+                ]);
+            }
+
+            return $product;
+        });
+    }
+
+    public function updateWithRecipes($id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = $this->update($id, $data);
+            $record->recipes()->delete();
+
+            $recipes = $data['recipes'] ?? [];
+            foreach ($recipes as $recipe) {
+                $record->recipes()->create($recipe);
+            }
+
+            return $record;
+        });
     }
 }

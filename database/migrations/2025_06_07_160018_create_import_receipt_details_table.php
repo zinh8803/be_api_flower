@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('import_price', 10, 2);
             $table->decimal('subtotal', 10, 2);
+            $table->date('import_date')->nullable();
             $table->foreignId('import_receipt_id')->constrained();
             $table->foreignId('flower_id')->constrained();
             $table->timestamps();

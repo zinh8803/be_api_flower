@@ -5,9 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\FlowerTypeRepositoryInterface;
+use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Eloquent\FlowerTypeRepository;
+use App\Repositories\Eloquent\ImportReceiptRepository;
 use App\Repositories\Eloquent\ProductRepository;
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -26,7 +28,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(FlowerTypeRepositoryInterface::class, FlowerTypeRepository::class);
         // $this->app->bind(FlowerRepositoryInterface::class, FlowerRepository::class);
         // $this->app->bind(RecipeRepositoryInterface::class, RecipeRepository::class);
-        // $this->app->bind(ImportReceiptRepositoryInterface::class, ImportReceiptRepository::class);
+         $this->app->bind(ImportReceiptRepositoryInterface::class, ImportReceiptRepository::class);
         // $this->app->bind(ImportReceiptDetailRepositoryInterface::class, ImportReceiptDetailRepository::class);
     }
 

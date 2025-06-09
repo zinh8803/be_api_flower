@@ -3,7 +3,16 @@
 namespace App\Http\Requests\Category;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+/**
+ * @OA\Schema(
+ *     schema="CategoryStoreRequest",
+ *     required={"name"},
+ *     required={"image_url"},
+ *     @OA\Property(property="name", type="string", example="Hoa tặng mẹ"),
+ *     @OA\Property(property="image", type="string", format="binary", example="https://example.com/image.jpg"),
+ *     
+ * )
+ */
 class StoreCategoryRequest extends FormRequest
 {
     /**
@@ -11,7 +20,7 @@ class StoreCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +31,8 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
-        ];
+        'name'  => 'required|string|max:255',
+        'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
+    ];
     }
 }

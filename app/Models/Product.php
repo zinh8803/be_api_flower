@@ -18,4 +18,8 @@ class Product extends Model
     {
         return $this->belongsToMany(Order::class)->withPivot('quantity','subtotal');
     }
+   public function recipes()
+{
+    return $this->hasMany(Recipe::class);
+}
 }
