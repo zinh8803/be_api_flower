@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FlowerController;
 use App\Http\Controllers\FlowerTypeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -14,3 +15,4 @@ Route::get('/user', function (Request $request) {
 
 
 Route::apiResource('flower-types', FlowerTypeController::class);
+Route::apiResource('flower', FlowerController::class);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\FlowerType\StoreFlowerTypeRequest;
 use App\Http\Requests\FlowerType\UpdateFlowerTypeRequest;
 use App\Http\Resources\FlowerResource;
+use App\Http\Resources\FlowerTypeResource;
 use App\Models\FlowerType;
 use App\Repositories\Eloquent\FlowerTypeRepository;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class FlowerTypeController extends Controller
     public function index()
     {
         $flowerTypes = $this->flowerTypeRepository->all();
-        return FlowerResource::collection($flowerTypes);
+        return FlowerTypeResource::collection($flowerTypes);
     }
 
     /**
@@ -139,7 +140,7 @@ class FlowerTypeController extends Controller
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
-     *         response=204,
+     *         response=200,
      *         description="Xóa thành công"
      *     )
      * )
@@ -151,6 +152,6 @@ class FlowerTypeController extends Controller
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
         $this->flowerTypeRepository->delete($id);
-        return response()->noContent();
+        return response()->json(['message' => 'Xóa loại hoa thành công'], 200);
     }
 }

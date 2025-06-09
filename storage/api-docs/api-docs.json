@@ -12,7 +12,156 @@
         }
     ],
     "paths": {
+        "/flower": {},
         "/flower-types": {},
+        "/api/flower": {
+            "get": {
+                "tags": [
+                    "Flower"
+                ],
+                "summary": "Lấy danh sách hoa",
+                "operationId": "c9d7678088844be03b2566ad48f78fd7",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách hoa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Flower"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Flower"
+                ],
+                "summary": "Tạo mới hoa",
+                "operationId": "01d86f40c3aaea802a28fd4cbeaa97b1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FlowerStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Flower"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flower/{id}": {
+            "get": {
+                "tags": [
+                    "Flower"
+                ],
+                "summary": "Lấy chi tiết hoa",
+                "operationId": "d447310b8e4dc1ded628852f67395910",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID hoa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin hoa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Flower"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Flower"
+                ],
+                "summary": "Cập nhật hoa",
+                "operationId": "16eee2dda3b1767d238af496fe4860c3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID hoa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FlowerUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Flower"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Flower"
+                ],
+                "summary": "Xóa hoa",
+                "operationId": "96d2aa75110e287d3e1d90de5990b1bc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID hoa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    }
+                }
+            }
+        },
         "/api/flower-types": {
             "get": {
                 "tags": [
@@ -155,7 +304,7 @@
                     }
                 ],
                 "responses": {
-                    "204": {
+                    "200": {
                         "description": "Xóa thành công"
                     }
                 }
@@ -164,6 +313,70 @@
     },
     "components": {
         "schemas": {
+            "FlowerStoreRequest": {
+                "required": [
+                    "color",
+                    "status",
+                    "price",
+                    "flower_type_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa hồng đỏ"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Đỏ"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": 1
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "flower_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerUpdateRequest": {
+                "required": [
+                    "color",
+                    "status",
+                    "price",
+                    "flower_type_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa hồng đỏ"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Đỏ"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": 1
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "flower_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
             "FlowerTypeStoreRequest": {
                 "required": [
                     "name"
@@ -184,6 +397,50 @@
                     "name": {
                         "type": "string",
                         "example": "Hoa sen"
+                    }
+                },
+                "type": "object"
+            },
+            "Flower": {
+                "title": "Flower",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa hồng"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Đỏ"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "available"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100.5
+                    },
+                    "flower_type": {
+                        "$ref": "#/components/schemas/FlowerType"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
                     }
                 },
                 "type": "object"
@@ -219,6 +476,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Flower",
+            "description": "Quản lý hoa"
+        },
         {
             "name": "Flower Types",
             "description": "Quản lý loại hoa"

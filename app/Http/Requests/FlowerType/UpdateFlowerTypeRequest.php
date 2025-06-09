@@ -30,7 +30,7 @@ class UpdateFlowerTypeRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            // You can add more validation rules here if needed
+           
         ];
     }
 }
