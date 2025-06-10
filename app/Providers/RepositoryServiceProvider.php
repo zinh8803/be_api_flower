@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\OrderRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquent\OrderRepository;
+use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\FlowerTypeRepositoryInterface;
@@ -20,9 +24,9 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
-        // $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         // $this->app->bind(DiscountRepositoryInterface::class, DiscountRepository::class);
-        // $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
+         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         // $this->app->bind(OrderDetailRepositoryInterface::class, OrderDetailRepository::class);
         // $this->app->bind(InvoiceRepositoryInterface::class, InvoiceRepository::class);
         $this->app->bind(FlowerTypeRepositoryInterface::class, FlowerTypeRepository::class);

@@ -508,6 +508,45 @@
                 }
             }
         },
+        "/api/orders": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Tạo đơn hàng mới",
+                "operationId": "d690d6834318e9b064df441e854de8b9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đơn hàng đã được tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [
@@ -559,6 +598,180 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng ký người dùng",
+                "operationId": "2f25885f3b6f61ca11724ec302d2e439",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng ký thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đăng ký thành công"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "jwt.token.here"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập người dùng",
+                "operationId": "0fc9610184083ac6dddab2c63139225a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đăng nhập thành công"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "jwt.token.here"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Sai email hoặc mật khẩu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sai email hoặc mật khẩu"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/profile": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Lấy thông tin người dùng hiện tại",
+                "operationId": "4373251f8140344279ac32a1ac817cef",
+                "responses": {
+                    "200": {
+                        "description": "Thông tin người dùng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng xuất người dùng",
+                "operationId": "67d5147477c548bfbc3f982833bbc7bd",
+                "responses": {
+                    "200": {
+                        "description": "Đăng xuất thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đăng xuất thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -757,6 +970,70 @@
                 },
                 "type": "object"
             },
+            "OrderStoreRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "phone",
+                    "address",
+                    "payment_method",
+                    "products"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Nguyen Van A"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "a@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0123456789"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Nguyen Trai"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Giao trong giờ hành chính",
+                        "nullable": true
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "example": "cod"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "discount_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "product_id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 2
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "RecipeInput": {
                 "required": [
                     "flower_id",
@@ -814,6 +1091,63 @@
                         "items": {
                             "$ref": "#/components/schemas/RecipeInput"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "a@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "123456"
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "password",
+                    "password_confirmation"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Nguyen Van A"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "a@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "123456"
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "123456"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0909123456"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Đường ABC"
                     }
                 },
                 "type": "object"
@@ -984,6 +1318,53 @@
                 },
                 "type": "object"
             },
+            "Order": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Nguyen Van A"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "ngovinh@gmail.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0123456789"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Nguyen Trai"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Giao trong giờ hành chính",
+                        "nullable": true
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "example": 250000
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ProductResource": {
                 "properties": {
                     "id": {
@@ -1051,6 +1432,70 @@
                     }
                 },
                 "type": "object"
+            },
+            "User": {
+                "title": "User Resource",
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Nguyen Van A"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "a@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0909123456"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "Hậu Giang"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "user"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "example": "http://localhost/storage/avatar.jpg"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-09T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-09T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Nhập token JWT vào ô Authorization",
+                "name": "Authorization",
+                "in": "header",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             }
         }
     },
@@ -1074,6 +1519,14 @@
         {
             "name": "Products",
             "description": "Quản lý sản phẩm hoa"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
         }
     ]
 }

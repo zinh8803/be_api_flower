@@ -14,6 +14,17 @@ class OrderDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'order_id' => $this->order_id,
+            'product_id' => $this->product_id,
+            'quantity' => $this->quantity,
+            'subtotal' => $this->subtotal,
+            // Lấy giá sản phẩm từ quan hệ product (nếu cần)
+            'product_price' => $this->product ? $this->product->price : null,
+            'product' => new ProductResource($this->whenLoaded('product')),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

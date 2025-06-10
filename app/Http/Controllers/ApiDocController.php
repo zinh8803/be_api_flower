@@ -15,7 +15,19 @@ use Illuminate\Http\Request;
  *     url=L5_SWAGGER_CONST_HOST,
  *     description="Main API server"
  * )
+ *
+*
+ * @OA\SecurityScheme(
+ *     type="http",
+ *     description="Nhập token JWT vào ô Authorization",
+ *     name="Authorization",
+ *     in="header",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     securityScheme="bearerAuth"
+ * )
  */
+
 class ApiDocController extends Controller
 {
     //

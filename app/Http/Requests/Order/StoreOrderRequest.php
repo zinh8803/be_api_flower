@@ -3,7 +3,29 @@
 namespace App\Http\Requests\Order;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+/**
+ * @OA\Schema(
+ *     schema="OrderStoreRequest",
+ *     type="object",
+ *     required={"name", "email", "phone", "address", "payment_method", "products"},
+ *     @OA\Property(property="name", type="string", example="Nguyen Van A"),
+ *     @OA\Property(property="email", type="string", example="a@example.com"),
+ *     @OA\Property(property="phone", type="string", example="0123456789"),
+ *     @OA\Property(property="address", type="string", example="123 Nguyen Trai"),
+ *     @OA\Property(property="note", type="string", example="Giao trong giờ hành chính", nullable=true),
+ *     @OA\Property(property="payment_method", type="string", example="cod"),
+ *      @OA\Property(property="user_id", type="integer", example=1, nullable=true),
+ *     @OA\Property(property="discount_id", type="integer", example=null, nullable=true),
+ *     @OA\Property(
+ *         property="products",
+ *         type="array",
+ *         @OA\Items(
+ *             @OA\Property(property="product_id", type="integer", example=1),
+ *             @OA\Property(property="quantity", type="integer", example=2)
+ *         )
+ *     ) 
+ * )
+ */
 class StoreOrderRequest extends FormRequest
 {
     /**
@@ -11,7 +33,7 @@ class StoreOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +44,16 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'note' => 'nullable|string|max:1000',
+            'payment_method' => 'required|string|in:cod,bank_transfer,online_payment',
+            'user_id' => 'nullable|integer|exists:users,id',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|integer|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ];
     }
 }
