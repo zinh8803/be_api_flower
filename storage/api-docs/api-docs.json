@@ -566,17 +566,17 @@
         "schemas": {
             "CategoryStoreRequest": {
                 "required": [
-                    "image_url"
+                    "name"
                 ],
                 "properties": {
                     "name": {
                         "type": "string",
                         "example": "Hoa tặng mẹ"
                     },
-                    "image_url": {
+                    "image": {
+                        "description": "Upload file ảnh",
                         "type": "string",
-                        "format": "binary",
-                        "example": "https://example.com/image.jpg"
+                        "format": "binary"
                     }
                 },
                 "type": "object"
@@ -594,30 +594,6 @@
                         "type": "string",
                         "format": "uri",
                         "example": "https://example.com/image.jpg"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeStoreRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa ngày Tết"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeUpdateRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"
@@ -674,6 +650,30 @@
                     "flower_type_id": {
                         "type": "integer",
                         "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"
@@ -757,6 +757,25 @@
                 },
                 "type": "object"
             },
+            "RecipeInput": {
+                "required": [
+                    "flower_id",
+                    "quantity"
+                ],
+                "properties": {
+                    "flower_id": {
+                        "description": "ID hoa",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "description": "Số lượng hoa",
+                        "type": "integer",
+                        "example": 20
+                    }
+                },
+                "type": "object"
+            },
             "ProductStoreRequest": {
                 "required": [
                     "name",
@@ -776,11 +795,6 @@
                         "type": "string",
                         "format": "binary"
                     },
-                    "price": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 500000
-                    },
                     "status": {
                         "description": "Trạng thái sản phẩm",
                         "type": "integer",
@@ -798,21 +812,7 @@
                     "recipes": {
                         "type": "array",
                         "items": {
-                            "required": [
-                                "flower_id",
-                                "quantity"
-                            ],
-                            "properties": {
-                                "flower_id": {
-                                    "type": "integer",
-                                    "example": 1
-                                },
-                                "quantity": {
-                                    "type": "integer",
-                                    "example": 10
-                                }
-                            },
-                            "type": "object"
+                            "$ref": "#/components/schemas/RecipeInput"
                         }
                     }
                 },
@@ -997,11 +997,6 @@
                     "description": {
                         "type": "string",
                         "example": "Nhập lô hoa hồng"
-                    },
-                    "price": {
-                        "type": "number",
-                        "format": "double",
-                        "example": 900000
                     },
                     "status": {
                         "type": "boolean",

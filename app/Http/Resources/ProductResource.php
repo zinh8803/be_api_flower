@@ -12,7 +12,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="id", type="integer", example=9),
  *   @OA\Property(property="name", type="string", example="Hoa hồng"),
  *     @OA\Property(property="description", type="string", example="Nhập lô hoa hồng"),
- *     @OA\Property(property="price", type="number", format="double", example=900000),
  *    @OA\Property(property="status", type="boolean", example=1),
  *      @OA\Property(property="image", type="string", format="uri", example="https://example.com/image.jpg"),
  * 
@@ -38,7 +37,7 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'status' => $this->status,
             'description' => $this->description,
-            'image_url' => asset($this->image_url),
+            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
             'category' => new CategoryResource($this->whenLoaded('category')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

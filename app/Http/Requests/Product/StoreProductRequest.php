@@ -6,23 +6,25 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @OA\Schema(
+ *     schema="RecipeInput",
+ *     required={"flower_id", "quantity"},
+ *     @OA\Property(property="flower_id", type="integer", example=1, description="ID hoa"),
+ *     @OA\Property(property="quantity", type="integer", example=20, description="Số lượng hoa")
+ * )
+ *
+ * @OA\Schema(
  *     schema="ProductStoreRequest",
  *     required={"name", "recipes"},
  *     @OA\Property(property="name", type="string", example="Bó hoa cưới hồng đỏ"),
  *     @OA\Property(property="description", type="string", example="Bó hoa cưới được kết từ 10 bông hồng đỏ và 5 hoa baby"),
  *     @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
- *     @OA\Property(property="price", type="number", format="float", example=500000),
- *     @OA\Property(property="status", type="int", example=1, description="Trạng thái sản phẩm"),
+ *     @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
  *     @OA\Property(property="size", type="string", example="Lớn"),
  *     @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục hoa"),
  *     @OA\Property(
  *         property="recipes",
  *         type="array",
- *         @OA\Items(
- *             required={"flower_id", "quantity"},
- *             @OA\Property(property="flower_id", type="integer", example=1),
- *             @OA\Property(property="quantity", type="integer", example=10)
- *         )
+ *         @OA\Items(ref="#/components/schemas/RecipeInput")
  *     )
  * )
  */
@@ -60,7 +62,10 @@ class StoreProductRequest extends FormRequest
     {
         $data = parent::all($keys);
         if (isset($data['recipes']) && is_string($data['recipes'])) {
-            $data['recipes'] = json_decode($data['recipes'], true);
+            $decoded = json_decode($data['recipes'], true);
+            if (is_array($decoded)) {
+                $data['recipes'] = $decoded;
+            }
         }
         return $data;
     }

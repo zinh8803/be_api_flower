@@ -49,8 +49,8 @@ class ProductRepository implements ProductRepositoryInterface
         return DB::transaction(function () use ($data) {
             if (isset($data['image'])) {
                 $path = $data['image']->store('products', 'public');
-                $data['image_path'] = $path;
-                unset($data['image']);
+                $data['image'] = $path;
+                //unset($data['image']);
             }
 
             $recipes = $data['recipes'];

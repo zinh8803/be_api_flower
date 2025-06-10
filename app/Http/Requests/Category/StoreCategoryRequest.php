@@ -5,12 +5,10 @@ namespace App\Http\Requests\Category;
 use Illuminate\Foundation\Http\FormRequest;
 /**
  * @OA\Schema(
- *     schema="CategoryStoreRequest",
- *     required={"name"},
- *     required={"image_url"},
- *     @OA\Property(property="name", type="string", example="Hoa tặng mẹ"),
- *     @OA\Property(property="image", type="string", format="binary", example="https://example.com/image.jpg"),
- *     
+ * schema="CategoryStoreRequest",
+ * required={"name"},
+ * @OA\Property(property="name", type="string", example="Hoa tặng mẹ"),
+ * @OA\Property(property="image", type="string", format="binary", description="Upload file ảnh"),
  * )
  */
 class StoreCategoryRequest extends FormRequest
