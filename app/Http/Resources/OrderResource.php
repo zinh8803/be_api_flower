@@ -37,12 +37,18 @@ class OrderResource extends JsonResource
             'note' => $this->note,
             'user_id' => $this->user_id,
             'status' => $this->status,
-             'total_price' => $this->total_price,
+            'discount' => $this->discount ? [
+                'name' => $this->discount->name,
+                'type' => $this->discount->type,
+                'value' => $this->discount->value,
+                'amount_applied' => $this->discount_amount,
+            ] : null,
+            'buy_at' => $this->buy_at,
+            'total_price' => $this->total_price,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'user' => new UserResource($this->whenLoaded('user')),
             'order_details' => OrderDetailResource::collection($this->whenLoaded('orderDetails')),
-         //   'products' => OrderDetailResource::collection($this->orderDetails),
         ];
     }
 }

@@ -13,6 +13,7 @@
     ],
     "paths": {
         "/categories": {},
+        "/discounts": {},
         "/flower": {},
         "/flower-types": {},
         "/api/categories": {
@@ -64,6 +65,154 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/discounts": {
+            "get": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Lấy danh sách mã giảm giá",
+                "operationId": "c34129a2b20b11a1bb914f9657376fb5",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách mã giảm giá",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Discount"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Tạo mới mã giảm giá",
+                "operationId": "9123c70fc44b58b641612d7f6f90469e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DiscountStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Discount"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/discounts/{id}": {
+            "get": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Lấy chi tiết mã giảm giá",
+                "operationId": "fbf1f3a350b69a823f2d71699d2da78b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID mã giảm giá",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin mã giảm giá",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Discount"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Cập nhật mã giảm giá",
+                "operationId": "17bf23d3850f2a65449514eb5f490fe0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID mã giảm giá",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DiscountUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Discount"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Xóa mã giảm giá",
+                "operationId": "cab56bd386823e47377b3584990cb58b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID mã giảm giá",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
                     }
                 }
             }
@@ -811,6 +960,68 @@
                 },
                 "type": "object"
             },
+            "DiscountStoreRequest": {
+                "required": [
+                    "name,type,value,start_date.end_date"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "HOA10"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "percent"
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01"
+                    }
+                },
+                "type": "object"
+            },
+            "DiscountUpdateRequest": {
+                "required": [
+                    "name,type,value,start_date.end_date"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "HOA10"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "percent"
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01"
+                    }
+                },
+                "type": "object"
+            },
             "FlowerStoreRequest": {
                 "required": [
                     "color",
@@ -1012,7 +1223,7 @@
                     },
                     "discount_id": {
                         "type": "integer",
-                        "example": 1,
+                        "example": null,
                         "nullable": true
                     },
                     "products": {
@@ -1171,6 +1382,48 @@
                         "type": "string",
                         "format": "uri",
                         "example": "https://example.com/image.jpg"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Discount": {
+                "title": "Discount",
+                "required": [
+                    "id",
+                    "name,type,value,start_date,end_date"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "HOA10"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "percent"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
                     },
                     "created_at": {
                         "type": "string",
@@ -1503,6 +1756,10 @@
         {
             "name": "Category",
             "description": "Quản lý danh mục hoa"
+        },
+        {
+            "name": "Discount",
+            "description": "Quản lý mã giảm giá"
         },
         {
             "name": "Flower",

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
 use App\Http\Controllers\FlowerTypeController;
 use App\Http\Controllers\ImportReceiptController;
@@ -26,6 +27,8 @@ Route::apiResource('import-receipts', ImportReceiptController::class);
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('products', ProductController::class);
 Route::apiResource('orders',OrderController::class);
+Route::apiResource('discounts',DiscountController::class);
+
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);

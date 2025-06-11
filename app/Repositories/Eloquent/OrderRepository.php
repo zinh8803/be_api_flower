@@ -1,5 +1,6 @@
 <?php
 namespace App\Repositories\Eloquent;
+use App\Models\Discount;
 use App\Models\ImportReceiptDetail;
 use App\Models\Order;
 use App\Models\Product;
@@ -17,64 +18,79 @@ class OrderRepository implements OrderRepositoryInterface
     public function createOrder(array $data)
     {
         return DB::transaction(function () use ($data) {
-            $products = $data['products']; // [{ product_id, quantity }]
-            
+
+            $items = $data['products'];
             unset($data['products']);
 
-            $total = 0;
             $orderDetails = [];
+            $orderSubtotal = 0;
+            $discountAmount = 0;
 
-            foreach ($products as $item) {
+            foreach ($items as $item) {
                 $product = Product::with('recipes.flower')->findOrFail($item['product_id']);
-                $quantity = $item['quantity'];
+                $qty = $item['quantity'];
 
-                // Lấy giá bán sản phẩm từ DB
-                $price = $product->price;
-                $subtotal = $price * $quantity;
-                $total += $subtotal;
-
-                // Trừ tồn kho như cũ
                 foreach ($product->recipes as $recipe) {
-                    $flower = $recipe->flower;
-                    $neededQty = $recipe->quantity * $quantity;
-                    $stock = ImportReceiptDetail::where('flower_id', $flower->id)->sum('quantity');
-                    if ($stock < $neededQty) {
-                        throw new \Exception("Không đủ tồn kho cho hoa: " . $flower->name);
+                    $need = $recipe->quantity * $qty;
+                    $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum('quantity');
+
+                    if ($stock < $need) {
+                        throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
                     }
-                    $this->deductStock($flower->id, $neededQty);
+                    $this->deductStock($recipe->flower_id, $need);
                 }
+
+                $unitPrice = $product->price;
+                $subTotal = $unitPrice * $qty;
+                $orderSubtotal += $subTotal;
 
                 $orderDetails[] = [
                     'product_id' => $product->id,
-                    'quantity' => $quantity,
-                    'price' => $price, // Giá bán 1 sản phẩm
-                    'subtotal' => $subtotal, // Tổng tiền cho sản phẩm này
+                    'quantity' => $qty,
+                    'price' => $unitPrice,
+                    'subtotal' => $subTotal,
                 ];
             }
 
-            // ✅ Tạo đơn hàng
+            if (!empty($data['discount_id'])) {
+                $discount = Discount::findOrFail($data['discount_id']);
+
+                if (!$discount->isActive()) {
+                    throw new \Exception('Mã giảm giá không còn hiệu lực.');
+                }
+
+                $discountAmount = $discount->type === 'percent'
+                    ? $orderSubtotal * $discount->value / 100
+                    : $discount->value;
+
+                $discountAmount = min($discountAmount, $orderSubtotal);
+            }
+
+            $orderTotal = $orderSubtotal - $discountAmount;
+
             $order = Order::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'],
                 'address' => $data['address'],
                 'note' => $data['note'] ?? null,
-                'total_amount' => $total,
                 'payment_method' => $data['payment_method'],
                 'user_id' => $data['user_id'] ?? auth()->id() ?? 1,
-                'status' => 'đang xử lý', // hoặc 'pending'
+                'status' => 'đang xử lý',
                 'buy_at' => now(),
-                'total_price' => $total,
+                'discount_id' => $data['discount_id'] ?? null,
+                'discount_amount' => $discountAmount,
+                'total_price' => $orderTotal,
             ]);
 
-            // ✅ Lưu chi tiết đơn hàng
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
             }
 
-            return $order->load('orderDetails.product');
+            return $order->load('orderDetails.product', 'discount');
         });
     }
+
 
     public function deductStock($flowerId, $neededQty)
     {

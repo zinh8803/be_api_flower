@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['name','email','phone','address','note', 'total_price','status','user_id','buy_at','payment_method','discount_id','user_id'];
+    protected $fillable = ['name','email','phone','address','note', 'total_price','status','user_id','buy_at','payment_method','discount_id','user_id', 'discount_amount'];
 
     public function user()
     {
@@ -21,5 +21,13 @@ class Order extends Model
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
+    }
+    public function discount()
+    {
+        return $this->belongsTo(Discount::class);
+    }
+    public function getTotalPriceAttribute($value)
+    {
+        return number_format($value, 0, ',', '.');
     }
 }

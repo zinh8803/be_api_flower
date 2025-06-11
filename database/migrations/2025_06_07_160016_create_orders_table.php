@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('note')->nullable();
             $table->decimal('total_price', 10, 2);
             $table->string('status');
+            $table->decimal('discount_amount', 10, 2)->default(0);
             $table->dateTime('buy_at')->useCurrent();
             $table->string('payment_method');
             $table->foreignId('discount_id')->nullable()->constrained();
