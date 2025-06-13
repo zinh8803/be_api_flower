@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class ProductRepository implements ProductRepositoryInterface
@@ -72,7 +73,10 @@ class ProductRepository implements ProductRepositoryInterface
                     'quantity' => $recipe['quantity'],
                 ]);
             }
-
+            Log::info(
+                'Product created with recipes',
+                ['product' => $product]
+            );
             return $product;
         });
     }

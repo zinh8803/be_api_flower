@@ -40,7 +40,7 @@ class UserResource extends JsonResource
             'address' => $this->address,
             'role' => $this->role,
             'status' => $this->status,
-            'avatar_url' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'avatar_url' => $this->avatar ?  $this->avatar : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
