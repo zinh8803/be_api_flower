@@ -25,7 +25,17 @@ Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
 Route::apiResource('import-receipts', ImportReceiptController::class);
 Route::apiResource('categories', CategoryController::class);
-Route::apiResource('products', ProductController::class);
+//Route::apiResource('products', ProductController::class);
+
+Route::get('products', [ProductController::class, 'index']);
+Route::post('products', [ProductController::class, 'store']);
+Route::get('products/{id}', [ProductController::class, 'show']);
+Route::post('products/{id}', [ProductController::class, 'update']);
+Route::delete('products/{id}', [ProductController::class, 'destroy']);
+
+
+Route::get('products/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
+
 Route::apiResource('orders',OrderController::class);
 Route::apiResource('discounts',DiscountController::class);
 

@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @OA\Schema(
- *     schema="RecipeInput",
+ *     schema="RecipeInputForStore",
  *     required={"flower_id", "quantity"},
  *     @OA\Property(property="flower_id", type="integer", example=1, description="ID hoa"),
  *     @OA\Property(property="quantity", type="integer", example=20, description="Số lượng hoa")
@@ -24,7 +24,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(
  *         property="recipes",
  *         type="array",
- *         @OA\Items(ref="#/components/schemas/RecipeInput")
+ *         @OA\Items(ref="#/components/schemas/RecipeInputForStore")
  *     )
  * )
  */

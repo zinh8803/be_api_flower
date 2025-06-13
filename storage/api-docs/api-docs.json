@@ -749,6 +749,96 @@
                 }
             }
         },
+        "/api/products/{id}": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Cập nhật sản phẩm",
+                "operationId": "b4b789a4a3d0c47897f43991a5f12372",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "category_id",
+                                    "recipes[0][flower_id]",
+                                    "recipes[0][quantity]"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Bó hoa cưới đỏ"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Bó hoa cưới rực rỡ"
+                                    },
+                                    "image": {
+                                        "description": "Ảnh sản phẩm",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "status": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "size": {
+                                        "type": "string",
+                                        "example": "Lớn"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "recipes[0][flower_id]": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "recipes[0][quantity]": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "recipes[1][flower_id]": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "recipes[1][quantity]": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -1245,7 +1335,7 @@
                 },
                 "type": "object"
             },
-            "RecipeInput": {
+            "RecipeInputForStore": {
                 "required": [
                     "flower_id",
                     "quantity"
@@ -1300,7 +1390,68 @@
                     "recipes": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/RecipeInput"
+                            "$ref": "#/components/schemas/RecipeInputForStore"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeInputForUpdate": {
+                "required": [
+                    "flower_id",
+                    "quantity"
+                ],
+                "properties": {
+                    "flower_id": {
+                        "description": "ID hoa",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "description": "Số lượng hoa",
+                        "type": "integer",
+                        "example": 20
+                    }
+                },
+                "type": "object"
+            },
+            "ProductUpdateRequest": {
+                "required": [
+                    "name",
+                    "recipes"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Bó hoa cưới hồng đỏ"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Bó hoa cưới được kết từ 10 bông hồng đỏ và 5 hoa baby"
+                    },
+                    "image": {
+                        "description": "Ảnh sản phẩm",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "status": {
+                        "description": "Trạng thái sản phẩm",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "size": {
+                        "type": "string",
+                        "example": "Lớn"
+                    },
+                    "category_id": {
+                        "description": "ID danh mục hoa",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "recipes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RecipeInputForUpdate"
                         }
                     }
                 },

@@ -26,13 +26,22 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function find($id)
     {
-        return $this->model->findOrFail($id);
+        return $this->model->find($id);
     }
 
     public function create(array $data)
     {
         return $this->model->create($data);
     }
+
+    public function getProductsByCategory($categoryId)
+    {
+        $products = $this->model->where('category_id', $categoryId)->get();
+        if ($products->isEmpty()) {
+            throw new RuntimeException('No products found for the given category.');
+        }
+        return $products;
+     }
 
     public function update($id, array $data)
     {
@@ -51,7 +60,6 @@ class ProductRepository implements ProductRepositoryInterface
             if (isset($data['image'])) {
                 $path = $data['image']->store('products', 'public');
                 $data['image'] = $path;
-                //unset($data['image']);
             }
 
             $recipes = $data['recipes'];
@@ -82,17 +90,44 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
     public function updateWithRecipes($id, array $data)
-    {
-        return DB::transaction(function () use ($id, $data) {
-            $record = $this->update($id, $data);
-            $record->recipes()->delete();
+{
+    return DB::transaction(function () use ($id, $data) {
+        $product = $this->model->find($id);
 
-            $recipes = $data['recipes'] ?? [];
-            foreach ($recipes as $recipe) {
-                $record->recipes()->create($recipe);
-            }
+        if (isset($data['image'])) {
+            $path = $data['image']->store('products', 'public');
+            $data['image'] = $path;
+        }
 
-            return $record;
-        });
-    }
+        $product->recipes()->delete();
+
+        $recipes = $data['recipes'] ?? [];
+
+        $totalPrice = 0;
+        foreach ($recipes as $recipe) {
+            $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
+                ->orderByDesc('import_date')
+                ->value('import_price') ?? 0;
+            $totalPrice += $recipe['quantity'] * $importPrice;
+        }
+        $data['price'] = $totalPrice * 1.5;
+
+        $product->update($data);
+
+        foreach ($recipes as $recipe) {
+            $product->recipes()->create([
+                'product_id' => $product->id,
+                'flower_id' => $recipe['flower_id'],
+                'quantity' => $recipe['quantity'],
+            ]);
+        }
+        Log::info(
+            'Product updated with recipes',
+            ['product' => $product]
+        );
+
+        return $product;
+    });
+}
+
 }
