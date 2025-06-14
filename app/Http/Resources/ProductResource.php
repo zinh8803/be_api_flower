@@ -13,7 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *   @OA\Property(property="name", type="string", example="Hoa hồng"),
  *     @OA\Property(property="description", type="string", example="Nhập lô hoa hồng"),
  *    @OA\Property(property="status", type="boolean", example=1),
- *      @OA\Property(property="image", type="string", format="uri", example="https://example.com/image.jpg"),
+ *      @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/image.jpg"),
  * 
  *     @OA\Property(
  *         property="details",
@@ -37,7 +37,7 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'status' => $this->status,
             'description' => $this->description,
-            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => $this->image_url ,
             'category_id' => $this->category_id,
             //'category' => new CategoryResource($this->whenLoaded('category')),
             'created_at' => $this->created_at,

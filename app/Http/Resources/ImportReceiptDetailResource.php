@@ -26,11 +26,21 @@ class ImportReceiptDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $now = Carbon::now();
-        $status = 'hoa tươi';
-        if ($now->hour >= 22) {
-            $status = 'hoa ép';
+          $status = 'pending';
+
+        if (!empty($this->import_date)) {
+            $importDate = Carbon::parse($this->import_date);
+            $today = Carbon::today();
+
+            if ($importDate->isSameDay($today)) {
+                $now = Carbon::now();
+                $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
+            } elseif ($importDate->lt($today)) {
+                $status = 'hoa ép';
+            }
         }
+
+
 
         return [
              'id'          => $this->id,

@@ -24,17 +24,29 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
 Route::apiResource('import-receipts', ImportReceiptController::class);
-Route::apiResource('categories', CategoryController::class);
+//Route::apiResource('categories', CategoryController::class);
+//dung prefix đi
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::post('/', [CategoryController::class, 'store']);
+    Route::get('/{id}', [CategoryController::class, 'show']);
+    Route::post('/{id}', [CategoryController::class, 'update']);
+    Route::delete('/{id}', [CategoryController::class, 'destroy']);
+});
+
+
+
 //Route::apiResource('products', ProductController::class);
 
-Route::get('products', [ProductController::class, 'index']);
-Route::post('products', [ProductController::class, 'store']);
-Route::get('products/{id}', [ProductController::class, 'show']);
-Route::post('products/{id}', [ProductController::class, 'update']);
-Route::delete('products/{id}', [ProductController::class, 'destroy']);
-
-
-Route::get('products/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::post('/', [ProductController::class, 'store']);
+    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::post('/{id}', [ProductController::class, 'update']);
+    Route::delete('/{id}', [ProductController::class, 'destroy']);
+    Route::put('/{id}/hide', [ProductController::class, 'hide']);
+    Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
+});
 
 Route::apiResource('orders',OrderController::class);
 Route::apiResource('discounts',DiscountController::class);

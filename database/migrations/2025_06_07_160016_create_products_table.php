@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
-            $table->string('image')->nullable();
+            $table->string('image_url')->nullable();
             $table->boolean('status')->default(1);
             $table->string('size')->nullable();
             $table->foreignId('category_id')->constrained()->onDelete('restrict')->onUpdate('cascade');

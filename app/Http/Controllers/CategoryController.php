@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Category\StoreCategoryRequest;
+use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\Repositories\Eloquent\CategoryRepository;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -74,26 +74,85 @@ class CategoryController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/api/categories/{id}",
+     *     tags={"Category"},
+     *     summary="Lấy thông tin danh mục hoa",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thông tin danh mục hoa",
+     *         @OA\JsonContent(ref="#/components/schemas/Category")
+     *     ),
+     *     @OA\Response(response=404, description="Danh mục không tồn tại")
+     * )
      */
     public function show($id)
     {
-        //
+        $category = $this->categoryRepository->find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+        return new CategoryResource($category);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    /**
+     * @OA\Post(
+     *     path="/api/categories/{id}",
+     *     tags={"Category"},
+     *     summary="Cập nhật danh mục hoa",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(required=true, @OA\MediaType(
+     *         mediaType="multipart/form-data",
+     *         @OA\Schema(ref="#/components/schemas/CategoryUpdateRequest")
+     *     )),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật thành công",
+     *         @OA\JsonContent(ref="#/components/schemas/Category")
+     *     ),
+     *     @OA\Response(response=404, description="Danh mục không tồn tại")
+     * )
+     */
+    public function update(UpdateCategoryRequest $request, $id)
     {
-        //
+        $category = $this->categoryRepository->find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        $category = $this->categoryRepository->update($id, $request->validated());
+        Log::info('Category updated successfully', ['id' => $id, 'data' => $request->all()]);
+        return new CategoryResource($category);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
+        /**
+     * @OA\Delete(
+     *     path="/api/categories/{id}",
+     *     tags={"Category"},
+     *     summary="Xóa danh mục hoa",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Xóa thành công"),
+     *     @OA\Response(response=404, description="Danh mục không tồn tại")
+     * )
+     */
+    public function destroy($id)
     {
-        //
+        $category = $this->categoryRepository->find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        $this->categoryRepository->delete($id);
+        return response()->json(['message' => 'Category deleted successfully']);
     }
+ 
+    
+
 }

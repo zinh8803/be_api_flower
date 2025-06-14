@@ -24,7 +24,7 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function find($id)
     {
-        return $this->model->findOrFail($id);
+        return $this->model->find($id);
     }
 
     public function create(array $data)

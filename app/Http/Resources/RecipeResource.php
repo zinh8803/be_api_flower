@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 /**
@@ -25,11 +26,24 @@ class RecipeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Lấy importReceiptDetail mới nhất nếu là hasMany
         $importReceiptDetail = null;
         if ($this->flower && $this->flower->importReceiptDetails && $this->flower->importReceiptDetails->count()) {
             $importReceiptDetail = $this->flower->importReceiptDetails->sortByDesc('import_date')->first();
         }
+ $status = null;
+
+    if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
+        $importDate = Carbon::parse($importReceiptDetail->import_date);
+        $today = Carbon::today();
+
+        if ($importDate->isSameDay($today)) {
+            $now = Carbon::now();
+            $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
+        } elseif ($importDate->lt($today)) {
+            $status = 'hoa ép';
+        }
+    }
+
 
         return [
             'flower_id'     => $this->flower_id,
@@ -37,13 +51,7 @@ class RecipeResource extends JsonResource
             'quantity'      => $this->quantity,
             'import_price'  => $importReceiptDetail->import_price ?? null,
             'import_date'   => $importReceiptDetail->import_date ?? null,
-            'status'        => $importReceiptDetail
-                ? (
-                    (\Carbon\Carbon::parse($importReceiptDetail->import_date)->hour >= 22)
-                        ? 'hoa ép'
-                        : 'hoa tươi'
-                  )
-                : null,
+            'status'        => $status,
         ];
     }
 }

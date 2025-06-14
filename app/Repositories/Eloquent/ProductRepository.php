@@ -2,10 +2,12 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Helpers\ImageHelper;
 use App\Models\ImportReceiptDetail;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -54,13 +56,32 @@ class ProductRepository implements ProductRepositoryInterface
     {
         return $this->model->destroy($id);
     }
+    public function hide($id)
+    {
+        $product = $this->find($id);
+        if (!$product) {
+            throw new RuntimeException('Product not found.');
+        }
+        $product->status = false;
+        $product->save();
+        return $product;
+    }
      public function createWithRecipes(array $data)
     {
         return DB::transaction(function () use ($data) {
-            if (isset($data['image'])) {
-                $path = $data['image']->store('products', 'public');
-                $data['image'] = $path;
+              if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+            try {
+                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+                Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
+                if ($imageUrl) {
+                    $data['image_url'] = $imageUrl;
+                }
+                
+                unset($data['image']);
+            } catch (\Exception $e) {
+                Log::error('Image upload failed', ['error' => $e->getMessage()]);
             }
+        }
 
             $recipes = $data['recipes'];
             unset($data['recipes']);
@@ -94,9 +115,18 @@ class ProductRepository implements ProductRepositoryInterface
     return DB::transaction(function () use ($id, $data) {
         $product = $this->model->find($id);
 
-        if (isset($data['image'])) {
-            $path = $data['image']->store('products', 'public');
-            $data['image'] = $path;
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+            try {
+                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+                
+                if ($imageUrl) {
+                    $data['image_url'] = $imageUrl;
+                }
+                
+                unset($data['image']);
+            } catch (\Exception $e) {
+                Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
+            }
         }
 
         $product->recipes()->delete();

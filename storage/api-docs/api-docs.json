@@ -69,6 +69,107 @@
                 }
             }
         },
+        "/api/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Lấy thông tin danh mục hoa",
+                "operationId": "c68e76d323c008827a9e47398b1583de",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin danh mục hoa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Danh mục không tồn tại"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Cập nhật danh mục hoa",
+                "operationId": "ca9fbca85918139a8465ca00b4e67b1e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Danh mục không tồn tại"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Xóa danh mục hoa",
+                "operationId": "4c12e22a7f8c617bd83bfa1fdc05428d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    },
+                    "404": {
+                        "description": "Danh mục không tồn tại"
+                    }
+                }
+            }
+        },
         "/api/discounts": {
             "get": {
                 "tags": [
@@ -730,14 +831,63 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ProductStoreRequest"
+                                "required": [
+                                    "name",
+                                    "category_id",
+                                    "recipes[0][flower_id]",
+                                    "recipes[0][quantity]"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Bó hoa cưới đỏ"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Bó hoa cưới rực rỡ"
+                                    },
+                                    "image": {
+                                        "description": "Ảnh sản phẩm",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "status": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "size": {
+                                        "type": "string",
+                                        "example": "Lớn"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "recipes[0][flower_id]": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "recipes[0][quantity]": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "recipes[1][flower_id]": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "recipes[1][quantity]": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "Updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -745,6 +895,43 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/products/category/{categoryId}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lấy danh sách sản phẩm theo danh mục",
+                "operationId": "d9a719d13ea154ac76fb531fe1b679dc",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm theo danh mục",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Danh mục không tồn tại"
                     }
                 }
             }
@@ -835,6 +1022,65 @@
                                 }
                             }
                         }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Xóa sản phẩm",
+                "operationId": "e80a6ca46716acee6b47ea1ac91663c0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product deleted successfully"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                }
+            }
+        },
+        "/api/products/{id}/hide": {
+            "put": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Ẩn sản phẩm",
+                "operationId": "b352e3b23ebdc0ae9ec12abe989d0b30",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product hidden successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
                     }
                 }
             }
@@ -1035,17 +1281,17 @@
             },
             "CategoryUpdateRequest": {
                 "required": [
-                    "image_url"
+                    "name"
                 ],
                 "properties": {
                     "name": {
                         "type": "string",
                         "example": "Hoa tặng mẹ"
                     },
-                    "image_url": {
+                    "image": {
+                        "description": "Upload file ảnh",
                         "type": "string",
-                        "format": "uri",
-                        "example": "https://example.com/image.jpg"
+                        "format": "binary"
                     }
                 },
                 "type": "object"
@@ -1330,67 +1576,6 @@
                                 }
                             },
                             "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "RecipeInputForStore": {
-                "required": [
-                    "flower_id",
-                    "quantity"
-                ],
-                "properties": {
-                    "flower_id": {
-                        "description": "ID hoa",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "quantity": {
-                        "description": "Số lượng hoa",
-                        "type": "integer",
-                        "example": 20
-                    }
-                },
-                "type": "object"
-            },
-            "ProductStoreRequest": {
-                "required": [
-                    "name",
-                    "recipes"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Bó hoa cưới hồng đỏ"
-                    },
-                    "description": {
-                        "type": "string",
-                        "example": "Bó hoa cưới được kết từ 10 bông hồng đỏ và 5 hoa baby"
-                    },
-                    "image": {
-                        "description": "Ảnh sản phẩm",
-                        "type": "string",
-                        "format": "binary"
-                    },
-                    "status": {
-                        "description": "Trạng thái sản phẩm",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "size": {
-                        "type": "string",
-                        "example": "Lớn"
-                    },
-                    "category_id": {
-                        "description": "ID danh mục hoa",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "recipes": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/RecipeInputForStore"
                         }
                     }
                 },
@@ -1783,7 +1968,7 @@
                         "type": "boolean",
                         "example": 1
                     },
-                    "image": {
+                    "image_url": {
                         "type": "string",
                         "format": "uri",
                         "example": "https://example.com/image.jpg"

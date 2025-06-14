@@ -7,9 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
  * @OA\Schema(
  *     schema="CategoryUpdateRequest",
  *     required={"name"},
- *     required={"image_url"},
  *     @OA\Property(property="name", type="string", example="Hoa tặng mẹ"),
- *     @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/image.jpg"),
+ *     @OA\Property(property="image", type="string", format="binary", description="Upload file ảnh"),
  *     
  * )
  */
@@ -32,7 +31,7 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|required|string|max:255',
-            'image_url' => 'sometimes|nullable|url|max:2048',
+            'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
         ];
     }
 }

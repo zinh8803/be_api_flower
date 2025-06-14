@@ -46,16 +46,37 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-     /**
+    /**
      * @OA\Post(
      *     path="/api/products",
      *     tags={"Products"},
      *     summary="Tạo sản phẩm mới",
-     *     @OA\RequestBody(required=true, @OA\MediaType(
-     *         mediaType="multipart/form-data",
-     *         @OA\Schema(ref="#/components/schemas/ProductStoreRequest")
-     *     )),
-     *     @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/ProductResource"))
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"name", "category_id", "recipes[0][flower_id]", "recipes[0][quantity]"},
+     *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
+     *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
+     *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
+     *                 @OA\Property(property="status", type="integer", example=1),
+     *                 @OA\Property(property="size", type="string", example="Lớn"),
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 
+     *                 @OA\Property(property="recipes[0][flower_id]", type="integer", example=1),
+     *                 @OA\Property(property="recipes[0][quantity]", type="integer", example=10),
+     *                 @OA\Property(property="recipes[1][flower_id]", type="integer", example=2),
+     *                 @OA\Property(property="recipes[1][quantity]", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     )
      * )
      */
     public function store(StoreProductRequest $request)
@@ -75,7 +96,25 @@ class ProductController extends Controller
         }
         return new ProductResource($product);
     }
-
+/**
+     * @OA\Get(
+     *     path="/api/products/category/{categoryId}",
+     *     tags={"Products"},
+     *     summary="Lấy danh sách sản phẩm theo danh mục",
+     *     @OA\Parameter(
+     *         name="categoryId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách sản phẩm theo danh mục",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/ProductResource"))
+     *     ),
+     *     @OA\Response(response=404, description="Danh mục không tồn tại")
+     * )
+     */
     public function getProductsByCategory($categoryId)
     {
         try {
@@ -154,6 +193,24 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    /**
+     * @OA\Delete(
+     *     path="/api/products/{id}",
+     *     tags={"Products"},
+     *     summary="Xóa sản phẩm",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product deleted successfully"
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
     public function destroy($id)
     {
         $product = $this->products->find($id);
@@ -163,5 +220,33 @@ class ProductController extends Controller
 
         $this->products->delete($id);
         return response()->json(["message" => "Product deleted successfully"], 200);
+    }
+    /**
+     * @OA\Put(
+     *     path="/api/products/{id}/hide",
+     *     tags={"Products"},
+     *     summary="Ẩn sản phẩm",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product hidden successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+    public function hide($id)
+    {
+        try {
+            $this->products->hide($id);
+            return response()->json(['message' => 'Product hidden successfully'], 200);
+        } catch (\RuntimeException $e) {
+            return response()->json(["message" => $e->getMessage()], 404);
+        }
     }
 }
