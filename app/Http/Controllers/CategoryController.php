@@ -7,6 +7,8 @@ use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\Repositories\Eloquent\CategoryRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
 /**
  * @OA\Tag(
  *     name="Category",
@@ -63,9 +65,12 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
+        // $category = $this->categoryRepository->create($request->validated());
+        // return (new CategoryResource($category));
+    
         $category = $this->categoryRepository->create($request->validated());
-        return (new CategoryResource($category));
-
+        return new CategoryResource($category);
+   
     }
 
     /**

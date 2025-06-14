@@ -4,6 +4,9 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Category;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\ImageHelper;
 
 class CategoryRepository implements CategoryRepositoryInterface
 {
@@ -26,18 +29,41 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function create(array $data)
     {
-
-        if (isset($data['image'])) {
-            $path = $data['image']->store('categories', 'public');
-            $data['image_url'] = $path; 
-            unset($data['image']);      
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+            try {
+                $imageUrl = ImageHelper::uploadImage($data['image'], 'categories');
+                
+                if ($imageUrl) {
+                    $data['image_url'] = $imageUrl;
+                }
+                
+                unset($data['image']);
+            } catch (\Exception $e) {
+                Log::error('Image upload failed', ['error' => $e->getMessage()]);
+            }
         }
+
         return $this->model->create($data);
     }
 
     public function update($id, array $data)
     {
         $record = $this->find($id);
+        
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+            try {
+                $imageUrl = ImageHelper::uploadImage($data['image'], 'categories');
+                
+                if ($imageUrl) {
+                    $data['image_url'] = $imageUrl;
+                }
+                
+                unset($data['image']);
+            } catch (\Exception $e) {
+                Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
+            }
+        }
+        
         $record->update($data);
         return $record;
     }

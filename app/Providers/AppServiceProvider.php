@@ -12,6 +12,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(RepositoryServiceProvider::class);
+        $this->app->register(CloudinaryServiceProvider::class);
     }
 
     /**
