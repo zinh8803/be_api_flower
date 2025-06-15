@@ -899,16 +899,16 @@
                 }
             }
         },
-        "/api/products/category/{categoryId}": {
+        "/api/products/{id}": {
             "get": {
                 "tags": [
                     "Products"
                 ],
-                "summary": "Lấy danh sách sản phẩm theo danh mục",
-                "operationId": "d9a719d13ea154ac76fb531fe1b679dc",
+                "summary": "Lấy thông tin sản phẩm theo ID",
+                "operationId": "7ab21ddb713501f3d4c2914892c02a21",
                 "parameters": [
                     {
-                        "name": "categoryId",
+                        "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -918,25 +918,20 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Danh sách sản phẩm theo danh mục",
+                        "description": "Thông tin sản phẩm",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/ProductResource"
-                                    }
+                                    "$ref": "#/components/schemas/ProductResource"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "Danh mục không tồn tại"
+                        "description": "Product not found"
                     }
                 }
-            }
-        },
-        "/api/products/{id}": {
+            },
             "post": {
                 "tags": [
                     "Products"
@@ -1051,6 +1046,43 @@
                 }
             }
         },
+        "/api/products/category/{categoryId}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lấy danh sách sản phẩm theo danh mục",
+                "operationId": "d9a719d13ea154ac76fb531fe1b679dc",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm theo danh mục",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Danh mục không tồn tại"
+                    }
+                }
+            }
+        },
         "/api/products/{id}/hide": {
             "put": {
                 "tags": [
@@ -1071,6 +1103,64 @@
                 "responses": {
                     "200": {
                         "description": "Product hidden successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                }
+            }
+        },
+        "/api/products/stock": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Kiểm tra tồn kho tất cả sản phẩm",
+                "operationId": "1e6d6c8b892cba092d4c1e39f2c5e280",
+                "responses": {
+                    "200": {
+                        "description": "Tồn kho của tất cả sản phẩm",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{id}/stock": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Kiểm tra tồn kho của sản phẩm theo ID",
+                "operationId": "fcd232ac145eef6eac3b0ba58d3f7c78",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tồn kho của sản phẩm",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1855,6 +1945,14 @@
                     "quantity": {
                         "type": "integer",
                         "example": 100
+                    },
+                    "used_quantity": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "remaining_quantity": {
+                        "type": "integer",
+                        "example": 80
                     },
                     "import_price": {
                         "type": "number",

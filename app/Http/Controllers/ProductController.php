@@ -17,13 +17,13 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    protected ProductRepositoryInterface $products;
+    protected $products;
 
     public function __construct(ProductRepositoryInterface $products)
     {
         $this->products = $products;
     }
-    
+
     /**
      * @OA\Get(
      *     path="/api/products",
@@ -38,7 +38,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-    
+
         $products = $this->products->all()->load('category', 'recipes', 'recipes.flower', 'recipes.flower.importReceiptDetails');
         return ProductResource::collection($products);
     }
@@ -81,13 +81,34 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-         $product = $this->products->createWithRecipes($request->validated());
+        $product = $this->products->createWithRecipes($request->validated());
         return (new ProductResource($product))->response()->setStatusCode(201);
     }
 
     /**
      * Display the specified resource.
      */
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/{id}",
+     *     tags={"Products"},
+     *     summary="Lấy thông tin sản phẩm theo ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thông tin sản phẩm",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+
     public function show($id)
     {
         $product = $this->products->find($id);
@@ -96,7 +117,7 @@ class ProductController extends Controller
         }
         return new ProductResource($product);
     }
-/**
+    /**
      * @OA\Get(
      *     path="/api/products/category/{categoryId}",
      *     tags={"Products"},
@@ -129,45 +150,45 @@ class ProductController extends Controller
      */
 
 
-   /**
- * @OA\Post(
- *     path="/api/products/{id}",
- *     tags={"Products"},
- *     summary="Cập nhật sản phẩm",
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         required=true,
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\MediaType(
- *             mediaType="multipart/form-data",
- *             @OA\Schema(
- *                 type="object",
- *                 required={"name", "category_id", "recipes[0][flower_id]", "recipes[0][quantity]"},
- *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
- *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
- *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
- *                 @OA\Property(property="status", type="integer", example=1),
- *                 @OA\Property(property="size", type="string", example="Lớn"),
- *                 @OA\Property(property="category_id", type="integer", example=1),
- *                 
- *                 @OA\Property(property="recipes[0][flower_id]", type="integer", example=1),
- *                 @OA\Property(property="recipes[0][quantity]", type="integer", example=10),
- *                 @OA\Property(property="recipes[1][flower_id]", type="integer", example=2),
- *                 @OA\Property(property="recipes[1][quantity]", type="integer", example=5)
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Updated",
- *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
- *     )
- * )
- */
+    /**
+     * @OA\Post(
+     *     path="/api/products/{id}",
+     *     tags={"Products"},
+     *     summary="Cập nhật sản phẩm",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"name", "category_id", "recipes[0][flower_id]", "recipes[0][quantity]"},
+     *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
+     *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
+     *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
+     *                 @OA\Property(property="status", type="integer", example=1),
+     *                 @OA\Property(property="size", type="string", example="Lớn"),
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 
+     *                 @OA\Property(property="recipes[0][flower_id]", type="integer", example=1),
+     *                 @OA\Property(property="recipes[0][quantity]", type="integer", example=10),
+     *                 @OA\Property(property="recipes[1][flower_id]", type="integer", example=2),
+     *                 @OA\Property(property="recipes[1][quantity]", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     )
+     * )
+     */
 
     public function update(UpdateProductRequest $request, $id)
     {
@@ -248,5 +269,52 @@ class ProductController extends Controller
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);
         }
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/products/stock",
+     *     tags={"Products"},
+     *     summary="Kiểm tra tồn kho tất cả sản phẩm",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tồn kho của tất cả sản phẩm",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/ProductResource"))
+     *     )
+     * )
+     */
+    public function checkAllStock()
+    {
+        $data = $this->products->getAllStock();
+        Log::info('Check all stock data:', ['data' => $data]);
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/{id}/stock",
+     *     tags={"Products"},
+     *     summary="Kiểm tra tồn kho của sản phẩm theo ID",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tồn kho của sản phẩm",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+
+    public function checkStock($id)
+    {
+        $data = $this->products->getStockById($id);
+        if (!$data) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+        return response()->json($data);
     }
 }

@@ -26,32 +26,31 @@ class RecipeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $importReceiptDetail = null;
-        if ($this->flower && $this->flower->importReceiptDetails && $this->flower->importReceiptDetails->count()) {
-            $importReceiptDetail = $this->flower->importReceiptDetails->sortByDesc('import_date')->first();
-        }
- $status = null;
+        $importReceiptDetail = $this->flower
+            ? $this->flower->importReceiptDetails()->orderByDesc('import_date')->first()
+            : null;
+        $status = null;
 
-    if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
-        $importDate = Carbon::parse($importReceiptDetail->import_date);
-        $today = Carbon::today();
+        if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
+            $importDate = Carbon::parse($importReceiptDetail->import_date);
+            $today = Carbon::today();
 
-        if ($importDate->isSameDay($today)) {
-            $now = Carbon::now();
-            $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
-        } elseif ($importDate->lt($today)) {
-            $status = 'hoa ép';
+            if ($importDate->isSameDay($today)) {
+                $now = Carbon::now();
+                $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
+            } elseif ($importDate->lt($today)) {
+                $status = 'hoa ép';
+            }
         }
-    }
 
 
         return [
-            'flower_id'     => $this->flower_id,
-            'flower_name'   => $this->flower->name ?? null,
-            'quantity'      => $this->quantity,
-            'import_price'  => $importReceiptDetail->import_price ?? null,
-            'import_date'   => $importReceiptDetail->import_date ?? null,
-            'status'        => $status,
+            'flower_id' => $this->flower_id,
+            'flower_name' => $this->flower->name ?? null,
+            'quantity' => $this->quantity,
+            'import_price' => $importReceiptDetail->import_price ?? null,
+            'import_date' => $importReceiptDetail->import_date ?? null,
+            'status' => $status,
         ];
     }
 }

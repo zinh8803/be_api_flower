@@ -5,7 +5,9 @@ use App\Models\ImportReceiptDetail;
 use App\Models\Order;
 use App\Models\Product;
 use App\Repositories\Contracts\OrderRepositoryInterface;
-use DB;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 class OrderRepository implements OrderRepositoryInterface
 {
     protected $model;
@@ -32,7 +34,7 @@ class OrderRepository implements OrderRepositoryInterface
 
                 foreach ($product->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
-                    $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum('quantity');
+                    $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
 
                     if ($stock < $need) {
                         throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
@@ -92,23 +94,32 @@ class OrderRepository implements OrderRepositoryInterface
     }
 
 
-    public function deductStock($flowerId, $neededQty)
-    {
-        $details = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->orderBy('created_at')
-            ->get();
+public function deductStock($flowerId, $neededQty)
+{
+    $stock = ImportReceiptDetail::where('flower_id', $flowerId)
+        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+        ->value('remaining') ?? 0;
 
-        foreach ($details as $detail) {
-            if ($neededQty <= 0)
-                break;
-
-            $used = min($neededQty, $detail->quantity);
-            $detail->quantity -= $used;
-            $detail->save();
-
-            $neededQty -= $used;
-        }
+    if ($stock < $neededQty) {
+        throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
     }
+
+    $details = ImportReceiptDetail::where('flower_id', $flowerId)
+        ->orderByDesc('import_date')
+        ->get();
+
+    foreach ($details as $detail) {
+        $available = $detail->quantity - $detail->used_quantity;
+        if ($neededQty <= 0) break;
+        if ($available <= 0) continue;
+
+        $used = min($neededQty, $available);
+        $detail->used_quantity += $used;
+        $detail->save();
+
+        $neededQty -= $used;
+    }
+}
 
     public function findById(int $id)
     {

@@ -159,5 +159,37 @@ class ProductRepository implements ProductRepositoryInterface
         return $product;
     });
 }
+ public function getAllStock()
+    {
+        $products = $this->model->all()->map(function ($product) {
+            $stock = ImportReceiptDetail::where('flower_id', $product->id)
+                ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+                ->value('remaining') ?? 0;
+                Log::info('Stock for product', ['product_id' => $product->id, 'remaining' => $stock]);
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'remaining_quantity' => (int)$stock,
+            ];
+        });
 
+        return $products;
+    }
+public function getStockById($id)
+    {
+        $product = $this->model->find($id);
+        if (!$product) {
+            return null;
+        }
+
+        $stock = ImportReceiptDetail::where('flower_id', $id)
+            ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+            ->value('remaining') ?? 0;
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'remaining_quantity' => (int)$stock,
+        ];
+    }
 }

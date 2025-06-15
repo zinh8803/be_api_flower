@@ -17,7 +17,7 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
 
     public function all()
     {
-        return $this->model->with('details.flower')->get();
+        return $this->model->with('details.flower')->orderBy('import_date', 'desc')->get();
     }
 
     public function find($id)

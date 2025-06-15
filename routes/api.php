@@ -39,13 +39,16 @@ Route::prefix('categories')->group(function () {
 //Route::apiResource('products', ProductController::class);
 
 Route::prefix('products')->group(function () {
+    Route::get('/stock', [ProductController::class, 'checkAllStock']);
+    Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
+    Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
+
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::post('/{id}', [ProductController::class, 'update']);
     Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::put('/{id}/hide', [ProductController::class, 'hide']);
-    Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
 });
 
 Route::apiResource('orders',OrderController::class);

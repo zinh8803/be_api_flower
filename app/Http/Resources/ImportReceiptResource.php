@@ -28,11 +28,11 @@ class ImportReceiptResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-         $importDate = Carbon::now();
+       
         return [
            
            'id'          => $this->id,
-            'import_date' => $importDate->format('Y-m-d H:i:s' ),
+            'import_date' => $this->import_date ? Carbon::parse($this->import_date)->format('Y-m-d') : null,
             'note'        => $this->note,
             'total_price' => $this->total_price,
             'details'     => ImportReceiptDetailResource::collection($this->whenLoaded('details')),
