@@ -1438,6 +1438,75 @@
                     }
                 ]
             }
+        },
+        "/api/user/update": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật thông tin người dùng",
+                "operationId": "d85a51651cebcf840931255be80c6998",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thông tin thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật thông tin thành công"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dữ liệu không hợp lệ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1875,6 +1944,34 @@
                 },
                 "type": "object"
             },
+            "UserUpdateRequest": {
+                "required": [
+                    "name",
+                    "phone",
+                    "address"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "* @OA\\Schema(\n    schema=\"UserUpdateRequest\",\n    required={\"name\", \"phone\", \"address\"},",
+                        "type": "string",
+                        "example": "Nguyễn Văn A"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0123456789"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Đường ABC, Quận 1, TP.HCM"
+                    },
+                    "avatar_url": {
+                        "description": "Ảnh đại diện",
+                        "type": "string",
+                        "format": "binary"
+                    }
+                },
+                "type": "object"
+            },
             "Category": {
                 "title": "FlowerType",
                 "required": [
@@ -2304,6 +2401,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "User",
+            "description": "User"
         }
     ]
 }

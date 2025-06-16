@@ -22,6 +22,8 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:api')->group(function () {
     Route::get('profile', [UserController::class, 'profile']);
     Route::post('logout', [UserController::class, 'logout']);
+    Route::post('user/update', [UserController::class, 'updateProfile']);
+
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
@@ -137,5 +138,44 @@ class UserController extends Controller
     {
         Auth::guard('api')->logout();
         return response()->json(['message' => 'Đăng xuất thành công']);
+    }
+
+
+/**
+ * @OA\Put(
+ *     path="/api/user/update",
+ *     summary="Cập nhật thông tin người dùng",
+ *     tags={"User"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/UserUpdateRequest")
+ *     ),   
+ * *     @OA\Response(
+ *         response=200,
+ *         description="Cập nhật thông tin thành công",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="Cập nhật thông tin thành công"),        
+ *            @OA\Property(property="data", ref="#/components/schemas/User")
+ *        )
+ * *     ),
+ *    @OA\Response(
+ *        response=422,
+ *       description="Dữ liệu không hợp lệ",
+ *       @OA\JsonContent(
+ *            @OA\Property(property="status", type="boolean", example=false),
+ *           @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
+ * *        )
+ *    )
+ * )
+ * */
+    public function updateProfile(UpdateUserRequest $request){
+        $user = $this->users->updateUser(Auth::id(), $request->validated());
+        return response()->json([
+            'status' => true,
+            'message' => 'Cập nhật thông tin thành công',
+            'data' => new UserResource($user),
+        ]);
     }
 }
