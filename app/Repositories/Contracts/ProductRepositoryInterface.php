@@ -12,6 +12,7 @@ interface ProductRepositoryInterface
     public function hide($id);
     public function getAllStock();
     public function getStockById($id);
+     public function search($params);
     public function getProductsByCategory($categoryId);
     public function createWithRecipes(array $data);
     public function updateWithRecipes($id, array $data);

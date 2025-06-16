@@ -22,7 +22,7 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:api')->group(function () {
     Route::get('profile', [UserController::class, 'profile']);
     Route::post('logout', [UserController::class, 'logout']);
-    Route::post('user/update', [UserController::class, 'updateProfile']);
+    Route::Put('user/update', [UserController::class, 'updateProfile']);
 
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
@@ -54,10 +54,12 @@ Route::prefix('products')->group(function () {
 
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);
+    Route::get('/search', [ProductController::class, 'search']);
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::post('/{id}', [ProductController::class, 'update']);
     Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::put('/{id}/hide', [ProductController::class, 'hide']);
+
 });
 
 Route::apiResource('orders',OrderController::class);

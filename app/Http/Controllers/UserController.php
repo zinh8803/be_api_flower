@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 class UserController extends Controller
 {
@@ -142,40 +143,44 @@ class UserController extends Controller
 
 
 /**
- * @OA\Put(
+ * @OA\Post(
  *     path="/api/user/update",
  *     summary="Cập nhật thông tin người dùng",
  *     tags={"User"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
- *         @OA\JsonContent(ref="#/components/schemas/UserUpdateRequest")
- *     ),   
- * *     @OA\Response(
+ *         @OA\MediaType(
+ *             mediaType="multipart/form-data",
+ *             @OA\Schema(ref="#/components/schemas/UserUpdateRequest")
+ *         )
+ *     ),
+ *     @OA\Response(
  *         response=200,
  *         description="Cập nhật thông tin thành công",
  *         @OA\JsonContent(
  *             @OA\Property(property="status", type="boolean", example=true),
- *             @OA\Property(property="message", type="string", example="Cập nhật thông tin thành công"),        
- *            @OA\Property(property="data", ref="#/components/schemas/User")
- *        )
- * *     ),
- *    @OA\Response(
- *        response=422,
- *       description="Dữ liệu không hợp lệ",
- *       @OA\JsonContent(
- *            @OA\Property(property="status", type="boolean", example=false),
- *           @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
- * *        )
- *    )
+ *             @OA\Property(property="message", type="string", example="Cập nhật thông tin thành công"),
+ *             @OA\Property(property="data", ref="#/components/schemas/User")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Dữ liệu không hợp lệ",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
+ *         )
+ *     )
  * )
- * */
-    public function updateProfile(UpdateUserRequest $request){
-        $user = $this->users->updateUser(Auth::id(), $request->validated());
-        return response()->json([
-            'status' => true,
-            'message' => 'Cập nhật thông tin thành công',
-            'data' => new UserResource($user),
-        ]);
-    }
+ */
+public function updateProfile(UpdateUserRequest $request){
+    $user = $this->users->updateUser(Auth::id(), $request->validated());
+    Log::info('User profile updated', ['request' => $request->all(), 'user_id' => Auth::id()]);
+    return response()->json([
+        'status' => true,
+        'message' => 'Cập nhật thông tin thành công',
+        'data' => new UserResource($user),
+    ]);
+}
 }

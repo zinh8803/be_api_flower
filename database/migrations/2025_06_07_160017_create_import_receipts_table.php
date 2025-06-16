@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('note')->nullable();
             $table->date('import_date');
-            $table->decimal('total_price', 10, 2);
+            $table->decimal('total_price', 12, 2);
             $table->foreignId('user_id')->nullable()->constrained('users');
 
 

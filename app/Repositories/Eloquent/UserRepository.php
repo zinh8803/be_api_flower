@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ImageHelper;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 class UserRepository implements UserRepositoryInterface
 {
@@ -42,14 +43,14 @@ class UserRepository implements UserRepositoryInterface
 
     public function updateUser(int $id, array $data)
     {
-        $user = User::findOrFail($id);
+        $user = User::find($id);
 
-        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile && $data['image']->isValid()) {
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
             try {
                 $imageUrl = ImageHelper::uploadImage($data['image'], 'avatars');
                 Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
                 if ($imageUrl) {
-                    $data['avatar_url'] = $imageUrl;
+                    $data['image_url'] = $imageUrl;
                 }
                 unset($data['image']);
             } catch (\Exception $e) {
@@ -60,8 +61,8 @@ class UserRepository implements UserRepositoryInterface
         $user->name = $data['name'] ?? $user->name;
         $user->phone = $data['phone'] ?? $user->phone;
         $user->address = $data['address'] ?? $user->address;
-        if (isset($data['avatar_url'])) {
-            $user->avatar_url = $data['avatar_url'];
+        if (isset($data['image_url'])) {
+            $user->image_url = $data['image_url'];
         }
         $user->save();
 

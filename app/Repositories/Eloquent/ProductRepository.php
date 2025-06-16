@@ -43,7 +43,7 @@ class ProductRepository implements ProductRepositoryInterface
             throw new RuntimeException('No products found for the given category.');
         }
         return $products;
-     }
+    }
 
     public function update($id, array $data)
     {
@@ -66,22 +66,22 @@ class ProductRepository implements ProductRepositoryInterface
         $product->save();
         return $product;
     }
-     public function createWithRecipes(array $data)
+    public function createWithRecipes(array $data)
     {
         return DB::transaction(function () use ($data) {
-              if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
-            try {
-                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
-                Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
-                if ($imageUrl) {
-                    $data['image_url'] = $imageUrl;
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+                try {
+                    $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+                    Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
+                    if ($imageUrl) {
+                        $data['image_url'] = $imageUrl;
+                    }
+
+                    unset($data['image']);
+                } catch (\Exception $e) {
+                    Log::error('Image upload failed', ['error' => $e->getMessage()]);
                 }
-                
-                unset($data['image']);
-            } catch (\Exception $e) {
-                Log::error('Image upload failed', ['error' => $e->getMessage()]);
             }
-        }
 
             $recipes = $data['recipes'];
             unset($data['recipes']);
@@ -111,71 +111,71 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
     public function updateWithRecipes($id, array $data)
-{
-    return DB::transaction(function () use ($id, $data) {
-        $product = $this->model->find($id);
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $product = $this->model->find($id);
 
-        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
-            try {
-                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
-                
-                if ($imageUrl) {
-                    $data['image_url'] = $imageUrl;
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+                try {
+                    $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+
+                    if ($imageUrl) {
+                        $data['image_url'] = $imageUrl;
+                    }
+
+                    unset($data['image']);
+                } catch (\Exception $e) {
+                    Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
                 }
-                
-                unset($data['image']);
-            } catch (\Exception $e) {
-                Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
             }
-        }
 
-        $product->recipes()->delete();
+            $product->recipes()->delete();
 
-        $recipes = $data['recipes'] ?? [];
+            $recipes = $data['recipes'] ?? [];
 
-        $totalPrice = 0;
-        foreach ($recipes as $recipe) {
-            $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
-                ->orderByDesc('import_date')
-                ->value('import_price') ?? 0;
-            $totalPrice += $recipe['quantity'] * $importPrice;
-        }
-        $data['price'] = $totalPrice * 1.5;
+            $totalPrice = 0;
+            foreach ($recipes as $recipe) {
+                $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
+                    ->orderByDesc('import_date')
+                    ->value('import_price') ?? 0;
+                $totalPrice += $recipe['quantity'] * $importPrice;
+            }
+            $data['price'] = $totalPrice * 1.5;
 
-        $product->update($data);
+            $product->update($data);
 
-        foreach ($recipes as $recipe) {
-            $product->recipes()->create([
-                'product_id' => $product->id,
-                'flower_id' => $recipe['flower_id'],
-                'quantity' => $recipe['quantity'],
-            ]);
-        }
-        Log::info(
-            'Product updated with recipes',
-            ['product' => $product]
-        );
+            foreach ($recipes as $recipe) {
+                $product->recipes()->create([
+                    'product_id' => $product->id,
+                    'flower_id' => $recipe['flower_id'],
+                    'quantity' => $recipe['quantity'],
+                ]);
+            }
+            Log::info(
+                'Product updated with recipes',
+                ['product' => $product]
+            );
 
-        return $product;
-    });
-}
- public function getAllStock()
+            return $product;
+        });
+    }
+    public function getAllStock()
     {
         $products = $this->model->all()->map(function ($product) {
             $stock = ImportReceiptDetail::where('flower_id', $product->id)
                 ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                 ->value('remaining') ?? 0;
-                Log::info('Stock for product', ['product_id' => $product->id, 'remaining' => $stock]);
+            Log::info('Stock for product', ['product_id' => $product->id, 'remaining' => $stock]);
             return [
                 'id' => $product->id,
                 'name' => $product->name,
-                'remaining_quantity' => (int)$stock,
+                'remaining_quantity' => (int) $stock,
             ];
         });
 
         return $products;
     }
-public function getStockById($id)
+    public function getStockById($id)
     {
         $product = $this->model->find($id);
         if (!$product) {
@@ -189,7 +189,44 @@ public function getStockById($id)
         return [
             'id' => $product->id,
             'name' => $product->name,
-            'remaining_quantity' => (int)$stock,
+            'remaining_quantity' => (int) $stock,
         ];
+    }
+    public function search($params)
+    {
+        $query = $this->model->query();
+
+        if (!empty($params['product'])) {
+            $products = $this->model->where('name', 'like', '%' . $params['product'] . '%')->get();
+            if ($products->count() > 0) {
+                return $products->load('category', 'recipes', 'recipes.flower');
+            }
+
+            $categoryProducts = $this->model->whereHas('category', function ($q) use ($params) {
+                $q->where('name', 'like', '%' . $params['product'] . '%');
+            })->get();
+            if ($categoryProducts->count() > 0) {
+                return $categoryProducts->load('category', 'recipes', 'recipes.flower');
+            }
+
+            $flowerProducts = $this->model->whereHas('recipes.flower', function ($q) use ($params) {
+                $q->where('name', 'like', '%' . $params['product'] . '%');
+            })->get();
+            return $flowerProducts->load('category', 'recipes', 'recipes.flower');
+        }
+
+        if (!empty($params['name'])) {
+            $query->where('name', 'like', '%' . $params['name'] . '%');
+        }
+        if (!empty($params['category_id'])) {
+            $query->where('category_id', $params['category_id']);
+        }
+        if (!empty($params['flower_name'])) {
+            $query->whereHas('recipes.flower', function ($q) use ($params) {
+                $q->where('name', 'like', '%' . $params['flower_name'] . '%');
+            });
+        }
+
+        return $query->with('category', 'recipes', 'recipes.flower')->get();
     }
 }

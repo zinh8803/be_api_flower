@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('avatar_url')->default('http://127.0.0.1:8000/avatar/avatar.jpg');
+            $table->string('image_url')->default('https://res.cloudinary.com/def4sm0df/image/upload/v1750084996/avatars/hvoc0rxofqwfaudmooil.jpg');
             $table->string('address')->nullable();
             $table->string('phone')->nullable();
             $table->boolean('status')->default(1);

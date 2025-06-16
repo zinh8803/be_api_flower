@@ -43,6 +43,54 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
+        /**
+     * @OA\Get(
+     *     path="/api/products/search",
+     *     tags={"Products"},
+     *     summary="Tìm kiếm sản phẩm theo tên sản phẩm, tên danh mục, hoặc tên hoa (ưu tiên theo thứ tự này)",
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="query",
+     *         description="Từ khóa tìm kiếm (tên sản phẩm, tên danh mục hoặc tên hoa)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         description="Tìm theo tên sản phẩm (nếu muốn lọc riêng)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         description="Tìm theo ID danh mục (nếu muốn lọc riêng)",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="flower_name",
+     *         in="query",
+     *         description="Tìm theo tên hoa (nếu muốn lọc riêng)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách sản phẩm tìm kiếm",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/ProductResource"))
+     *     )
+     * )
+     */
+    public function search(Request $request)
+    {
+        $products = $this->products->search($request->all());
+        return ProductResource::collection($products);
+    }
+
+
+
     /**
      * Store a newly created resource in storage.
      */

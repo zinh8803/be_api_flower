@@ -17,7 +17,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="address", type="string", example="Hậu Giang"),
  *     @OA\Property(property="role", type="string", example="user"),
  *     @OA\Property(property="status", type="string", example="active"),
- *     @OA\Property(property="avatar_url", type="string", example="http://localhost/storage/avatar.jpg"),
+ *     @OA\Property(property="image_url", type="string",format="uri", example="http://localhost/storage/avatar.jpg"),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2025-06-09T10:00:00Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2025-06-09T10:00:00Z")
  * )
@@ -40,7 +40,7 @@ class UserResource extends JsonResource
             'address' => $this->address,
             'role' => $this->role,
             'status' => $this->status,
-            'avatar_url' => $this->avatar ?  $this->avatar : null,
+            'image_url' => $this->image_url,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
