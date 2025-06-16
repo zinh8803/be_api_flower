@@ -5,6 +5,7 @@ use App\Models\ImportReceiptDetail;
 use App\Models\Order;
 use App\Models\Product;
 use App\Repositories\Contracts\OrderRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -94,36 +95,38 @@ class OrderRepository implements OrderRepositoryInterface
     }
 
 
-public function deductStock($flowerId, $neededQty)
-{
-    $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-        ->value('remaining') ?? 0;
+    public function deductStock($flowerId, $neededQty)
+    {
+        $stock = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+            ->value('remaining') ?? 0;
 
-    if ($stock < $neededQty) {
-        throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
+        if ($stock < $neededQty) {
+            throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
+        }
+
+        $details = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->orderByDesc('import_date')
+            ->get();
+
+        foreach ($details as $detail) {
+            $available = $detail->quantity - $detail->used_quantity;
+            if ($neededQty <= 0)
+                break;
+            if ($available <= 0)
+                continue;
+
+            $used = min($neededQty, $available);
+            $detail->used_quantity += $used;
+            $detail->save();
+
+            $neededQty -= $used;
+        }
     }
-
-    $details = ImportReceiptDetail::where('flower_id', $flowerId)
-        ->orderByDesc('import_date')
-        ->get();
-
-    foreach ($details as $detail) {
-        $available = $detail->quantity - $detail->used_quantity;
-        if ($neededQty <= 0) break;
-        if ($available <= 0) continue;
-
-        $used = min($neededQty, $available);
-        $detail->used_quantity += $used;
-        $detail->save();
-
-        $neededQty -= $used;
-    }
-}
 
     public function findById(int $id)
     {
-        return $this->model->findOrFail($id);
+        return $this->model->find($id);
     }
 
     public function update(int $id, array $data)
@@ -140,11 +143,47 @@ public function deductStock($flowerId, $neededQty)
 
     public function all()
     {
-        return $this->model->all();
+        return $this->model->paginate(10);
     }
 
     public function findByUserId(int $userId)
     {
         return $this->model->where('user_id', $userId)->get();
+    }
+
+    //su dung token
+
+    public function OrderByUser()
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            abort(401, 'Bạn cần đăng nhập để xem đơn hàng của mình.');
+        }
+
+        $orders = $this->model->where('user_id', $user->id)->paginate(10);
+
+        // Log::info('Lấy danh sách đơn hàng của người dùng', ['user_id' => $user->id]);
+        // Log::info('Danh sách đơn hàng', ['orders' => $orders->toArray()]);
+
+        return $orders;
+    }
+
+    public function OrderDetailById(int $id)
+    {
+         $user = Auth::guard('api')->user();
+    if (!$user) {
+        return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
+    }
+
+    $order = $this->model->with('orderDetails.product', 'discount')->find($id);
+    if (!$order) {
+        return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
+    }
+
+    if ($order->user_id !== $user->id) {
+        return response()->json(['message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
+    }
+
+    return $order;
     }
 }

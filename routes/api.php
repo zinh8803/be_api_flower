@@ -19,7 +19,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::middleware('auth:api')->group(function () {
+    Route::get('profile', [UserController::class, 'profile']);
+    Route::post('logout', [UserController::class, 'logout']);
+    Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
+    Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
+
+});
 
 Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
@@ -58,7 +65,3 @@ Route::apiResource('discounts',DiscountController::class);
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 
-Route::middleware('auth:api')->group(function () {
-    Route::get('profile', [UserController::class, 'profile']);
-    Route::post('logout', [UserController::class, 'logout']);
-});

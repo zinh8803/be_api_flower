@@ -13,4 +13,6 @@ interface OrderRepositoryInterface
     public function all();
 
     public function findByUserId(int $userId);
+    public function OrderByUser();
+
 }

@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost",
+            "url": "http://127.0.0.1:8000",
             "description": "Main API server"
         }
     ],
@@ -759,6 +759,28 @@
             }
         },
         "/api/orders": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Lấy danh sách đơn hàng",
+                "operationId": "2cd7e03021e72d9d799c12dfe179c865",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách đơn hàng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Order"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "tags": [
                     "Orders"
@@ -788,6 +810,74 @@
                     },
                     "422": {
                         "description": "Lỗi xác thực"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/details": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Lấy danh sách đơn hàng của người dùng",
+                "operationId": "33a29260d91991254c873e2007b3d2c1",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách đơn hàng của người dùng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Order"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/user/{id}": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Lấy chi tiết đơn hàng theo ID",
+                "operationId": "ed641199f89a14660c0dff03a922acec",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết đơn hàng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Đơn hàng không tồn tại"
                     }
                 },
                 "security": [
