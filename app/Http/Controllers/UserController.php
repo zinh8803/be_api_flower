@@ -101,7 +101,7 @@ class UserController extends Controller
 
     $user = Auth::guard('api')->user();
 
-    $refreshToken = JWTAuth::fromUser($user);
+    $refreshToken = "123456";
 
     return response()->json([
         'status' => true,
@@ -152,10 +152,10 @@ class UserController extends Controller
     if (!$refreshToken) {
         return response()->json(['message' => 'Missing refresh token'], 400);
     }
-
+    $newtoken1 = jwt()->getToken();
     try {
         // Dùng refresh token (thực chất là access token cũ) để tạo access token mới
-        $newToken = \Tymon\JWTAuth\Facades\JWTAuth::setToken($refreshToken)->refresh();
+        $newToken = \Tymon\JWTAuth\Facades\JWTAuth::setToken($newtoken1)->refresh();
 
         return response()->json([
             'token' => $newToken
