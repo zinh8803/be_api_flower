@@ -143,6 +143,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function all()
     {
+       // return $this->model->orderBy('id', 'desc')->paginate(10);
         return $this->model->paginate(10);
     }
 
@@ -160,7 +161,7 @@ class OrderRepository implements OrderRepositoryInterface
             abort(401, 'Bạn cần đăng nhập để xem đơn hàng của mình.');
         }
 
-        $orders = $this->model->where('user_id', $user->id)->paginate(10);
+        $orders = $this->model->orderBy('buy_at', 'desc')->where('user_id', $user->id)->paginate(10);
 
         // Log::info('Lấy danh sách đơn hàng của người dùng', ['user_id' => $user->id]);
         // Log::info('Danh sách đơn hàng', ['orders' => $orders->toArray()]);
