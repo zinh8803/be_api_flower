@@ -29,7 +29,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
 
 });
-
+Route::post('/refresh-token', [UserController::class, 'refreshToken']);
 Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
 Route::apiResource('import-receipts', ImportReceiptController::class);
