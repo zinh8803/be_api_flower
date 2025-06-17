@@ -1744,6 +1744,30 @@
                 },
                 "type": "object"
             },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
+                    }
+                },
+                "type": "object"
+            },
             "FlowerStoreRequest": {
                 "required": [
                     "color",
@@ -1796,30 +1820,6 @@
                     "flower_type_id": {
                         "type": "integer",
                         "example": 1
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeStoreRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa ngày Tết"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeUpdateRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"

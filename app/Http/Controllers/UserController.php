@@ -6,12 +6,17 @@ use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
+use App\Models\RefreshToken;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Crypt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
 use Tymon\JWTAuth\Facades\JWTAuth;
+
 class UserController extends Controller
 {
     protected $users;
@@ -90,26 +95,35 @@ class UserController extends Controller
 
     public function login(LoginRequest $request)
     {
-         $credentials = $request->only('email', 'password');
+        $credentials = $request->only('email', 'password');
 
-    if (!$token = Auth::guard('api')->attempt($credentials)) {
+        if (!$token = Auth::guard('api')->attempt($credentials)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Incorrect email or password',
+            ], 401);
+        }
+
+        $user = Auth::guard('api')->user();
+
+        $refreshToken = Str::random(60);
+
+        //luu refresh token vao database
+        RefreshToken::create([
+            'token' => $refreshToken,
+            'user_id' => $user->id,
+            'expires_at' => now()->addDays(30),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'Incorrect email or password',
-        ], 401);
-    }
-
-    $user = Auth::guard('api')->user();
-
-    $refreshToken = "123456";
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Login successful',
-        'token' => $token,
-        'refresh_token' => $refreshToken,
-        'data' => new UserResource($user),
-    ]);
+            'status' => true,
+            'message' => 'Login successful',
+            'token' => $token,
+            'refresh_token' => $refreshToken,
+            'data' => new UserResource($user),
+        ]);
     }
 
     /**
@@ -149,22 +163,41 @@ class UserController extends Controller
     public function refreshToken(Request $request)
     {
         $refreshToken = $request->input('refresh_token');
-    if (!$refreshToken) {
-        return response()->json(['message' => 'Missing refresh token'], 400);
-    }
-    $newtoken1 = jwt()->getToken();
-    try {
-        // Dùng refresh token (thực chất là access token cũ) để tạo access token mới
-        $newToken = \Tymon\JWTAuth\Facades\JWTAuth::setToken($newtoken1)->refresh();
+        if (!$refreshToken) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Refresh token is required',
+                'data' => null
+            ], 400);
+        }
+        $tokenRecord = RefreshToken::where('token', $refreshToken)->first();
+
+        if (!$tokenRecord) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Invalid refresh token',
+                'data' => null
+            ], 403);
+        }
+        if ($tokenRecord->expires_at < now()) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Refresh token đã hết hạn',
+                'data' => null
+            ], 403);
+        }
+        $user = User::find($tokenRecord->user_id);
+
+        $newToken = JWTAuth::fromUser($user);
 
         return response()->json([
-            'token' => $newToken
+            'status' => 200,
+            'message' => 'New token generated successfully',
+            'data' => [
+                'token' => $newToken
+            ]
         ]);
-    } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-        return response()->json(['message' => 'Refresh token không hợp lệ'], 401);
     }
-    }
-
     /**
      * @OA\Get(
      *     path="/api/profile",
