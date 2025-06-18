@@ -44,6 +44,42 @@ class DiscountController extends Controller
         return DiscountResource::collection($discount);
     }
 
+
+    /**
+     * @OA\Post(
+     *     path="/api/discounts/check-code",
+     *     tags={"Discount"},
+     *     summary="Kiểm tra mã giảm giá",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", description="Mã giảm giá")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mã giảm giá hợp lệ",
+     *         @OA\JsonContent(ref="#/components/schemas/Discount")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Mã giảm giá không hợp lệ"
+     *     )
+     * )
+     */
+    public function checkCode(Request $request)
+    {
+        $code = $request->input('name');
+        $discount = $this->discountRepository->checkCodeValidity($code);
+        if (!$discount) {
+            return response()->json(['message' => 'Mã giảm giá không hợp lệ'], 404);
+        }
+        return new DiscountResource($discount);
+    }
+
+
+
     /**
      * Store a newly created resource in storage.
      */

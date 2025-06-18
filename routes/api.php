@@ -34,7 +34,6 @@ Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
 Route::apiResource('import-receipts', ImportReceiptController::class);
 //Route::apiResource('categories', CategoryController::class);
-//dung prefix đi
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
     Route::post('/', [CategoryController::class, 'store']);
@@ -64,7 +63,7 @@ Route::prefix('products')->group(function () {
 
 Route::apiResource('orders',OrderController::class);
 Route::apiResource('discounts',DiscountController::class);
-
+Route::post('discounts/check-code', [DiscountController::class, 'checkCode']);
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);

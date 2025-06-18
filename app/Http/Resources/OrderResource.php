@@ -15,6 +15,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *  @OA\Property(property="note", type="string", example="Giao trong giờ hành chính", nullable=true),
  *     @OA\Property(property="total_price", type="number", example=250000),
  *     @OA\Property(property="status", type="string", example="pending"),
+ *     @OA\Property(property="payment_method", type="string", example="cod"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
@@ -37,6 +38,7 @@ class OrderResource extends JsonResource
             'note' => $this->note,
             'user_id' => $this->user_id,
             'status' => $this->status,
+            'payment_method' => $this->payment_method,
             'discount' => $this->discount ? [
                 'name' => $this->discount->name,
                 'type' => $this->discount->type,

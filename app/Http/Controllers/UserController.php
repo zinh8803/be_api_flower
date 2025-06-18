@@ -54,12 +54,21 @@ class UserController extends Controller
 
         //$refreshToken = JWTAuth::setToken($token)->refresh();
 
+        $refreshToken = Str::random(60);
 
+        //luu refresh token vao database
+        RefreshToken::create([
+            'token' => $refreshToken,
+            'user_id' => $user->id,
+            'expires_at' => now()->addDays(30),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
         return response()->json([
             'status' => true,
             'message' => 'Đăng ký thành công',
             'token' => $token,
-            //  'refresh_token' => $refreshToken,
+            'refresh_token' => $refreshToken,
             'data' => new UserResource($user),
         ]);
     }

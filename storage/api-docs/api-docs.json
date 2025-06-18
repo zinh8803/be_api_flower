@@ -223,6 +223,49 @@
                 }
             }
         },
+        "/api/discounts/check-code": {
+            "post": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Kiểm tra mã giảm giá",
+                "operationId": "ee9fb666723fd2e5252c6d0b856d7960",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Mã giảm giá",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mã giảm giá hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Discount"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Mã giảm giá không hợp lệ"
+                    }
+                }
+            }
+        },
         "/api/discounts/{id}": {
             "get": {
                 "tags": [
@@ -1744,30 +1787,6 @@
                 },
                 "type": "object"
             },
-            "FlowerTypeStoreRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa ngày Tết"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeUpdateRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa sen"
-                    }
-                },
-                "type": "object"
-            },
             "FlowerStoreRequest": {
                 "required": [
                     "color",
@@ -1820,6 +1839,30 @@
                     "flower_type_id": {
                         "type": "integer",
                         "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"
