@@ -12,12 +12,13 @@
 
 # # Set working dir
 # WORKDIR /var/www/html
-FROM php:8.2-cli
+# --- Base PHP image ---
+FROM php:8.2-fpm
 
-# Install dependencies
+# Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libonig-dev libxml2-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql zip
+    nginx supervisor curl git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,17 +26,26 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy app code
+# Copy Laravel project
 COPY . .
 
-# Install PHP dependencies
+# Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
-RUN php artisan config:cache && php artisan route:cache
-RUN chmod -R 775 storage bootstrap/cache
 
-# Expose correct port
+# Set permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Copy nginx config
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+
+# Copy supervisor config
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose Render-required port
 EXPOSE 10000
 
-# Start Laravel app using built-in PHP server
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
+# Start both nginx and php-fpm via supervisord
+CMD ["/usr/bin/supervisord"]
+
 
