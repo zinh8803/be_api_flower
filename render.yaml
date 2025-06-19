@@ -3,5 +3,5 @@ services:
     name: laravel-api
     env: docker
     plan: free
-    dockerfilePath: ./docker/app/Dockerfile
+    dockerfilePath: ./Dockerfile
     autoDeploy: true
