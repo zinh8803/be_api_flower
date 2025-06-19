@@ -12,12 +12,12 @@
 
 # # Set working dir
 # WORKDIR /var/www/html
-FROM php:8.2-fpm
+FROM php:8.2-cli
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libonig-dev libxml2-dev zip unzip curl git \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+    git curl zip unzip libonig-dev libxml2-dev libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,15 +25,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy project files
+# Copy app code
 COPY . .
 
-# Install Laravel dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
-
-# Laravel artisan commands
 RUN php artisan config:cache && php artisan route:cache
+RUN chmod -R 775 storage bootstrap/cache
 
-# Expose port & start Laravel
-EXPOSE 8000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Expose correct port
+EXPOSE 10000
+
+# Start Laravel app using built-in PHP server
+CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
+
