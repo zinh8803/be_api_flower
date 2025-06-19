@@ -26,8 +26,8 @@ class Order extends Model
     {
         return $this->belongsTo(Discount::class);
     }
-    public function getTotalPriceAttribute($value)
-    {
-        return number_format($value, 0, ',', '.');
-    }
+    // public function getTotalPriceAttribute($value)
+    // {
+    //     return number_format($value, 0, ',', '.');
+    // }
 }

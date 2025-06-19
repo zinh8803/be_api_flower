@@ -8,7 +8,8 @@ use App\Repositories\Contracts\OrderRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderSuccessMail;
 class OrderRepository implements OrderRepositoryInterface
 {
     protected $model;
@@ -89,8 +90,9 @@ class OrderRepository implements OrderRepositoryInterface
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
             }
-
-            return $order->load('orderDetails.product', 'discount');
+            $order->load('orderDetails.product', 'discount');
+            Mail::to($order->email)->send(new OrderSuccessMail($order));
+            return $order;
         });
     }
 
@@ -144,7 +146,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function all()
     {
        // return $this->model->orderBy('id', 'desc')->paginate(10);
-        return $this->model->paginate(10);
+        return $this->model->orderBy('buy_at', 'desc')->paginate(10);
     }
 
     public function findByUserId(int $userId)

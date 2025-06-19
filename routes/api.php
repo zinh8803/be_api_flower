@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
@@ -65,6 +66,8 @@ Route::apiResource('orders',OrderController::class);
 Route::apiResource('discounts',DiscountController::class);
 Route::post('discounts/check-code', [DiscountController::class, 'checkCode']);
 
+Route::get('users/getall', [UserController::class, 'index']);
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 
+Route::post('/send-otp', [UserController::class, 'sendOtp']);

@@ -1370,6 +1370,48 @@
                 }
             }
         },
+        "/api/users/getall": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Lấy danh sách người dùng",
+                "operationId": "4c614ccc98ea18bac2aaf4f217bf1eea",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách người dùng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Danh sách người dùng"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -1686,6 +1728,74 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/send-otp": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Gửi mã OTP đến email",
+                "operationId": "a79191b4b9e125eab6049d51018d23e0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mã OTP đã được gửi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mã OTP đã được gửi đến email"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dữ liệu không hợp lệ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     },
@@ -2120,6 +2230,11 @@
                     "phone": {
                         "type": "string",
                         "example": "0909123456"
+                    },
+                    "otp": {
+                        "description": "One-time password for email verification",
+                        "type": "string",
+                        "format": "binary"
                     }
                 },
                 "type": "object"
@@ -2409,6 +2524,10 @@
                         "type": "string",
                         "example": "pending"
                     },
+                    "payment_method": {
+                        "type": "string",
+                        "example": "cod"
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time"
@@ -2585,12 +2704,12 @@
             "description": "Orders"
         },
         {
-            "name": "Auth",
-            "description": "Auth"
-        },
-        {
             "name": "User",
             "description": "User"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
         }
     ]
 }

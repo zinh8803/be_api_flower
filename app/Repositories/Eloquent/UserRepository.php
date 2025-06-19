@@ -11,10 +11,9 @@ class UserRepository implements UserRepositoryInterface
 {
     public function create(array $data)
     {
-
         $data['password'] = bcrypt($data['password']);
-        $data['role'] = $data['role'] ?? 'user'; // Default role is 'user'
-        $data['status'] = $data['status'] ?? 1; // Default status is 'active'
+        $data['role'] = $data['role'] ?? 'user'; 
+        $data['status'] = $data['status'] ?? 1; 
         return User::create($data);
     }
 
@@ -67,6 +66,10 @@ class UserRepository implements UserRepositoryInterface
         $user->save();
 
         return $user;
+    }
+    public function getAll()
+    {
+        return User::paginate(10);
     }
 }
 

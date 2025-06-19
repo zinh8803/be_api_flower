@@ -12,6 +12,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="password", type="string", format="password", example="123456"),
  *     @OA\Property(property="password_confirmation", type="string", format="password", example="123456"),
  *     @OA\Property(property="phone", type="string", example="0909123456"),
+ *     @OA\Property(property="otp", type="string", format="binary", description="One-time password for email verification"),
  * )
  */
 
@@ -39,6 +40,7 @@ class StoreUserRequest extends FormRequest
             'password' => 'required|string|min:6|confirmed', // Password must be confirmed
             // 'address' => 'nullable|string|max:500',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Optional avatar image
+            'role' => 'nullable|in:admin,user', // Optional role, default is 'user'
         ];
     }
 }

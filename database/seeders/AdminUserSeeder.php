@@ -24,5 +24,17 @@ class AdminUserSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        //    User::create([
+        //     'name' => 'admin',
+        //     'email' =>  random_int(1, 100) . '@gmail.com',
+        //     'password' => bcrypt('admin'),
+        //     'role' => 'admin',
+        //     'status' => 1, 
+        //     'email_verified_at' => now(),
+        //     'remember_token' => null,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+        //  User::factory()->count(100)->create();
     }
 }

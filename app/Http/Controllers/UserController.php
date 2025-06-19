@@ -6,6 +6,8 @@ use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
+use App\Mail\SendOtpMail;
+use App\Models\EmailOtp;
 use App\Models\RefreshToken;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -13,6 +15,7 @@ use Crypt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -25,6 +28,30 @@ class UserController extends Controller
     {
         $this->users = $users;
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/users/getall",
+     *     summary="Lấy danh sách người dùng",
+     *     tags={"User"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách người dùng",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Danh sách người dùng"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *         )
+     *     )
+     * )
+     */
+    public function index()
+    {
+     return UserResource::collection($this->users->getAll());
+    }
+
+
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -49,10 +76,18 @@ class UserController extends Controller
 
     public function register(StoreUserRequest $request)
     {
+         $otpRecord = EmailOtp::where('email', $request->email)->first();
+
+        if (!$otpRecord || $otpRecord->otp !== $request->otp || $otpRecord->expires_at < now()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Mã OTP không đúng hoặc đã hết hạn',
+        ], 422);
+    }
+
         $user = $this->users->create($request->validated());
         $token = JWTAuth::fromUser($user);
 
-        //$refreshToken = JWTAuth::setToken($token)->refresh();
 
         $refreshToken = Str::random(60);
 
@@ -290,4 +325,60 @@ class UserController extends Controller
             'data' => new UserResource($user),
         ]);
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/send-otp",
+     *     summary="Gửi mã OTP đến email",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mã OTP đã được gửi",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Mã OTP đã được gửi đến email")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
+     *         )
+     *     )
+     * )
+     */
+    public function sendOtp(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|unique:users,email',
+    ]);
+
+    $otp = rand(100000, 999999); // 6 chữ số
+
+    // Lưu OTP
+    EmailOtp::updateOrCreate(
+        ['email' => $request->email],
+        [
+            'otp' => $otp,
+            'expires_at' => now()->addMinutes(5),
+        ]
+    );
+
+    // Gửi mail
+    Mail::to($request->email)->send(new SendOtpMail($otp));
+
+    return response()->json([
+        'status' => true,
+        'message' => 'OTP đã được gửi đến email',
+    ]);
+}
 }
