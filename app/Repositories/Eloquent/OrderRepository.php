@@ -71,8 +71,11 @@ class OrderRepository implements OrderRepositoryInterface
             }
 
             $orderTotal = $orderSubtotal - $discountAmount;
-
+            do {
+                $orderCode = 'SP' . date('YmdHis') . rand(100, 999);
+            } while (Order::where('order_code', $orderCode)->exists());
             $order = Order::create([
+                'order_code' => $orderCode,
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => $data['phone'],
@@ -145,7 +148,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function all()
     {
-       // return $this->model->orderBy('id', 'desc')->paginate(10);
+        // return $this->model->orderBy('id', 'desc')->paginate(10);
         return $this->model->orderBy('buy_at', 'desc')->paginate(10);
     }
 
@@ -173,20 +176,20 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function OrderDetailById(int $id)
     {
-         $user = Auth::guard('api')->user();
-    if (!$user) {
-        return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
-    }
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
+        }
 
-    $order = $this->model->with('orderDetails.product', 'discount')->find($id);
-    if (!$order) {
-        return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
-    }
+        $order = $this->model->with('orderDetails.product', 'discount')->find($id);
+        if (!$order) {
+            return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
+        }
 
-    if ($order->user_id !== $user->id) {
-        return response()->json(['message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
-    }
+        if ($order->user_id !== $user->id) {
+            return response()->json(['message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
+        }
 
-    return $order;
+        return $order;
     }
 }

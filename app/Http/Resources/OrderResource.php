@@ -31,6 +31,7 @@ class OrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'order_code' => $this->order_code,
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
