@@ -94,7 +94,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $order->orderDetails()->create($detail);
             }
             $order->load('orderDetails.product', 'discount');
-            Mail::to($order->email)->send(new OrderSuccessMail($order));
+          //  Mail::to($order->email)->send(new OrderSuccessMail($order));
             return $order;
         });
     }

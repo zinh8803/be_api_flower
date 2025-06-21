@@ -133,25 +133,37 @@ class VnPayController extends Controller
 
         $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
 
-        if ($secureHash === $vnp_SecureHash) {
-            if ($request->vnp_ResponseCode == '00') {
-                return response()->json([
-                    'status' => 200,
-                    'message' => 'Thanh toán thành công',
-                    'data' => $request->all()
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Thanh toán thất bại',
-                    'data' => $request->all()
-                ]);
-            }
+        // if ($secureHash === $vnp_SecureHash) {
+        //     if ($request->vnp_ResponseCode == '00') {
+        //         return response()->json([
+        //             'status' => 200,
+        //             'message' => 'Thanh toán thành công',
+        //             'data' => $request->all()
+        //         ]);
+        //     } else {
+        //         return response()->json([
+        //             'status' => 400,
+        //             'message' => 'Thanh toán thất bại',
+        //             'data' => $request->all()
+        //         ]);
+        //     }
+        // } else {
+        //     return response()->json([
+        //         'status' => 403,
+        //         'message' => 'Chữ ký không hợp lệ'
+        //     ]);
+        // } $frontendUrl = 'http://localhost:5173/vnpay_return';
+$frontendUrl = 'http://localhost:5173/vnpay_return';
+    if ($secureHash === $vnp_SecureHash) {
+        if ($request->vnp_ResponseCode == '00') {
+
+            return redirect($frontendUrl . '?' . http_build_query($request->all()));
         } else {
-            return response()->json([
-                'status' => 403,
-                'message' => 'Chữ ký không hợp lệ'
-            ]);
+            return redirect($frontendUrl . '?' . http_build_query($request->all()));
         }
+    } else {
+        // Chữ ký không hợp lệ, cũng redirect về frontend với thông báo lỗi
+        return redirect($frontendUrl . '?status=fail&message=Chữ ký không hợp lệ');
+    }
     }
 }

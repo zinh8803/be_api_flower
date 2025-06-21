@@ -6,6 +6,7 @@ use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
 use App\Http\Controllers\FlowerTypeController;
 use App\Http\Controllers\ImportReceiptController;
+use App\Http\Controllers\MoMoController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;

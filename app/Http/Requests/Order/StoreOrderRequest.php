@@ -50,7 +50,7 @@ class StoreOrderRequest extends FormRequest
             'address' => 'required|string|max:500',
             'note' => 'nullable|string|max:1000',
             'discount_id' => 'nullable|integer',
-            'payment_method' => 'required|string|in:cod,bank_transfer,online_payment',
+            'payment_method' => 'required|string|in:cod,vnpay',
             'user_id' => 'nullable|integer|exists:users,id',
             'products' => 'required|array',
             'products.*.product_id' => 'required|integer|exists:products,id',
