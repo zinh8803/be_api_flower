@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Product;
+use App\Models\ProductSize;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +21,23 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *         property="details",
  *         type="array",
  *         @OA\Items(ref="#/components/schemas/RecipeDetailResource")
+ *     )
+ * ),
+ * @OA\Schema(
+ *     schema="RecipeInput",
+ *     required={"flower_id", "quantity"},
+ *     @OA\Property(property="flower_id", type="integer", example=1, description="ID hoa"),
+ *     @OA\Property(property="quantity", type="integer", example=10, description="Số lượng hoa")
+ * ),
+ * @OA\Schema(
+ *     schema="SizeInput",
+ *     required={"size", "recipes"},
+ *     @OA\Property(property="size", type="string", example="Nhỏ", description="Tên size sản phẩm"),
+ *     @OA\Property(
+ *         property="recipes",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/RecipeInput"),
+ *         description="Danh sách hoa theo công thức của size này"
  *     )
  * )
  */
@@ -43,6 +62,7 @@ class ProductResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'receipt_details' => RecipeResource::collection($this->whenLoaded('recipes')),
+            'Size' => ProductSizeResource::collection($this->whenLoaded('productSizes')),
         ];
     }
 }

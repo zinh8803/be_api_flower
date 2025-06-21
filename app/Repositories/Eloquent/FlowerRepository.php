@@ -15,7 +15,7 @@ class FlowerRepository implements FlowerRepositoryInterface
 
     public function all()
     {
-        return $this->model->all();
+        return $this->model->with(['flowerType'])->get();
     }
 
     public function find($id)

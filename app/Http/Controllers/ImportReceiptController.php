@@ -40,7 +40,7 @@ class ImportReceiptController extends Controller
     public function index()
     {
         $data = $this->receipts->all();
-        return ImportReceiptResource::collection($data->load('details.flower'));
+        return ImportReceiptResource::collection($data);
     }
 
 

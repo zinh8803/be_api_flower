@@ -957,7 +957,7 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Tạo sản phẩm mới",
+                "summary": "Tạo sản phẩm mới với nhiều size và công thức hoa",
                 "operationId": "e8185e307706e2cd84bbcf5171e2f09d",
                 "requestBody": {
                     "required": true,
@@ -967,50 +967,76 @@
                                 "required": [
                                     "name",
                                     "category_id",
-                                    "recipes[0][flower_id]",
-                                    "recipes[0][quantity]"
+                                    "status",
+                                    "sizes[0][size]",
+                                    "sizes[0][recipes][0][flower_id]",
+                                    "sizes[0][recipes][0][quantity]"
                                 ],
                                 "properties": {
                                     "name": {
+                                        "description": "Tên sản phẩm",
                                         "type": "string",
-                                        "example": "Bó hoa cưới đỏ"
+                                        "example": "Bó hoa cưới đẹp"
                                     },
                                     "description": {
+                                        "description": "Mô tả sản phẩm",
                                         "type": "string",
-                                        "example": "Bó hoa cưới rực rỡ"
+                                        "example": "Mẫu bó hoa cưới với nhiều hoa baby"
+                                    },
+                                    "category_id": {
+                                        "description": "ID danh mục",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "status": {
+                                        "description": "Trạng thái sản phẩm",
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "image": {
                                         "description": "Ảnh sản phẩm",
                                         "type": "string",
                                         "format": "binary"
                                     },
-                                    "status": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "size": {
+                                    "sizes[0][size]": {
+                                        "description": "Tên size 1",
                                         "type": "string",
-                                        "example": "Lớn"
+                                        "example": "Nhỏ"
                                     },
-                                    "category_id": {
+                                    "sizes[0][recipes][0][flower_id]": {
+                                        "description": "ID hoa thứ 1 cho size Nhỏ",
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "recipes[0][flower_id]": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "recipes[0][quantity]": {
+                                    "sizes[0][recipes][0][quantity]": {
+                                        "description": "Số lượng hoa thứ 1 cho size Nhỏ",
                                         "type": "integer",
                                         "example": 10
                                     },
-                                    "recipes[1][flower_id]": {
+                                    "sizes[0][recipes][1][flower_id]": {
+                                        "description": "ID hoa thứ 2 cho size Nhỏ",
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "recipes[1][quantity]": {
+                                    "sizes[0][recipes][1][quantity]": {
+                                        "description": "Số lượng hoa thứ 2 cho size Nhỏ",
                                         "type": "integer",
                                         "example": 5
+                                    },
+                                    "sizes[1][size]": {
+                                        "description": "Tên size 2",
+                                        "type": "string",
+                                        "example": "Lớn"
+                                    },
+                                    "sizes[1][recipes][0][flower_id]": {
+                                        "description": "ID hoa cho size Lớn",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sizes[1][recipes][0][quantity]": {
+                                        "description": "Số lượng hoa cho size Lớn",
+                                        "type": "integer",
+                                        "example": 20
                                     }
                                 },
                                 "type": "object"
@@ -1020,7 +1046,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Updated",
+                        "description": "Tạo sản phẩm thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1131,15 +1157,17 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Cập nhật sản phẩm",
+                "summary": "Cập nhật sản phẩm với nhiều size và công thức hoa",
                 "operationId": "b4b789a4a3d0c47897f43991a5f12372",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID sản phẩm cần cập nhật",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -1149,12 +1177,20 @@
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
+                                    "_method",
                                     "name",
                                     "category_id",
-                                    "recipes[0][flower_id]",
-                                    "recipes[0][quantity]"
+                                    "status",
+                                    "sizes[0][size]",
+                                    "sizes[0][recipes][0][flower_id]",
+                                    "sizes[0][recipes][0][quantity]"
                                 ],
                                 "properties": {
+                                    "_method": {
+                                        "description": "Phương thức HTTP (đặt là PUT để cập nhật)",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
                                     "name": {
                                         "type": "string",
                                         "example": "Bó hoa cưới đỏ"
@@ -1164,37 +1200,51 @@
                                         "example": "Bó hoa cưới rực rỡ"
                                     },
                                     "image": {
-                                        "description": "Ảnh sản phẩm",
+                                        "description": "Ảnh sản phẩm (tùy chọn)",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "status": {
+                                        "description": "Trạng thái sản phẩm",
                                         "type": "integer",
                                         "example": 1
-                                    },
-                                    "size": {
-                                        "type": "string",
-                                        "example": "Lớn"
                                     },
                                     "category_id": {
+                                        "description": "ID danh mục sản phẩm",
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "recipes[0][flower_id]": {
+                                    "sizes[0][size]": {
+                                        "type": "string",
+                                        "example": "Nhỏ"
+                                    },
+                                    "sizes[0][recipes][0][flower_id]": {
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "recipes[0][quantity]": {
+                                    "sizes[0][recipes][0][quantity]": {
                                         "type": "integer",
                                         "example": 10
                                     },
-                                    "recipes[1][flower_id]": {
+                                    "sizes[0][recipes][1][flower_id]": {
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "recipes[1][quantity]": {
+                                    "sizes[0][recipes][1][quantity]": {
                                         "type": "integer",
                                         "example": 5
+                                    },
+                                    "sizes[1][size]": {
+                                        "type": "string",
+                                        "example": "Lớn"
+                                    },
+                                    "sizes[1][recipes][0][flower_id]": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sizes[1][recipes][0][quantity]": {
+                                        "type": "integer",
+                                        "example": 20
                                     }
                                 },
                                 "type": "object"
@@ -1204,7 +1254,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Updated",
+                        "description": "Cập nhật sản phẩm thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2204,6 +2254,10 @@
                                     "type": "integer",
                                     "example": 1
                                 },
+                                "product_size_id": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
                                 "quantity": {
                                     "type": "integer",
                                     "example": 2
@@ -2257,10 +2311,6 @@
                         "description": "Trạng thái sản phẩm",
                         "type": "integer",
                         "example": 1
-                    },
-                    "size": {
-                        "type": "string",
-                        "example": "Lớn"
                     },
                     "category_id": {
                         "description": "ID danh mục hoa",
@@ -2665,6 +2715,46 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/RecipeDetailResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeInput": {
+                "required": [
+                    "flower_id",
+                    "quantity"
+                ],
+                "properties": {
+                    "flower_id": {
+                        "description": "ID hoa",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "description": "Số lượng hoa",
+                        "type": "integer",
+                        "example": 10
+                    }
+                },
+                "type": "object"
+            },
+            "SizeInput": {
+                "required": [
+                    "size",
+                    "recipes"
+                ],
+                "properties": {
+                    "size": {
+                        "description": "Tên size sản phẩm",
+                        "type": "string",
+                        "example": "Nhỏ"
+                    },
+                    "recipes": {
+                        "description": "Danh sách hoa theo công thức của size này",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RecipeInput"
                         }
                     }
                 },

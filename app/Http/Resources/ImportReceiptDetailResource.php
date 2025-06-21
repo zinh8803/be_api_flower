@@ -29,7 +29,7 @@ class ImportReceiptDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $status = 'pending';
+        $status = 'hoa tươi';
 
         if (!empty($this->import_date)) {
             $importDate = Carbon::parse($this->import_date);

@@ -18,7 +18,6 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="description", type="string", example="Bó hoa cưới được kết từ 10 bông hồng đỏ và 5 hoa baby"),
  *     @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
  *     @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
- *     @OA\Property(property="size", type="string", example="Lớn"),
  *     @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục hoa"),
  *     @OA\Property(
  *         property="recipes",
@@ -50,20 +49,21 @@ class UpdateProductRequest extends FormRequest
             'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
             //'price' => 'required|numeric|min:0',
             'status' => 'boolean',
-            'size' => 'nullable|string|max:50',
             'category_id' => 'required|integer|exists:categories,id',
-            'recipes' => 'required|array',
-            'recipes.*.flower_id' => 'required|integer|exists:flowers,id',
-            'recipes.*.quantity' => 'required|integer|min:1',
+            'sizes' => 'required|array|min:1',
+        'sizes.*.size' => 'required|string|max:255',
+        'sizes.*.recipes' => 'required|array|min:1',
+        'sizes.*.recipes.*.flower_id' => 'required|integer|exists:flowers,id',
+        'sizes.*.recipes.*.quantity' => 'required|integer|min:1',
         ];
     }
     public function all($keys = null)
     {
         $data = parent::all($keys);
-        if (isset($data['recipes']) && is_string($data['recipes'])) {
-            $decoded = json_decode($data['recipes'], true);
+        if (isset($data['sizes']) && is_string($data['sizes'])) {
+            $decoded = json_decode($data['sizes'], true);
             if (is_array($decoded)) {
-                $data['recipes'] = $decoded;
+                $data['sizes'] = $decoded;
             }
         }
         return $data;

@@ -21,6 +21,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *         type="array",
  *         @OA\Items(
  *             @OA\Property(property="product_id", type="integer", example=1),
+ *             @OA\Property(property="product_size_id", type="integer", example=2),
  *             @OA\Property(property="quantity", type="integer", example=2)
  *         )
  *     ) 
@@ -54,6 +55,7 @@ class StoreOrderRequest extends FormRequest
             'user_id' => 'nullable|integer|exists:users,id',
             'products' => 'required|array',
             'products.*.product_id' => 'required|integer|exists:products,id',
+            'products.*.product_size_id' => 'required|integer|exists:product_sizes,id',
             'products.*.quantity' => 'required|integer|min:1',
         ];
     }

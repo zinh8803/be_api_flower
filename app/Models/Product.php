@@ -22,4 +22,8 @@ class Product extends Model
 {
     return $this->hasMany(Recipe::class);
 }
+    public function productSizes()
+    {
+        return $this->hasMany(ProductSize::class);
+    }
 }

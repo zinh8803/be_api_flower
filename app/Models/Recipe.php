@@ -17,4 +17,8 @@ class Recipe extends Model
     {
         return $this->belongsTo(Flower::class);
     }
+    public function productSize()
+    {
+        return $this->belongsTo(ProductSize::class);
+    }
 }

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
+use App\Models\ProductSize;
+
 class OrderRepository implements OrderRepositoryInterface
 {
     protected $model;
@@ -31,10 +33,12 @@ class OrderRepository implements OrderRepositoryInterface
             $discountAmount = 0;
 
             foreach ($items as $item) {
-                $product = Product::with('recipes.flower')->findOrFail($item['product_id']);
+                // Lấy đúng size của sản phẩm
+                $productSize = ProductSize::with('recipes.flower', 'product')->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
 
-                foreach ($product->recipes as $recipe) {
+                // Kiểm tra tồn kho cho từng hoa trong size này
+                foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
                     $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
 
@@ -44,12 +48,14 @@ class OrderRepository implements OrderRepositoryInterface
                     $this->deductStock($recipe->flower_id, $need);
                 }
 
-                $unitPrice = $product->price;
+                $unitPrice = $productSize->price;
                 $subTotal = $unitPrice * $qty;
                 $orderSubtotal += $subTotal;
 
                 $orderDetails[] = [
-                    'product_id' => $product->id,
+                    'product_id' => $productSize->product_id,
+                    'product_size_id' => $productSize->id, // BẮT BUỘC PHẢI CÓ DÒNG NÀY
+                    'size' => $productSize->size ?? null,
                     'quantity' => $qty,
                     'price' => $unitPrice,
                     'subtotal' => $subTotal,
@@ -93,7 +99,7 @@ class OrderRepository implements OrderRepositoryInterface
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
             }
-            $order->load('orderDetails.product', 'discount');
+            $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
           //  Mail::to($order->email)->send(new OrderSuccessMail($order));
             return $order;
         });
@@ -149,7 +155,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function all()
     {
         // return $this->model->orderBy('id', 'desc')->paginate(10);
-        return $this->model->orderBy('buy_at', 'desc')->paginate(10);
+        return $this->model->with('orderDetails.product', 'orderDetails.productSize')->orderBy('buy_at', 'desc')->paginate(10);
     }
 
     public function findByUserId(int $userId)
@@ -181,7 +187,7 @@ class OrderRepository implements OrderRepositoryInterface
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }
 
-        $order = $this->model->with('orderDetails.product', 'discount')->find($id);
+        $order = $this->model->with('orderDetails.product', 'orderDetails.productSize')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }
