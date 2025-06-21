@@ -44,6 +44,7 @@ class DiscountRepository implements DiscountRepositoryInterface
     public function checkCodeValidity($code)
     {
         $discount = Discount::where('name', $code)
+            ->where('status', true) // Ensure the discount is active
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->first();

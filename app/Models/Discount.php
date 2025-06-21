@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Discount extends Model
 {
-    protected $fillable = ['name', 'type', 'value', 'start_date', 'end_date'];
+    protected $fillable = ['name', 'type','status', 'value', 'start_date', 'end_date'];
 
     public function orders()
     {

@@ -23,6 +23,7 @@ class DiscountResource extends JsonResource
      *     @OA\Property(property="type", type="string", example="percent"),
      *     @OA\Property(property="start_date", type="string", format="date-time", example="2025-06-01T12:00:00Z"),
      *     @OA\Property(property="end_date", type="string", format="date-time", example="2025-06-01T12:00:00Z"),
+     *     @OA\Property(property="status", type="boolean", example=true),
      *     @OA\Property(property="created_at", type="string", format="date-time", example="2025-06-01T12:00:00Z"),
      *     @OA\Property(property="updated_at", type="string", format="date-time", example="2025-06-01T12:00:00Z")
      * )
@@ -36,6 +37,7 @@ class DiscountResource extends JsonResource
             'value'      => $this->value,
             'start_date' => $this->start_date,
             'end_date'   => $this->end_date,
+            'status'     => $this->status,
             'created_at' => $this->created_at,
         ];
     }

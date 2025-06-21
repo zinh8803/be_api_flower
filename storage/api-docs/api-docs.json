@@ -1797,6 +1797,97 @@
                     }
                 }
             }
+        },
+        "/api/payment": {
+            "post": {
+                "tags": [
+                    "VnPay"
+                ],
+                "summary": "Tạo URL thanh toán VNPAY",
+                "description": "Tạo URL thanh toán dựa trên mã đơn hàng và số tiền. Người dùng chọn ngân hàng ở trang VNPAY.",
+                "operationId": "ae6b547c15741e53f964149cad57618c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order_code",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "example": 150000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "URL thanh toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tạo URL thanh toán thành công"
+                                        },
+                                        "payment_url": {
+                                            "type": "string",
+                                            "example": "https://sandbox.vnpayment.vn/..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/vnpay_return": {
+            "get": {
+                "tags": [
+                    "VnPay"
+                ],
+                "summary": "Nhận kết quả thanh toán từ VNPAY",
+                "description": "Xử lý kết quả thanh toán và xác minh chữ ký.",
+                "operationId": "07522d61dabb312785f9eaf3be9a78ee",
+                "responses": {
+                    "200": {
+                        "description": "Thanh toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thanh toán thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Thanh toán thất bại hoặc sai chữ ký"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1893,6 +1984,34 @@
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-06-01"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"
@@ -1949,30 +2068,6 @@
                     "flower_type_id": {
                         "type": "integer",
                         "example": 1
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeStoreRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa ngày Tết"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeUpdateRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"
@@ -2333,6 +2428,10 @@
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-06-01T12:00:00Z"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": true
                     },
                     "created_at": {
                         "type": "string",
@@ -2710,6 +2809,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "VnPay",
+            "description": "VnPay"
         }
     ]
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\ImportReceiptController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VnPayController;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,3 +72,6 @@ Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 
 Route::post('/send-otp', [UserController::class, 'sendOtp']);
+
+Route::post('/payment',[VnPayController::class, 'createPayment']); 
+Route::get('/vnpay_return', [VnPayController::class, 'vnpayReturn']); 

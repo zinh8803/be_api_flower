@@ -12,6 +12,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *      @OA\Property(property="value", type="float", example=10),
  *     @OA\Property(property="start_date", type="string", format="date-time", example="2025-06-01"),
  *     @OA\Property(property="end_date", type="string", format="date-time", example="2025-06-01"),
+ *    @OA\Property(property="status", type="boolean", example=true),
  * )
  */
 class UpdateDiscountRequest extends FormRequest
@@ -37,6 +38,7 @@ class UpdateDiscountRequest extends FormRequest
             'value'      => 'required|numeric|min:0',
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',
+            'status'     => 'boolean',
         ];
     }
 }
