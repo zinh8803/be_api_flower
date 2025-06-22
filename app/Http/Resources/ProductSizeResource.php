@@ -18,6 +18,7 @@ class ProductSizeResource extends JsonResource
             'id'         => $this->id,
             'size'       => $this->size,
             'price'      => $this->price,
+            "receipt_details"   => RecipeResource::collection($this->whenLoaded('recipes')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -18,17 +18,17 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function __construct(Product $product)
     {
-        $this->model = $product->with(['category', 'recipes', 'recipes.flower','productSizes']);
+        $this->model = $product;
     }
 
     public function all()
     {
-        return $this->model->paginate(10);
+        return $this->model->with(['category', 'productSizes.recipes.flower'])->paginate(10);
     }
 
     public function find($id)
     {
-        return $this->model->find($id);
+        return $this->model->with(['category', 'productSizes.recipes.flower'])->find($id);
     }
 
     public function create(array $data)

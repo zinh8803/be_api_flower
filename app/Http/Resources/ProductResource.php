@@ -53,7 +53,7 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'price' => $this->price,
+           // 'price' => $this->price,
             'status' => $this->status,
             'description' => $this->description,
             'image_url' => $this->image_url ,
@@ -61,8 +61,8 @@ class ProductResource extends JsonResource
             //'category' => new CategoryResource($this->whenLoaded('category')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'receipt_details' => RecipeResource::collection($this->whenLoaded('recipes')),
-            'Size' => ProductSizeResource::collection($this->whenLoaded('productSizes')),
+          //  'receipt_details' => RecipeResource::collection($this->whenLoaded('recipes')),
+            'sizes' => ProductSizeResource::collection($this->whenLoaded('productSizes')),
         ];
     }
 }
