@@ -55,7 +55,10 @@ class User extends Authenticatable implements JWTSubject
     public function importReceipt(){
         return $this->hasMany(ImportReceipt::class);
     }
-
+    public function emailOtps()
+    {
+        return $this->hasMany(EmailOtp::class);
+    }
     protected function casts(): array
     {
         return [

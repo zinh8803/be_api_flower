@@ -45,14 +45,7 @@ class OrderSuccessMail extends Mailable
             ],
         );
     }
-    // public function build()
-    // {
-    //     return $this->subject('Đơn hàng của bạn đã được đặt thành công')
-    //                 ->markdown('emails.orders.success')
-    //                 ->with([
-    //                     'order' => $this->order
-    //                 ]);
-    // }
+    
     /**
      * Get the attachments for the message.
      *
