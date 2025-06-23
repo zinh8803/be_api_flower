@@ -1,5 +1,6 @@
 <?php
 namespace App\Repositories\Eloquent;
+use App\Jobs\SendOrderMail;
 use App\Models\Discount;
 use App\Models\ImportReceiptDetail;
 use App\Models\Order;
@@ -100,24 +101,12 @@ class OrderRepository implements OrderRepositoryInterface
                 $order->orderDetails()->create($detail);
             }
             $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
-          //  Mail::to($order->email)->send(new OrderSuccessMail($order));
 
-          $email = $order->email;
-        $key = 'order_mail_fail_' . $email;
-        $maxAttempts = 3;
-        $failCount = Cache::get($key, 0);
+            // if (!empty($order->email)) {
+            //     SendOrderMail::dispatch($order, $order->email);
+            // }
+           
 
-        if ($failCount < $maxAttempts) {
-            try {
-                Mail::to($email)->send(new OrderSuccessMail($order));
-                Cache::forget($key); // Gửi thành công, reset đếm
-            } catch (\Exception $e) {
-                Cache::put($key, $failCount + 1, now()->addHours(6));
-                Log::error("Gửi mail đơn hàng thất bại cho $email: " . $e->getMessage());
-            }
-        } else {
-            Log::warning("Gửi mail đơn hàng thất bại quá $maxAttempts lần cho $email");
-        }
             return $order;
         });
     }

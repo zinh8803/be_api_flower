@@ -373,8 +373,8 @@ class UserController extends Controller
         ]
     );
 
-    // Gửi mail
-    Mail::to($request->email)->send(new SendOtpMail($otp));
+    // Gửi mail qua queue
+    \App\Jobs\SendOtpMail::dispatch($request->email, $otp);
 
     return response()->json([
         'status' => true,
