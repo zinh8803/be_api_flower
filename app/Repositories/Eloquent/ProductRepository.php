@@ -227,7 +227,7 @@ class ProductRepository implements ProductRepositoryInterface
         if (!empty($params['product'])) {
             $products = $this->model->where('name', 'like', '%' . $params['product'] . '%')->get();
             if ($products->count() > 0) {
-                return $products->load('category', 'recipes', 'recipes.flower');
+                return $products->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
             }
 
             $categoryProducts = $this->model->whereHas('category', function ($q) use ($params) {
@@ -255,6 +255,11 @@ class ProductRepository implements ProductRepositoryInterface
             });
         }
 
-        return $query->with('category', 'recipes', 'recipes.flower')->get();
+        return $query->with([
+            'category',
+            'recipes',
+            'recipes.flower',
+            'productSizes.recipes.flower'
+        ])->get();
     }
 }
