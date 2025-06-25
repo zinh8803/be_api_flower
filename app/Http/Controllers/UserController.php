@@ -256,7 +256,7 @@ class UserController extends Controller
 
     public function profile()
     {
-        return new UserResource(auth()->user());
+        return new UserResource(auth()-> user());
     }
     /**
      * @OA\Post(
