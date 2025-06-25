@@ -3,20 +3,22 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Discount;
 use App\Repositories\Contracts\DiscountRepositoryInterface;
-use Log;
-
+use Illuminate\Support\Facades\Log;
 class DiscountRepository implements DiscountRepositoryInterface
 {
-    public function getAll(array $filters = [])
+    public function getAll()
     {
-        $query = Discount::query();
-
-        if (!empty($filters['active_only'])) {
-            $query->whereDate('start_date', '<=', now())
-                  ->whereDate('end_date', '>=', now());
-        }
-
-        return $query->get();
+        $this->updateExpiredStatus();
+        return Discount::orderBy('status', 'desc')
+            ->orderBy('start_date', 'asc')
+            ->paginate(10);
+        return Discount::all();
+    }
+    public function updateExpiredStatus()
+    {
+        Discount::where('end_date', '<', now())
+            ->where('status', true)
+            ->update(['status' => false]);
     }
 
     public function findById($id)

@@ -42,7 +42,7 @@ class ProductRepository implements ProductRepositoryInterface
         if ($products->isEmpty()) {
             throw new RuntimeException('No products found for the given category.');
         }
-        return $products;
+        return $products->load(['category', 'productSizes.recipes.flower']);
     }
 
     public function update($id, array $data)

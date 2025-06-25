@@ -3,7 +3,7 @@ namespace App\Repositories\Contracts;
 
 interface DiscountRepositoryInterface
 {
-    public function getAll(array $filters = []);        
+    public function getAll();        
 
     public function findById($id);               
 
