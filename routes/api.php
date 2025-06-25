@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VnPayController;
+use App\Http\Middleware\CheckJWT;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,7 +23,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::middleware('auth:api')->group(function () {
+// Route::middleware('auth:api')->group(function () {
+Route::middleware(CheckJWT::class)->group(function () {
+
     Route::get('profile', [UserController::class, 'profile']);
     Route::post('logout', [UserController::class, 'logout']);
     Route::Put('user/update', [UserController::class, 'updateProfile']);

@@ -173,7 +173,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function OrderByUser()
     {
-        $user = Auth::guard('api')->user();
+        $user = Auth()->user();
         if (!$user) {
             abort(401, 'Bạn cần đăng nhập để xem đơn hàng của mình.');
         }
@@ -188,7 +188,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function OrderDetailById(int $id)
     {
-        $user = Auth::guard('api')->user();
+        $user = Auth()->user();
         if (!$user) {
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }

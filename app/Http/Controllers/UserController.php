@@ -48,7 +48,7 @@ class UserController extends Controller
      */
     public function index()
     {
-     return UserResource::collection($this->users->getAll());
+        return UserResource::collection($this->users->getAll());
     }
 
 
@@ -76,22 +76,20 @@ class UserController extends Controller
 
     public function register(StoreUserRequest $request)
     {
-         $otpRecord = EmailOtp::where('email', $request->email)->first();
+        $otpRecord = EmailOtp::where('email', $request->email)->first();
 
         if (!$otpRecord || $otpRecord->otp !== $request->otp || $otpRecord->expires_at < now()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Mã OTP không đúng hoặc đã hết hạn',
-        ], 422);
-    }
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không đúng hoặc đã hết hạn',
+            ], 422);
+        }
 
         $user = $this->users->create($request->validated());
         $token = JWTAuth::fromUser($user);
 
-
         $refreshToken = Str::random(60);
 
-        //luu refresh token vao database
         RefreshToken::create([
             'token' => $refreshToken,
             'user_id' => $user->id,
@@ -99,13 +97,14 @@ class UserController extends Controller
             'ip_address' => request()->ip(),
             'user_agent' => request()->header('User-Agent'),
         ]);
+
+        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, false, 'Strict');
+        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, false, 'Strict');
+
         return response()->json([
             'status' => true,
             'message' => 'Đăng ký thành công',
-            'token' => $token,
-            'refresh_token' => $refreshToken,
-            'data' => new UserResource($user),
-        ]);
+        ])->withCookie($accessCookie)->withCookie($refreshCookie);
     }
     /**
      * @OA\Post(
@@ -137,22 +136,18 @@ class UserController extends Controller
      * )
      */
 
-    public function login(LoginRequest $request)
+    public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
         if (!$token = Auth::guard('api')->attempt($credentials)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Incorrect email or password',
+                'message' => 'Email hoặc mật khẩu không đúng',
             ], 401);
         }
-
         $user = Auth::guard('api')->user();
-
         $refreshToken = Str::random(60);
-
-        //luu refresh token vao database
         RefreshToken::create([
             'token' => $refreshToken,
             'user_id' => $user->id,
@@ -161,13 +156,14 @@ class UserController extends Controller
             'user_agent' => request()->header('User-Agent'),
         ]);
 
+        // Set cookie HttpOnly
+        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, false, 'Strict');
+        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, false, 'Strict');
+
         return response()->json([
             'status' => true,
-            'message' => 'Login successful',
-            'token' => $token,
-            'refresh_token' => $refreshToken,
-            'data' => new UserResource($user),
-        ]);
+            'message' => 'Đăng nhập thành công'
+        ], 200)->withCookie($accessCookie)->withCookie($refreshCookie);
     }
 
     /**
@@ -234,13 +230,15 @@ class UserController extends Controller
 
         $newToken = JWTAuth::fromUser($user);
 
+        $accessCookie = cookie('access_token', $newToken, 60, null, null, true, true, false, 'Strict');
+
         return response()->json([
             'status' => 200,
             'message' => 'New token generated successfully',
             'data' => [
-                'token' => $newToken
+                'access_token' => $newToken
             ]
-        ]);
+        ])->withCookie($accessCookie);
     }
     /**
      * @OA\Get(
@@ -258,7 +256,7 @@ class UserController extends Controller
 
     public function profile()
     {
-        return new UserResource(Auth::guard('api')->user());
+        return new UserResource(auth()->user());
     }
     /**
      * @OA\Post(
@@ -278,8 +276,12 @@ class UserController extends Controller
 
     public function logout()
     {
-        Auth::guard('api')->logout();
-        return response()->json(['message' => 'Đăng xuất thành công']);
+        auth()->logout();
+        $accessCookie = cookie('access_token', '', -1, null, null, true, true, false, 'Strict');
+        $refreshCookie = cookie('refresh_token', '', -1, null, null, true, true, false, 'Strict');
+        return response()->json(['message' => 'Đăng xuất thành công'])
+            ->withCookie($accessCookie)
+            ->withCookie($refreshCookie);
     }
 
 
@@ -317,8 +319,8 @@ class UserController extends Controller
      */
     public function updateProfile(UpdateUserRequest $request)
     {
-        $user = $this->users->updateUser(Auth::id(), $request->validated());
-        Log::info('User profile updated', ['request' => $request->all(), 'user_id' => Auth::id()]);
+        $user = $this->users->updateUser(auth()->user()->id, $request->validated());
+        Log::info('User profile updated', ['request' => $request->all(), 'user_id' => auth()->user()->id]);
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật thông tin thành công',
@@ -357,28 +359,28 @@ class UserController extends Controller
      * )
      */
     public function sendOtp(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email|unique:users,email',
-    ]);
+    {
+        $request->validate([
+            'email' => 'required|email|unique:users,email',
+        ]);
 
-    $otp = rand(100000, 999999); // 6 chữ số
+        $otp = rand(100000, 999999); // 6 chữ số
 
-    // Lưu OTP
-    EmailOtp::updateOrCreate(
-        ['email' => $request->email],
-        [
-            'otp' => $otp,
-            'expires_at' => now()->addMinutes(5),
-        ]
-    );
+        // Lưu OTP
+        EmailOtp::updateOrCreate(
+            ['email' => $request->email],
+            [
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(5),
+            ]
+        );
 
-    // Gửi mail qua queue
-    \App\Jobs\SendOtpMail::dispatch($request->email, $otp);
+        // Gửi mail qua queue
+        \App\Jobs\SendOtpMail::dispatch($request->email, $otp);
 
-    return response()->json([
-        'status' => true,
-        'message' => 'OTP đã được gửi đến email',
-    ]);
-}
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP đã được gửi đến email',
+        ]);
+    }
 }
