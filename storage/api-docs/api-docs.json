@@ -1584,23 +1584,8 @@
                     "Auth"
                 ],
                 "summary": "Làm mới access token",
+                "description": "Lấy refresh_token từ cookie, không cần truyền trong body.",
                 "operationId": "5557fe076b6108897e5e119baec787cd",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "refresh_token": {
-                                        "type": "string",
-                                        "example": "jwt.refresh.token.here"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Access token mới",
@@ -1608,7 +1593,7 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "token": {
+                                        "access_token": {
                                             "type": "string",
                                             "example": "new.jwt.token.here"
                                         }

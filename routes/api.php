@@ -33,6 +33,8 @@ Route::middleware(CheckJWT::class)->group(function () {
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
+    Route::apiResource('orders',OrderController::class);
+    
 
 });
 Route::post('/refresh-token', [UserController::class, 'refreshToken']);
@@ -67,7 +69,6 @@ Route::prefix('products')->group(function () {
 
 });
 
-Route::apiResource('orders',OrderController::class);
 Route::apiResource('discounts',DiscountController::class);
 Route::post('discounts/check-code', [DiscountController::class, 'checkCode']);
 

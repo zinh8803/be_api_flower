@@ -171,17 +171,12 @@ class UserController extends Controller
      *     path="/api/refresh-token",
      *     summary="Làm mới access token",
      *     tags={"Auth"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="refresh_token", type="string", example="jwt.refresh.token.here")
-     *         )
-     *     ),
+     *     description="Lấy refresh_token từ cookie, không cần truyền trong body.",
      *     @OA\Response(
      *         response=200,
      *         description="Access token mới",
      *         @OA\JsonContent(
-     *             @OA\Property(property="token", type="string", example="new.jwt.token.here")
+     *             @OA\Property(property="access_token", type="string", example="new.jwt.token.here")
      *         )
      *     ),
      *     @OA\Response(
@@ -202,7 +197,8 @@ class UserController extends Controller
      */
     public function refreshToken(Request $request)
     {
-        $refreshToken = $request->input('refresh_token');
+        // Lấy refresh_token từ cookie
+        $refreshToken = $request->cookie('refresh_token');
         if (!$refreshToken) {
             return response()->json([
                 'status' => 400,
