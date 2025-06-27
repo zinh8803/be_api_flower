@@ -32,6 +32,7 @@ class ImportReceiptResource extends JsonResource
         return [
            
            'id'          => $this->id,
+            'import_code' => $this->import_code,
             'import_date' => $this->import_date ? Carbon::parse($this->import_date)->format('Y-m-d') : null,
             'note'        => $this->note,
             'total_price' => $this->total_price,

@@ -4,6 +4,12 @@ namespace App\Http\Requests\Order;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @OA\Schema(
+ *     schema="UpdateOrderRequest",
+ *     @OA\Property(property="status", type="string", example="đang xử lý")
+ * )
+ */
 class UpdateOrderRequest extends FormRequest
 {
     /**
@@ -11,7 +17,7 @@ class UpdateOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +28,7 @@ class UpdateOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'status' => 'required',
         ];
     }
 }

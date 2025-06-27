@@ -34,11 +34,9 @@ class OrderRepository implements OrderRepositoryInterface
             $discountAmount = 0;
 
             foreach ($items as $item) {
-                // Lấy đúng size của sản phẩm
                 $productSize = ProductSize::with('recipes.flower', 'product')->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
 
-                // Kiểm tra tồn kho cho từng hoa trong size này
                 foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
                     $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
@@ -55,7 +53,7 @@ class OrderRepository implements OrderRepositoryInterface
 
                 $orderDetails[] = [
                     'product_id' => $productSize->product_id,
-                    'product_size_id' => $productSize->id, // BẮT BUỘC PHẢI CÓ DÒNG NÀY
+                    'product_size_id' => $productSize->id, 
                     'size' => $productSize->size ?? null,
                     'quantity' => $qty,
                     'price' => $unitPrice,

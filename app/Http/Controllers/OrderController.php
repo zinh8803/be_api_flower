@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Order\StoreOrderRequest;
+use App\Http\Requests\Order\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Repositories\Eloquent\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -114,11 +115,45 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Order $order)
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{id}",
+     *     tags={"Orders"},
+     *     summary="Cập nhật đơn hàng",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UpdateOrderRequest")
+     *     ),
+     *     @OA\Response(response=200, description="Đơn hàng đã được cập nhật thành công", @OA\JsonContent(ref="#/components/schemas/Order")),
+     *     @OA\Response(response=404, description="Đơn hàng không tồn tại"),
+     *     @OA\Response(response=422, description="Lỗi xác thực")
+     * )
+     */
+    public function update(UpdateOrderRequest $request, $id)
     {
-        //
+        $order = $this->orderRepository->findById($id);
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+        $order = $this->orderRepository->update($id, $request->validated());
+        Log::info('Order updated successfully', ['id' => $id, 'data' => $request->all()]);
+        return response()->json([
+            'message' => 'Order updated successfully',
+        ], 200);
     }
-
+    /**
+     * @OA\Delete(
+     *     path="/api/orders/{id}",
+     *     tags={"Orders"},
+     *     summary="Xóa đơn hàng",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Đơn hàng đã được xóa thành công"),
+     *     @OA\Response(response=404, description="Đơn hàng không tồn tại")
+     * )
+     */
     /**
      * Remove the specified resource from storage.
      */
