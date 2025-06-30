@@ -360,8 +360,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
         ]);
 
-        $otp = rand(100000, 999999); // 6 chữ số
-
+        $otp = rand(100000, 999999); 
         // Lưu OTP
         EmailOtp::updateOrCreate(
             ['email' => $request->email],

@@ -112,6 +112,8 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function deductStock($flowerId, $neededQty)
     {
+        $now = now();
+        $today = $now->format('Y-m-d');
         $stock = ImportReceiptDetail::where('flower_id', $flowerId)
             ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
             ->value('remaining') ?? 0;
@@ -119,12 +121,12 @@ class OrderRepository implements OrderRepositoryInterface
         if ($stock < $neededQty) {
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
+        $todayDetails = ImportReceiptDetail::where('flower_id', $flowerId)
+        ->whereDate('import_date', $today)
+        ->orderByDesc('import_date')
+        ->get();
 
-        $details = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->orderByDesc('import_date')
-            ->get();
-
-        foreach ($details as $detail) {
+        foreach ($todayDetails as $detail) {
             $available = $detail->quantity - $detail->used_quantity;
             if ($neededQty <= 0)
                 break;
@@ -136,6 +138,29 @@ class OrderRepository implements OrderRepositoryInterface
             $detail->save();
 
             $neededQty -= $used;
+        }
+        // if ($neededQty > 0) {
+        //     $previousDetails = ImportReceiptDetail::where('flower_id', $flowerId)
+        //         ->whereDate('import_date', '<', $today)
+        //         ->orderByDesc('import_date')
+        //         ->get();
+
+        //     foreach ($previousDetails as $detail) {
+        //         $available = $detail->quantity - $detail->used_quantity;
+        //         if ($neededQty <= 0)
+        //             break;
+        //         if ($available <= 0)
+        //             continue;
+
+        //         $used = min($neededQty, $available);
+        //         $detail->used_quantity += $used;
+        //         $detail->save();
+
+        //         $neededQty -= $used;
+        //     }
+        // }
+        if ($neededQty > 0) {
+            throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
     }
 

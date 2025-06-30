@@ -5,8 +5,10 @@ namespace App\Repositories\Eloquent;
 use App\Helpers\ImageHelper;
 use App\Models\ImportReceiptDetail;
 use App\Models\Product;
+use App\Models\ProductSize;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -203,22 +205,112 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $products;
     }
-    public function getStockById($id)
-    {
-        $product = $this->model->find($id);
-        if (!$product) {
-            return null;
+public function getStockById($id)
+{
+    $today = Carbon::now()->format('Y-m-d');
+    Log::info('Checking stock for product today', ['product_id' => $id, 'date' => $today]);
+
+    $product = $this->model->with(['productSizes.recipes.flower'])->find($id);
+    if (!$product) {
+        return null;
+    }
+
+    $stockStatus = [];
+    $canBeMade = true;
+
+    foreach ($product->productSizes as $size) {
+        $sizeStatus = [
+            'size_id' => $size->id,
+            'size_name' => $size->size,
+            'price' => $size->price,
+            'in_stock' => true,
+            'flower_details' => []
+        ];
+
+        foreach ($size->recipes as $recipe) {
+            $flowerStock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                ->whereDate('import_date', $today)
+                ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+                ->value('remaining') ?? 0;
+
+            $neededQuantity = $recipe->quantity;
+
+            if ($flowerStock < $neededQuantity) {
+                $sizeStatus['in_stock'] = false;
+                $canBeMade = false;
+            }
+
+            // Thêm chi tiết về tồn kho của hoa
+            $sizeStatus['flower_details'][] = [
+                'flower_id' => $recipe->flower_id,
+                'flower_name' => $recipe->flower->name,
+                'needed_quantity' => $neededQuantity,
+                'available_quantity' => $flowerStock,
+                'sufficient' => $flowerStock >= $neededQuantity
+            ];
         }
 
-        $stock = ImportReceiptDetail::where('flower_id', $id)
-            ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-            ->value('remaining') ?? 0;
+        $stockStatus[] = $sizeStatus;
+    }
 
-        return [
-            'id' => $product->id,
-            'name' => $product->name,
-            'remaining_quantity' => (int) $stock,
-        ];
+    Log::info('Stock check completed for product', [
+        'product_id' => $id, 
+        'can_be_made' => $canBeMade,
+        'details' => $stockStatus
+    ]);
+
+    return [
+        'id' => $product->id,
+        'name' => $product->name,
+        'can_be_made' => $canBeMade,
+        'stock_details' => $stockStatus,
+        'checked_date' => $today
+    ];
+}
+
+    public function checkStock(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'product_size_id' => 'required|exists:product_sizes,id',
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        try {
+            $productSize = ProductSize::with('recipes.flower')->findOrFail($request->product_size_id);
+            $quantity = $request->quantity;
+            $inStock = true;
+            $missingFlowers = [];
+
+            foreach ($productSize->recipes as $recipe) {
+                $need = $recipe->quantity * $quantity;
+                
+                // Chỉ kiểm tra tồn kho ngày hôm nay
+                $today = now()->format('Y-m-d');
+                $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                    ->whereDate('import_date', $today)
+                    ->sum(DB::raw('quantity - used_quantity'));
+
+                if ($stock < $need) {
+                    $inStock = false;
+                    $missingFlowers[] = [
+                        'flower' => $recipe->flower->name,
+                        'needed' => $need,
+                        'available' => $stock
+                    ];
+                }
+            }
+
+            return response()->json([
+                'in_stock' => $inStock,
+                'missing_flowers' => $missingFlowers
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'in_stock' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     public function search($params)
     {
