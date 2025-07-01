@@ -982,6 +982,67 @@
                 ]
             }
         },
+        "/api/products/check-available-products": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Kiểm tra sản phẩm có thể làm được với lượng hoa hiện có trong giỏ hàng",
+                "operationId": "12cd98bfefc2703e0cd62c4a92e8f697",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cart_items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_size_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm có thể làm được",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "available_products": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "checked_date": {
+                                            "type": "string",
+                                            "format": "date"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [

@@ -55,6 +55,7 @@ Route::prefix('categories')->group(function () {
 //Route::apiResource('products', ProductController::class);
 
 Route::prefix('products')->group(function () {
+    Route::post('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
     Route::get('/stock', [ProductController::class, 'checkAllStock']);
     Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
     Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
