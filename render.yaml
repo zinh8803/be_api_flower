@@ -5,6 +5,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    startCommand: "/usr/bin/supervisord"
 
   - type: worker
     name: laravel-queue-worker

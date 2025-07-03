@@ -46,6 +46,6 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 10000
 
 # Start both nginx and php-fpm via supervisord
-CMD ["/usr/bin/supervisord"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
 
 
