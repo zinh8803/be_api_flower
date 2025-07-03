@@ -157,8 +157,8 @@ class UserController extends Controller
         ]);
 
         // Set cookie HttpOnly
-        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, true, 'Strict');
-        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, true, 'Strict');
+        $accessCookie = make_cookie('access_token', $token, 60);
+    $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
 
         return response()->json([
             'status' => true,
@@ -226,7 +226,7 @@ class UserController extends Controller
 
         $newToken = JWTAuth::fromUser($user);
 
-        $accessCookie = cookie('access_token', $newToken, 60, null, null, true, true, false, 'Strict');
+        $accessCookie = make_cookie('access_token', $newToken, 60);
 
         return response()->json([
             'status' => 200,
@@ -273,8 +273,8 @@ class UserController extends Controller
     public function logout()
     {
         auth()->logout();
-        $accessCookie = cookie('access_token', '', -1, null, null, true, true, false, 'Strict');
-        $refreshCookie = cookie('refresh_token', '', -1, null, null, true, true, false, 'Strict');
+                    $accessCookie = make_cookie('access_token', '', -1);
+                    $refreshCookie = make_cookie('refresh_token', '', -1);
         return response()->json(['message' => 'Đăng xuất thành công'])
             ->withCookie($accessCookie)
             ->withCookie($refreshCookie);
