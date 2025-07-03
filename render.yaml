@@ -5,3 +5,11 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+
+  - type: worker
+    name: laravel-queue-worker
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    startCommand: "php artisan queue:work --sleep=3 --tries=3"
