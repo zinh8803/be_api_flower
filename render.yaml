@@ -6,11 +6,3 @@ services:
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     startCommand: "/usr/bin/supervisord"
-
-  - type: worker
-    name: laravel-queue-worker
-    env: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
-    autoDeploy: true
-    startCommand: "php artisan queue:work --sleep=3 --tries=3"
