@@ -157,8 +157,8 @@ class UserController extends Controller
         ]);
 
         // Set cookie HttpOnly
-        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, false, 'Strict');
-        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, false, 'Strict');
+        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, true, 'Strict');
+        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, true, 'Strict');
 
         return response()->json([
             'status' => true,
