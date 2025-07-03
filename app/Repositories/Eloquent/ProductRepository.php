@@ -68,64 +68,64 @@ class ProductRepository implements ProductRepositoryInterface
         $product->save();
         return $product;
     }
+
     public function createWithRecipes(array $data)
-{
-    return DB::transaction(function () use ($data) {
-        // Xử lý ảnh như cũ...
-        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
-            try {
-                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
-                Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
-                if ($imageUrl) {
-                    $data['image_url'] = $imageUrl;
+    {
+        return DB::transaction(function () use ($data) {
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+                try {
+                    $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+                    Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
+                    if ($imageUrl) {
+                        $data['image_url'] = $imageUrl;
+                    }
+                    unset($data['image']);
+                } catch (\Exception $e) {
+                    Log::error('Image upload failed', ['error' => $e->getMessage()]);
                 }
-                unset($data['image']);
-            } catch (\Exception $e) {
-                Log::error('Image upload failed', ['error' => $e->getMessage()]);
             }
-        }
 
-        // Lấy ra size và recipes
-        $sizes = $data['sizes'] ?? $data['productSizes'] ?? [];
-        unset($data['sizes'], $data['productSizes']);
+            // Lấy ra size và recipes
+            $sizes = $data['sizes'] ?? $data['productSizes'] ?? [];
+            unset($data['sizes'], $data['productSizes']);
 
-        // Tạo sản phẩm
-        $product = $this->model->create($data);
+            // Tạo sản phẩm
+            $product = $this->model->create($data);
 
-        foreach ($sizes as $sizeData) {
-            // Tính giá cho từng size
-            $totalPrice = 0;
-            foreach ($sizeData['recipes'] as $recipe) {
-                $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
-                    ->orderByDesc('import_date')
-                    ->value('import_price') ?? 0;
-                $totalPrice += $recipe['quantity'] * $importPrice;
-            }
-            $finalPrice = $totalPrice * 1.5;
+            foreach ($sizes as $sizeData) {
+                // Tính giá cho từng size
+                $totalPrice = 0;
+                foreach ($sizeData['recipes'] as $recipe) {
+                    $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
+                        ->orderByDesc('import_date')
+                        ->value('import_price') ?? 0;
+                    $totalPrice += $recipe['quantity'] * $importPrice;
+                }
+                $finalPrice = $totalPrice * 1.5;
 
-            // Tạo product_size với giá đã tính
-            $productSize = $product->productSizes()->create([
-                'size' => $sizeData['size'],
-                'price' => $finalPrice,
-            ]);
-
-            // Tạo recipes cho từng size
-            foreach ($sizeData['recipes'] as $recipe) {
-                $productSize->recipes()->create([
-
-                    'flower_id' => $recipe['flower_id'],
-                    'quantity' => $recipe['quantity'],
-                    'product_size_id' => $productSize->id,
-                    'product_id' => $product->id,
+                // Tạo product_size với giá đã tính
+                $productSize = $product->productSizes()->create([
+                    'size' => $sizeData['size'],
+                    'price' => $finalPrice,
                 ]);
+
+                // Tạo recipes cho từng size
+                foreach ($sizeData['recipes'] as $recipe) {
+                    $productSize->recipes()->create([
+
+                        'flower_id' => $recipe['flower_id'],
+                        'quantity' => $recipe['quantity'],
+                        'product_size_id' => $productSize->id,
+                        'product_id' => $product->id,
+                    ]);
+                }
             }
-        }
 
-        Log::info('Product with sizes and recipes created', ['product_id' => $product->id]);
+            Log::info('Product with sizes and recipes created', ['product_id' => $product->id]);
 
-        return $product->load('productSizes.recipes.flower');
-    });
-}
+            return $product->load('productSizes.recipes.flower');
+        });
+    }
 
     public function updateWithRecipes($id, array $data)
     {
@@ -205,68 +205,68 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $products;
     }
-public function getStockById($id)
-{
-    $today = Carbon::now()->format('Y-m-d');
-    Log::info('Checking stock for product today', ['product_id' => $id, 'date' => $today]);
+    public function getStockById($id)
+    {
+        $today = Carbon::now()->format('Y-m-d');
+        Log::info('Checking stock for product today', ['product_id' => $id, 'date' => $today]);
 
-    $product = $this->model->with(['productSizes.recipes.flower'])->find($id);
-    if (!$product) {
-        return null;
-    }
-
-    $stockStatus = [];
-    $canBeMade = true;
-
-    foreach ($product->productSizes as $size) {
-        $sizeStatus = [
-            'size_id' => $size->id,
-            'size_name' => $size->size,
-            'price' => $size->price,
-            'in_stock' => true,
-            'flower_details' => []
-        ];
-
-        foreach ($size->recipes as $recipe) {
-            $flowerStock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
-                ->whereDate('import_date', $today)
-                ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-                ->value('remaining') ?? 0;
-
-            $neededQuantity = $recipe->quantity;
-
-            if ($flowerStock < $neededQuantity) {
-                $sizeStatus['in_stock'] = false;
-                $canBeMade = false;
-            }
-
-            // Thêm chi tiết về tồn kho của hoa
-            $sizeStatus['flower_details'][] = [
-                'flower_id' => $recipe->flower_id,
-                'flower_name' => $recipe->flower->name,
-                'needed_quantity' => $neededQuantity,
-                'available_quantity' => $flowerStock,
-                'sufficient' => $flowerStock >= $neededQuantity
-            ];
+        $product = $this->model->with(['productSizes.recipes.flower'])->find($id);
+        if (!$product) {
+            return null;
         }
 
-        $stockStatus[] = $sizeStatus;
+        $stockStatus = [];
+        $canBeMade = true;
+
+        foreach ($product->productSizes as $size) {
+            $sizeStatus = [
+                'size_id' => $size->id,
+                'size_name' => $size->size,
+                'price' => $size->price,
+                'in_stock' => true,
+                'flower_details' => []
+            ];
+
+            foreach ($size->recipes as $recipe) {
+                $flowerStock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                    ->whereDate('import_date', $today)
+                    ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+                    ->value('remaining') ?? 0;
+
+                $neededQuantity = $recipe->quantity;
+
+                if ($flowerStock < $neededQuantity) {
+                    $sizeStatus['in_stock'] = false;
+                    $canBeMade = false;
+                }
+
+                // Thêm chi tiết về tồn kho của hoa
+                $sizeStatus['flower_details'][] = [
+                    'flower_id' => $recipe->flower_id,
+                    'flower_name' => $recipe->flower->name,
+                    'needed_quantity' => $neededQuantity,
+                    'available_quantity' => $flowerStock,
+                    'sufficient' => $flowerStock >= $neededQuantity
+                ];
+            }
+
+            $stockStatus[] = $sizeStatus;
+        }
+
+        Log::info('Stock check completed for product', [
+            'product_id' => $id,
+            'can_be_made' => $canBeMade,
+            'details' => $stockStatus
+        ]);
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'can_be_made' => $canBeMade,
+            'stock_details' => $stockStatus,
+            'checked_date' => $today
+        ];
     }
-
-    Log::info('Stock check completed for product', [
-        'product_id' => $id, 
-        'can_be_made' => $canBeMade,
-        'details' => $stockStatus
-    ]);
-
-    return [
-        'id' => $product->id,
-        'name' => $product->name,
-        'can_be_made' => $canBeMade,
-        'stock_details' => $stockStatus,
-        'checked_date' => $today
-    ];
-}
 
     public function checkStock(Request $request)
     {
@@ -284,7 +284,7 @@ public function getStockById($id)
 
             foreach ($productSize->recipes as $recipe) {
                 $need = $recipe->quantity * $quantity;
-                
+
                 // Chỉ kiểm tra tồn kho ngày hôm nay
                 $today = now()->format('Y-m-d');
                 $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)

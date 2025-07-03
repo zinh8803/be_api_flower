@@ -1,6 +1,7 @@
 <?php
 namespace App\Repositories\Eloquent;
 use App\Jobs\SendOrderMail;
+use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
 use App\Models\ImportReceiptDetail;
 use App\Models\Order;
@@ -53,7 +54,7 @@ class OrderRepository implements OrderRepositoryInterface
 
                 $orderDetails[] = [
                     'product_id' => $productSize->product_id,
-                    'product_size_id' => $productSize->id, 
+                    'product_size_id' => $productSize->id,
                     'size' => $productSize->size ?? null,
                     'quantity' => $qty,
                     'price' => $unitPrice,
@@ -100,10 +101,10 @@ class OrderRepository implements OrderRepositoryInterface
             }
             $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
 
-            // if (!empty($order->email)) {
-            //     SendOrderMail::dispatch($order, $order->email);
-            // }
-           
+            if (!empty($order->email)) {
+                SendOrderMail::dispatch($order, $order->email);
+            }
+
 
             return $order;
         });
@@ -122,9 +123,9 @@ class OrderRepository implements OrderRepositoryInterface
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
         $todayDetails = ImportReceiptDetail::where('flower_id', $flowerId)
-        ->whereDate('import_date', $today)
-        ->orderByDesc('import_date')
-        ->get();
+            ->whereDate('import_date', $today)
+            ->orderByDesc('import_date')
+            ->get();
 
         foreach ($todayDetails as $detail) {
             $available = $detail->quantity - $detail->used_quantity;
@@ -172,10 +173,24 @@ class OrderRepository implements OrderRepositoryInterface
     public function update(int $id, array $data)
     {
         $order = $this->findById($id);
+        $status = $order->status;
+
         $order->update($data);
+
+        if (isset($data['status']) && $data['status'] !== $status && !empty($order->email)) {
+            try {
+                SendOrderStatusMailJob::dispatch($order, $status);
+            } catch (\Exception $e) {
+                \Log::error('Gửi mail trạng thái đơn hàng thất bại', [
+                    'order_id' => $order->id,
+                    'email' => $order->email,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
         return $order;
     }
-
     public function delete(int $id)
     {
         return $this->model->destroy($id);

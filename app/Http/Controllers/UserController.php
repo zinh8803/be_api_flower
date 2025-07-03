@@ -6,7 +6,7 @@ use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
-use App\Mail\SendOtpMail;
+use App\Jobs\SendOtpMail;
 use App\Models\EmailOtp;
 use App\Models\RefreshToken;
 use App\Models\User;
@@ -361,7 +361,6 @@ class UserController extends Controller
         ]);
 
         $otp = rand(100000, 999999); 
-        // Lưu OTP
         EmailOtp::updateOrCreate(
             ['email' => $request->email],
             [
@@ -370,8 +369,7 @@ class UserController extends Controller
             ]
         );
 
-        // Gửi mail qua queue
-        \App\Jobs\SendOtpMail::dispatch($request->email, $otp);
+        SendOtpMail::dispatch($request->email, $otp);
 
         return response()->json([
             'status' => true,
