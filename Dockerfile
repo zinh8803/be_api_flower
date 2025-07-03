@@ -17,8 +17,10 @@ RUN chown -R www-data:www-data /var/www \
 
 COPY [nginx.conf](http://_vscodecontentref_/2) /etc/nginx/nginx.conf
 COPY [supervisord.conf](http://_vscodecontentref_/3) /etc/supervisor/conf.d/supervisord.conf
+COPY docker/startup.sh /usr/local/bin/startup.sh
+
+RUN chmod +x /usr/local/bin/startup.sh
 
 EXPOSE 10000
 
-# KHÔNG có CMD nào ở đây hoặc chỉ để mặc định như bạn đã làm
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
+CMD ["/usr/local/bin/startup.sh"]
