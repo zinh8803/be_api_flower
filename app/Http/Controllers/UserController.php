@@ -98,8 +98,8 @@ class UserController extends Controller
             'user_agent' => request()->header('User-Agent'),
         ]);
 
-        $accessCookie = cookie('access_token', $token, 60, null, null, true, true, false, 'Strict');
-        $refreshCookie = cookie('refresh_token', $refreshToken, 20160, null, null, true, true, false, 'Strict');
+         $accessCookie = make_cookie('access_token', $token, 60);
+    $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
 
         return response()->json([
             'status' => true,
