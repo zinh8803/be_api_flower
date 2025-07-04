@@ -930,6 +930,45 @@
                 ]
             }
         },
+        "/api/admin/orders/details/{id}": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Lấy chi tiết đơn hàng theo ID",
+                "operationId": "7ce636a3b969758952e6c89aadb280e5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết đơn hàng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Đơn hàng không tồn tại"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/orders/{id}": {
             "put": {
                 "tags": [
@@ -982,41 +1021,72 @@
                 ]
             }
         },
+        "/api/products/stock-warning/search": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Tìm kiếm sản phẩm trong tồn kho cảnh báo",
+                "operationId": "11a27c5dfd41852f76a45e4838b83f20",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm (tên sản phẩm)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm tồn kho và cảnh báo (theo từ khóa)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/stock-warning": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Kiểm tra tồn kho hôm nay, cảnh báo sản phẩm gần hết",
+                "operationId": "01688e4a046cb1a37c9c833376f479a9",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm tồn kho và cảnh báo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/products/check-available-products": {
-            "post": {
+            "get": {
                 "tags": [
                     "Products"
                 ],
                 "summary": "Kiểm tra sản phẩm có thể làm được với lượng hoa hiện có trong giỏ hàng",
-                "operationId": "12cd98bfefc2703e0cd62c4a92e8f697",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "cart_items": {
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "product_size_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "quantity": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
+                "operationId": "442db33c08812eaff7ddc7c6e45b4011",
                 "responses": {
                     "200": {
                         "description": "Danh sách sản phẩm có thể làm được",
@@ -2140,30 +2210,6 @@
                 },
                 "type": "object"
             },
-            "FlowerTypeStoreRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa ngày Tết"
-                    }
-                },
-                "type": "object"
-            },
-            "FlowerTypeUpdateRequest": {
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Hoa sen"
-                    }
-                },
-                "type": "object"
-            },
             "FlowerStoreRequest": {
                 "required": [
                     "color",
@@ -2216,6 +2262,30 @@
                     "flower_type_id": {
                         "type": "integer",
                         "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa ngày Tết"
+                    }
+                },
+                "type": "object"
+            },
+            "FlowerTypeUpdateRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Hoa sen"
                     }
                 },
                 "type": "object"

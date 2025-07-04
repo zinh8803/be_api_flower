@@ -98,8 +98,8 @@ class UserController extends Controller
             'user_agent' => request()->header('User-Agent'),
         ]);
 
-         $accessCookie = make_cookie('access_token', $token, 60);
-    $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
+        $accessCookie = make_cookie('access_token', $token, 60);
+        $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
 
         return response()->json([
             'status' => true,
@@ -158,7 +158,7 @@ class UserController extends Controller
 
         // Set cookie HttpOnly
         $accessCookie = make_cookie('access_token', $token, 60);
-    $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
+        $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
 
         return response()->json([
             'status' => true,
@@ -252,7 +252,7 @@ class UserController extends Controller
 
     public function profile()
     {
-        return new UserResource(auth()-> user());
+        return new UserResource(auth()->user());
     }
     /**
      * @OA\Post(
@@ -273,8 +273,8 @@ class UserController extends Controller
     public function logout()
     {
         auth()->logout();
-                    $accessCookie = make_cookie('access_token', '', -1);
-                    $refreshCookie = make_cookie('refresh_token', '', -1);
+        $accessCookie = make_cookie('access_token', '', -1);
+        $refreshCookie = make_cookie('refresh_token', '', -1);
         return response()->json(['message' => 'Đăng xuất thành công'])
             ->withCookie($accessCookie)
             ->withCookie($refreshCookie);
@@ -360,7 +360,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
         ]);
 
-        $otp = rand(100000, 999999); 
+        $otp = rand(100000, 999999);
         EmailOtp::updateOrCreate(
             ['email' => $request->email],
             [

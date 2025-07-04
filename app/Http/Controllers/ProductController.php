@@ -28,23 +28,170 @@ class ProductController extends Controller
         $this->products = $products;
     }
 
+    /**
+ * @OA\Get(
+ *     path="/api/products/stock-warning/search",
+ *     tags={"Products"},
+ *     summary="Tìm kiếm sản phẩm trong tồn kho cảnh báo",
+ *     @OA\Parameter(
+ *         name="q",
+ *         in="query",
+ *         description="Từ khóa tìm kiếm (tên sản phẩm)",
+ *         required=false,
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Danh sách sản phẩm tồn kho và cảnh báo (theo từ khóa)",
+ *         @OA\JsonContent(type="array", @OA\Items(type="object"))
+ *     )
+ * )
+ */
+public function searchStockWarning(Request $request)
+{
+    $today = now()->format('Y-m-d');
+    $query = $request->input('q', '');
+    $productsQuery = Product::with(['productSizes.recipes.flower']);
+
+    if ($query) {
+        $productsQuery->where('name', 'like', '%' . $query . '%');
+    }
+
+    $products = $productsQuery->paginate(10);
+    $result = [];
+
+    foreach ($products as $product) {
+        foreach ($product->productSizes as $size) {
+            $minStock = PHP_INT_MAX;
+            $limitingFlower = null;
+            foreach ($size->recipes as $recipe) {
+                $flowerId = $recipe->flower_id;
+                $needed = $recipe->quantity;
+                $stock = ImportReceiptDetail::where('flower_id', $flowerId)
+                    ->whereDate('import_date', $today)
+                    ->select(\DB::raw('SUM(quantity - used_quantity) as remaining'))
+                    ->value('remaining') ?? 0;
+                $possible = $needed > 0 ? floor($stock / $needed) : 0;
+                if ($possible < $minStock) {
+                    $minStock = $possible;
+                    $limitingFlower = [
+                        'id' => $flowerId,
+                        'name' => $recipe->flower->name,
+                        'available' => $stock,
+                        'needed' => $needed
+                    ];
+                }
+            }
+            $result[] = [
+                'product_id' => $product->id,
+                'product_image' => $product->image_url,
+                'product_name' => $product->name,
+                'size_id' => $size->id,
+                'size' => $size->size,
+                'max_quantity' => $minStock,
+                'limiting_flower' => $limitingFlower,
+                'warning' => $minStock <= 3
+            ];
+        }
+    }
+
+    // Sắp xếp gần hết lên trên
+    usort($result, function ($a, $b) {
+        return $a['max_quantity'] <=> $b['max_quantity'];
+    });
+
+    $currentPage = $products->currentPage();
+    $perPage = $products->perPage();
+    $total = $products->total();
+    $lastPage = $products->lastPage();
+
+    return response()->json([
+        'data' => $result,
+        'current_page' => $currentPage,
+        'per_page' => $perPage,
+        'total' => $total,
+        'last_page' => $lastPage,
+    ]);
+}
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/stock-warning",
+     *     tags={"Products"},
+     *     summary="Kiểm tra tồn kho hôm nay, cảnh báo sản phẩm gần hết",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách sản phẩm tồn kho và cảnh báo",
+     *         @OA\JsonContent(type="array", @OA\Items(type="object"))
+     *     )
+     * )
+     */
+    public function stockWarning(Request $request)
+{
+    $today = now()->format('Y-m-d');
+    $products = Product::with(['productSizes.recipes.flower'])->paginate(10);
+    $result = [];
+
+    foreach ($products as $product) {
+        foreach ($product->productSizes as $size) {
+            $minStock = PHP_INT_MAX;
+            $limitingFlower = null;
+            foreach ($size->recipes as $recipe) {
+                $flowerId = $recipe->flower_id;
+                $needed = $recipe->quantity;
+                $stock = ImportReceiptDetail::where('flower_id', $flowerId)
+                    ->whereDate('import_date', $today)
+                    ->select(\DB::raw('SUM(quantity - used_quantity) as remaining'))
+                    ->value('remaining') ?? 0;
+                $possible = $needed > 0 ? floor($stock / $needed) : 0;
+                if ($possible < $minStock) {
+                    $minStock = $possible;
+                    $limitingFlower = [
+                        'id' => $flowerId,
+                        'name' => $recipe->flower->name,
+                        'available' => $stock,
+                        'needed' => $needed
+                    ];
+                }
+            }
+            $result[] = [
+                'product_id' => $product->id,
+                'product_image' => $product->image_url,
+                'product_name' => $product->name,
+                'size_id' => $size->id,
+                'size' => $size->size,
+                'max_quantity' => $minStock,
+                'limiting_flower' => $limitingFlower,
+                'warning' => $minStock <= 3
+            ];
+        }
+    }
+
+    // Sắp xếp theo max_quantity tăng dần (gần hết lên trên)
+    usort($result, function ($a, $b) {
+        return $a['max_quantity'] <=> $b['max_quantity'];
+    });
+
+    $currentPage = $products->currentPage();
+    $perPage = $products->perPage();
+    $total = $products->total();
+    $lastPage = $products->lastPage();
+
+    return response()->json([
+        'data' => $result,
+        'current_page' => $currentPage,
+        'per_page' => $perPage,
+        'total' => $total,
+        'last_page' => $lastPage,
+    ]);
+}
 
 
     /**
-     * @OA\Post(
+     * @OA\get(
      *     path="/api/products/check-available-products",
      *     tags={"Products"},
      *     summary="Kiểm tra sản phẩm có thể làm được với lượng hoa hiện có trong giỏ hàng",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="cart_items", type="array", @OA\Items(type="object", 
-     *                 @OA\Property(property="product_size_id", type="integer", example=1),
-     *                 @OA\Property(property="quantity", type="integer", example=2)
-     *             ))
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Danh sách sản phẩm có thể làm được",
@@ -56,103 +203,104 @@ class ProductController extends Controller
      * )
      */
     public function checkAvailableProducts(Request $request)
-{
-    $cartItems = $request->input('cart_items', []);
-    $today = Carbon::now()->format('Y-m-d');
-    
-    // Lấy tất cả sản phẩm (hoặc theo trang, danh mục)
-    $products = Product::with(['productSizes.recipes.flower'])->get();
-    
-    // Tính lượng hoa đã sử dụng trong giỏ hàng
-    $usedFlowers = [];
-    foreach ($cartItems as $item) {
-        $productSizeId = $item['product_size_id'];
-        $quantity = $item['quantity'];
-        
-        $productSize = ProductSize::with('recipes')->find($productSizeId);
-        if (!$productSize) continue;
-        
-        foreach ($productSize->recipes as $recipe) {
-            $flowerId = $recipe->flower_id;
-            $usedAmount = $recipe->quantity * $quantity;
-            
-            if (!isset($usedFlowers[$flowerId])) {
-                $usedFlowers[$flowerId] = 0;
-            }
-            $usedFlowers[$flowerId] += $usedAmount;
-        }
-    }
-    
-    // Kiểm tra tồn kho còn lại cho từng sản phẩm
-    $availableProducts = [];
-    
-    foreach ($products as $product) {
-        $productStatus = [
-            'id' => $product->id,
-            'sizes' => []
-        ];
-        
-        foreach ($product->productSizes as $size) {
-            $canBeMade = true;
-            $limitingFlower = null;
-            $maxQuantity = PHP_INT_MAX;
-            
-            foreach ($size->recipes as $recipe) {
+    {
+        $cartItems = $request->input('cart_items', []);
+        $today = Carbon::now()->format('Y-m-d');
+
+        // Lấy tất cả sản phẩm (hoặc theo trang, danh mục)
+        $products = Product::with(['productSizes.recipes.flower'])->get();
+
+        // Tính lượng hoa đã sử dụng trong giỏ hàng
+        $usedFlowers = [];
+        foreach ($cartItems as $item) {
+            $productSizeId = $item['product_size_id'];
+            $quantity = $item['quantity'];
+
+            $productSize = ProductSize::with('recipes')->find($productSizeId);
+            if (!$productSize)
+                continue;
+
+            foreach ($productSize->recipes as $recipe) {
                 $flowerId = $recipe->flower_id;
-                $neededPerItem = $recipe->quantity;
-                
-                // Lấy tồn kho hôm nay của loại hoa
-                $flowerStock = ImportReceiptDetail::where('flower_id', $flowerId)
-                    ->whereDate('import_date', $today)
-                    ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-                    ->value('remaining') ?? 0;
-                
-                // Trừ đi lượng đã dùng trong giỏ hàng
-                $remainingStock = $flowerStock - ($usedFlowers[$flowerId] ?? 0);
-                
-                // Tính số lượng tối đa có thể làm
-                $possibleItems = floor($remainingStock / $neededPerItem);
-                
-                if ($possibleItems < 1) {
-                    $canBeMade = false;
-                    $limitingFlower = [
-                        'id' => $flowerId,
-                        'name' => $recipe->flower->name,
-                        'available' => $remainingStock,
-                        'needed' => $neededPerItem
-                    ];
-                    $maxQuantity = 0;
-                    break;
+                $usedAmount = $recipe->quantity * $quantity;
+
+                if (!isset($usedFlowers[$flowerId])) {
+                    $usedFlowers[$flowerId] = 0;
                 }
-                
-                if ($possibleItems < $maxQuantity) {
-                    $maxQuantity = $possibleItems;
-                    $limitingFlower = [
-                        'id' => $flowerId,
-                        'name' => $recipe->flower->name,
-                        'available' => $remainingStock,
-                        'needed' => $neededPerItem
-                    ];
-                }
+                $usedFlowers[$flowerId] += $usedAmount;
             }
-            
-            $productStatus['sizes'][] = [
-                'size_id' => $size->id,
-                'size_name' => $size->size,
-                'in_stock' => $canBeMade,
-                'max_quantity' => $maxQuantity,
-                'limiting_flower' => $limitingFlower
-            ];
         }
-        
-        $availableProducts[] = $productStatus;
+
+        // Kiểm tra tồn kho còn lại cho từng sản phẩm
+        $availableProducts = [];
+
+        foreach ($products as $product) {
+            $productStatus = [
+                'id' => $product->id,
+                'sizes' => []
+            ];
+
+            foreach ($product->productSizes as $size) {
+                $canBeMade = true;
+                $limitingFlower = null;
+                $maxQuantity = PHP_INT_MAX;
+
+                foreach ($size->recipes as $recipe) {
+                    $flowerId = $recipe->flower_id;
+                    $neededPerItem = $recipe->quantity;
+
+                    // Lấy tồn kho hôm nay của loại hoa
+                    $flowerStock = ImportReceiptDetail::where('flower_id', $flowerId)
+                        ->whereDate('import_date', $today)
+                        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
+                        ->value('remaining') ?? 0;
+
+                    // Trừ đi lượng đã dùng trong giỏ hàng
+                    $remainingStock = $flowerStock - ($usedFlowers[$flowerId] ?? 0);
+
+                    // Tính số lượng tối đa có thể làm
+                    $possibleItems = floor($remainingStock / $neededPerItem);
+
+                    if ($possibleItems < 1) {
+                        $canBeMade = false;
+                        $limitingFlower = [
+                            'id' => $flowerId,
+                            'name' => $recipe->flower->name,
+                            'available' => $remainingStock,
+                            'needed' => $neededPerItem
+                        ];
+                        $maxQuantity = 0;
+                        break;
+                    }
+
+                    if ($possibleItems < $maxQuantity) {
+                        $maxQuantity = $possibleItems;
+                        $limitingFlower = [
+                            'id' => $flowerId,
+                            'name' => $recipe->flower->name,
+                            'available' => $remainingStock,
+                            'needed' => $neededPerItem
+                        ];
+                    }
+                }
+
+                $productStatus['sizes'][] = [
+                    'size_id' => $size->id,
+                    'size_name' => $size->size,
+                    'in_stock' => $canBeMade,
+                    'max_quantity' => $maxQuantity,
+                    'limiting_flower' => $limitingFlower
+                ];
+            }
+
+            $availableProducts[] = $productStatus;
+        }
+
+        return response()->json([
+            'available_products' => $availableProducts,
+            'checked_date' => $today
+        ]);
     }
-    
-    return response()->json([
-        'available_products' => $availableProducts,
-        'checked_date' => $today
-    ]);
-}
 
     /**
      * @OA\Get(
@@ -166,14 +314,20 @@ class ProductController extends Controller
      *     )
      * )
      */
-    public function index()
-    {
+    public function index(Request $request)
+{
+    // Lấy các tham số tìm kiếm từ query string
+    $filters = [
+        'name' => $request->input('name'),
+        'category_id' => $request->input('category_id'),
+        // Thêm các filter khác nếu cần
+    ];
 
-        $products = $this->products->all();
-        return ProductResource::collection($products);
-    }
+    $products = $this->products->all($filters);
+    return ProductResource::collection($products);
+}
 
-        /**
+    /**
      * @OA\Get(
      *     path="/api/products/search",
      *     tags={"Products"},

@@ -179,7 +179,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         if (isset($data['status']) && $data['status'] !== $status && !empty($order->email)) {
             try {
-                SendOrderStatusMailJob::dispatch($order, $status);
+                SendOrderStatusMailJob::dispatch($order, $data['status']);
             } catch (\Exception $e) {
                 \Log::error('Gửi mail trạng thái đơn hàng thất bại', [
                     'order_id' => $order->id,
@@ -240,6 +240,14 @@ class OrderRepository implements OrderRepositoryInterface
             return response()->json(['message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
         }
 
+        return $order;
+    }
+    public function show(int $id)
+    {
+        $order = $this->model->with('orderDetails.product', 'orderDetails.productSize')->find($id);
+        if (!$order) {
+            return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
+        }
         return $order;
     }
 }

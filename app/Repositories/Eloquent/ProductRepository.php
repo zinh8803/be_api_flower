@@ -23,9 +23,18 @@ class ProductRepository implements ProductRepositoryInterface
         $this->model = $product;
     }
 
-    public function all()
+    public function all($filters = [])
     {
-        return $this->model->with(['category', 'productSizes.recipes.flower'])->paginate(10);
+        $query = $this->model->with(['category', 'productSizes.recipes.flower'])->orderBy('created_at', 'desc');
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+        if (!empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        return $query->paginate(10);
     }
 
     public function find($id)

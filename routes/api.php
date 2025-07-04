@@ -37,6 +37,7 @@ Route::middleware(CheckJWT::class)->group(function () {
     
 
 });
+Route::get('/admin/orders/details/{id}', [OrderController::class, 'show']);
 Route::post('/refresh-token', [UserController::class, 'refreshToken']);
 Route::apiResource('flower-types', FlowerTypeController::class);
 Route::apiResource('flower', FlowerController::class);
@@ -55,7 +56,9 @@ Route::prefix('categories')->group(function () {
 //Route::apiResource('products', ProductController::class);
 
 Route::prefix('products')->group(function () {
-    Route::post('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
+    Route::get('/stock-warning/search', [ProductController::class, 'searchStockWarning']);
+    Route::get('/stock-warning', [ProductController::class, 'stockWarning']);
+    Route::get('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
     Route::get('/stock', [ProductController::class, 'checkAllStock']);
     Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
     Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);

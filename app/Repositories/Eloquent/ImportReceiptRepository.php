@@ -15,9 +15,18 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
         $this->model = $importReceipt;
     }
 
-    public function all()
+    public function all($filters = [])
     {
-        return $this->model->with('details.flower')->orderBy('import_date', 'desc')->paginate(10);
+        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc');
+
+        if (!empty($filters['from_date'])) {
+            $query->whereDate('import_date', '>=', $filters['from_date']);
+        }
+        if (!empty($filters['to_date'])) {
+            $query->whereDate('import_date', '<=', $filters['to_date']);
+        }
+
+        return $query->paginate(10);
     }
 
     public function find($id)

@@ -37,9 +37,13 @@ class ImportReceiptController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $data = $this->receipts->all();
+        $filters = [
+            'from_date' => $request->input('from_date'),
+            'to_date' => $request->input('to_date'),
+        ];
+        $data = $this->receipts->all($filters);
         return ImportReceiptResource::collection($data);
     }
 

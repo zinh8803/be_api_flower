@@ -107,9 +107,24 @@ class OrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Order $order)
+    /**
+     * @OA\Get(
+     *     path="/api/admin/orders/details/{id}",
+     *     tags={"Orders"},
+     *     summary="Lấy chi tiết đơn hàng theo ID",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Chi tiết đơn hàng", @OA\JsonContent(ref="#/components/schemas/Order")),
+     *     @OA\Response(response=404, description="Đơn hàng không tồn tại")
+     * )
+     */
+    public function show($id)
     {
-        //
+        $order = $this->orderRepository->show($id);
+        if ($order instanceof JsonResponse) {
+            return $order;
+        }
+        return new OrderResource($order);
     }
 
     /**
