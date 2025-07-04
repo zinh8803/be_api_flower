@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\ImportReceipt;
 use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ImportReceiptRepository implements ImportReceiptRepositoryInterface
 {
@@ -50,29 +51,29 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
     {
         return $this->model->destroy($id);
     }
-public function createWithDetails(array $data)
-{
-    return DB::transaction(function () use ($data) {
-        $details = $data['details'] ?? [];
-        unset($data['details']);
+    public function createWithDetails(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            $details = $data['details'] ?? [];
+            unset($data['details']);
 
-        $total = collect($details)->sum(function ($item) {
-            return $item['quantity'] * $item['import_price'];
+            $total = collect($details)->sum(function ($item) {
+                return $item['quantity'] * $item['import_price'];
+            });
+            $data['total_price'] = $total;
+
+            $receipt = $this->create($data);
+
+            foreach ($details as $detail) {
+                $detail['import_date'] = $data['import_date'];
+                $detail['subtotal'] = $detail['quantity'] * $detail['import_price'];
+                $detail['used_quantity'] = 0; // Thêm dòng này
+                $receipt->details()->create($detail);
+            }
+
+            return $this->find($receipt->id);
         });
-        $data['total_price'] = $total;
-
-        $receipt = $this->create($data);
-
-        foreach ($details as $detail) {
-            $detail['import_date'] = $data['import_date'];
-            $detail['subtotal'] = $detail['quantity'] * $detail['import_price'];
-            $receipt->details()->create($detail);
-        }
-
-        return $this->find($receipt->id);
-    });
-}
-
+    }
 
     public function updateWithDetails($id, array $data)
     {
@@ -87,11 +88,34 @@ public function createWithDetails(array $data)
 
             $receipt = $this->update($id, $data);
 
-            $receipt->details()->delete();
+            $existingDetails = $receipt->details()->get()->keyBy('flower_id');
+            
+            $processedFlowerIds = [];
+            
             foreach ($details as $detail) {
+                $detail['import_date'] = $data['import_date'];
                 $detail['subtotal'] = $detail['quantity'] * $detail['import_price'];
-                $receipt->details()->create($detail);
+
+                if ($existingDetails->has($detail['flower_id'])) {
+                    $existingDetail = $existingDetails->get($detail['flower_id']);
+                    
+                    $existingDetail->update([
+                        'quantity' => $detail['quantity'],
+                        'import_price' => $detail['import_price'],
+                        'import_date' => $detail['import_date'],
+                        'subtotal' => $detail['subtotal'],
+                    ]);
+                    
+                    $processedFlowerIds[] = $detail['flower_id'];
+                } else {
+                    $detail['used_quantity'] = 0;
+                    $receipt->details()->create($detail);
+                    $processedFlowerIds[] = $detail['flower_id'];
+                }
             }
+
+            // Xóa các chi tiết không còn trong danh sách
+            $receipt->details()->whereNotIn('flower_id', $processedFlowerIds)->delete();
 
             return $this->find($id);
         });

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
 use App\Models\ProductSize;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 class OrderRepository implements OrderRepositoryInterface
 {
@@ -35,8 +36,12 @@ class OrderRepository implements OrderRepositoryInterface
             $discountAmount = 0;
 
             foreach ($items as $item) {
-                $productSize = ProductSize::with('recipes.flower', 'product')->findOrFail($item['product_size_id']);
+                $productSize = ProductSize::with(['recipes.flower', 'product'])->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
+
+                if($this->isForcedFlower($productSize)) {
+                    throw new \Exception("Sản phẩm {$productSize->product->name} hiện đang ở trạng thái hoa ép, không thể đặt mua.");
+                }
 
                 foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
@@ -110,6 +115,29 @@ class OrderRepository implements OrderRepositoryInterface
         });
     }
 
+    protected function isForcedFlower(ProductSize $productSize)
+    {
+        foreach ($productSize->recipes as $recipe) {
+            $importReceiptDetail = $recipe->flower
+                ? $recipe->flower->importReceiptDetails()->orderByDesc('import_date')->first()
+                : null;
+            $status = null;
+            if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
+                $importDate = Carbon::parse($importReceiptDetail->import_date);
+                $today = Carbon::today();
+                if ($importDate->isSameDay($today)) {
+                    $now = Carbon::now();
+                    $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
+                } elseif ($importDate->lt($today)) {
+                    $status = 'hoa ép';
+                }
+            }
+            if ($status === 'hoa ép') {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public function deductStock($flowerId, $neededQty)
     {
@@ -181,7 +209,7 @@ class OrderRepository implements OrderRepositoryInterface
             try {
                 SendOrderStatusMailJob::dispatch($order, $data['status']);
             } catch (\Exception $e) {
-                \Log::error('Gửi mail trạng thái đơn hàng thất bại', [
+                Log::error('Gửi mail trạng thái đơn hàng thất bại', [
                     'order_id' => $order->id,
                     'email' => $order->email,
                     'error' => $e->getMessage()
