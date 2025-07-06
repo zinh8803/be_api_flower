@@ -52,6 +52,7 @@ class UpdateProductRequest extends FormRequest
             'category_id' => 'required|integer|exists:categories,id',
             'sizes' => 'required|array|min:1',
         'sizes.*.size' => 'required|string|max:255',
+        'sizes.*.price' => 'required|numeric|min:0',
         'sizes.*.recipes' => 'required|array|min:1',
         'sizes.*.recipes.*.flower_id' => 'required|integer|exists:flowers,id',
         'sizes.*.recipes.*.quantity' => 'required|integer|min:1',

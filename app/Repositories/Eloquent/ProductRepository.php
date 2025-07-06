@@ -102,26 +102,18 @@ class ProductRepository implements ProductRepositoryInterface
             $product = $this->model->create($data);
 
             foreach ($sizes as $sizeData) {
-                // Tính giá cho từng size
-                $totalPrice = 0;
-                foreach ($sizeData['recipes'] as $recipe) {
-                    $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
-                        ->orderByDesc('import_date')
-                        ->value('import_price') ?? 0;
-                    $totalPrice += $recipe['quantity'] * $importPrice;
-                }
-                $finalPrice = $totalPrice * 1.5;
+                // Sử dụng giá do người dùng nhập thay vì tự động tính
+                $price = $sizeData['price'];
 
-                // Tạo product_size với giá đã tính
+                // Tạo product_size với giá đã nhập
                 $productSize = $product->productSizes()->create([
                     'size' => $sizeData['size'],
-                    'price' => $finalPrice,
+                    'price' => $price,
                 ]);
 
                 // Tạo recipes cho từng size
                 foreach ($sizeData['recipes'] as $recipe) {
                     $productSize->recipes()->create([
-
                         'flower_id' => $recipe['flower_id'],
                         'quantity' => $recipe['quantity'],
                         'product_size_id' => $productSize->id,
@@ -165,21 +157,13 @@ class ProductRepository implements ProductRepositoryInterface
             $product->update($data);
 
             foreach ($sizes as $sizeData) {
-                // Tính giá cho từng size
-                $totalPrice = 0;
-                foreach ($sizeData['recipes'] as $recipe) {
-                    $importPrice = ImportReceiptDetail::where('flower_id', $recipe['flower_id'])
-                        ->orderByDesc('import_date')
-                        ->value('import_price') ?? 0;
-                    $totalPrice += $recipe['quantity'] * $importPrice;
-                }
-                $finalPrice = $totalPrice * 1.5;
+                // Sử dụng giá do người dùng nhập thay vì tự động tính
+                $price = $sizeData['price'];
 
-                // Tạo product_size với giá đã tính
+                // Tạo product_size với giá đã nhập
                 $productSize = $product->productSizes()->create([
                     'size' => $sizeData['size'],
-                    'price' => $finalPrice,
-
+                    'price' => $price,
                 ]);
 
                 // Tạo recipes cho từng size

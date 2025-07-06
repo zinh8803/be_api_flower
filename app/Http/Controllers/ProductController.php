@@ -69,7 +69,7 @@ class ProductController extends Controller
                     $needed = $recipe->quantity;
                     $stock = ImportReceiptDetail::where('flower_id', $flowerId)
                         ->whereDate('import_date', $today)
-                        ->select(\DB::raw('SUM(quantity - used_quantity) as remaining'))
+                        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
                     if ($possible < $minStock) {
@@ -383,7 +383,7 @@ class ProductController extends Controller
  *             mediaType="multipart/form-data",
  *             @OA\Schema(
  *                 type="object",
- *                 required={"name", "category_id", "status", "sizes[0][size]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
+ *                 required={"name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
  *                 
  *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đẹp", description="Tên sản phẩm"),
  *                 @OA\Property(property="description", type="string", example="Mẫu bó hoa cưới với nhiều hoa baby", description="Mô tả sản phẩm"),
@@ -392,12 +392,14 @@ class ProductController extends Controller
  *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
 
  *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ", description="Tên size 1"),
+ *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
  *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1, description="ID hoa thứ 1 cho size Nhỏ"),
  *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10, description="Số lượng hoa thứ 1 cho size Nhỏ"),
  *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2, description="ID hoa thứ 2 cho size Nhỏ"),
  *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5, description="Số lượng hoa thứ 2 cho size Nhỏ"),
 
  *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn", description="Tên size 2"),
+ *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
  *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1, description="ID hoa cho size Lớn"),
  *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20, description="Số lượng hoa cho size Lớn")
  *             )
@@ -500,7 +502,7 @@ class ProductController extends Controller
  *             mediaType="multipart/form-data",
  *             @OA\Schema(
  *                 type="object",
- *                 required={"_method", "name", "category_id", "status", "sizes[0][size]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
+ *                 required={"_method", "name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
  *                 @OA\Property(property="_method", type="string", example="PUT", description="Phương thức HTTP (đặt là PUT để cập nhật)"),
  *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
  *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
@@ -509,12 +511,14 @@ class ProductController extends Controller
  *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục sản phẩm"),
 
  *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ"),
+ *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
  *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1),
  *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10),
  *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2),
  *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5),
 
  *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn"),
+ *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
  *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1),
  *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20)
  *             )

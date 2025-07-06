@@ -9,7 +9,7 @@
         <img src="https://tools.dalathasfarm.com/assets/_file/2025/2025-06/diudang_banner11.jpg" style="width:100%;display:block;">
         <div style="padding:32px 24px;text-align:center;">
             <h2 style="color:#388e3c;">Cảm ơn bạn đã đặt hàng!</h2>
-            <p style="color:#333;">Đơn hàng #{{ $order->id }} đã được tiếp nhận.</p>
+            <p style="color:#333;">Đơn hàng #{{ $order->order_code }} đã được tiếp nhận.</p>
             <p><strong>Tổng tiền:</strong> {{ number_format((float) $order->total_price) }} VND</p>
             <p><strong>Phương thức thanh toán:</strong> {{ $order->payment_method }}</p>
 
