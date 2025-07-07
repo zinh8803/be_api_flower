@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
 use App\Http\Controllers\FlowerTypeController;
@@ -35,6 +36,7 @@ Route::middleware(CheckJWT::class)->group(function () {
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
     Route::apiResource('orders',OrderController::class);
     
+    Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
 
 });
 Route::get('/admin/orders/details/{id}', [OrderController::class, 'show']);
