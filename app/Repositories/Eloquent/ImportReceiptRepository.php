@@ -18,7 +18,7 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
 
     public function all($filters = [])
     {
-        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc');
+        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc')->orderBy('id', 'desc'); ;
 
         if (!empty($filters['from_date'])) {
             $query->whereDate('import_date', '>=', $filters['from_date']);

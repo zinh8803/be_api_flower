@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\Discount;
 use App\Repositories\Contracts\DiscountRepositoryInterface;
 use Illuminate\Support\Facades\Log;
+
 class DiscountRepository implements DiscountRepositoryInterface
 {
     public function getAll()
@@ -12,7 +14,6 @@ class DiscountRepository implements DiscountRepositoryInterface
         return Discount::orderBy('status', 'desc')
             ->orderBy('start_date', 'asc')
             ->paginate(10);
-        return Discount::all();
     }
     public function updateExpiredStatus()
     {
@@ -50,7 +51,7 @@ class DiscountRepository implements DiscountRepositoryInterface
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->first();
-       //Log::info('Checking discount code validity', ['code' => $code, 'result' => $discount]);
+        //Log::info('Checking discount code validity', ['code' => $code, 'result' => $discount]);
         return $discount ? $discount : null;
     }
 }

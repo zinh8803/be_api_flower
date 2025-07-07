@@ -33,9 +33,10 @@ class OrderController extends Controller
      * )
      */
 
-    public function index()
+    public function index(Request $request)
     {
-        return OrderResource::collection($this->orderRepository->all());
+        $filters = $request->only(['from_date', 'to_date', 'status']);
+        return OrderResource::collection($this->orderRepository->all($filters));
     }
 
     /**
@@ -78,8 +79,6 @@ class OrderController extends Controller
             return response()->json(['message' => 'Bạn chưa có đơn hàng nào.'], 404);
         }
         return OrderResource::collection($orders);
-
-
     }
     /**
      * @OA\Get(

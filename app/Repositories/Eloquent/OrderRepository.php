@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Repositories\Eloquent;
+
 use App\Jobs\SendOrderMail;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
@@ -15,6 +17,7 @@ use App\Mail\OrderSuccessMail;
 use App\Models\ProductSize;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+
 class OrderRepository implements OrderRepositoryInterface
 {
     protected $model;
@@ -39,7 +42,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $productSize = ProductSize::with(['recipes.flower', 'product'])->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
 
-                if($this->isForcedFlower($productSize)) {
+                if ($this->isForcedFlower($productSize)) {
                     throw new \Exception("Sản phẩm {$productSize->product->name} hiện đang ở trạng thái hoa ép, không thể đặt mua.");
                 }
 
@@ -73,7 +76,9 @@ class OrderRepository implements OrderRepositoryInterface
                 if (!$discount->isActive()) {
                     throw new \Exception('Mã giảm giá không còn hiệu lực.');
                 }
-
+                if ($orderSubtotal < ($discount->min_total ?? 0)) {
+                    throw new \Exception('Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã giảm giá.');
+                }
                 $discountAmount = $discount->type === 'percent'
                     ? $orderSubtotal * $discount->value / 100
                     : $discount->value;
@@ -224,10 +229,24 @@ class OrderRepository implements OrderRepositoryInterface
         return $this->model->destroy($id);
     }
 
-    public function all()
+    public function all($filters = [])
     {
         // return $this->model->orderBy('id', 'desc')->paginate(10);
-        return $this->model->with('orderDetails.product', 'orderDetails.productSize')->orderBy('buy_at', 'desc')->paginate(10);
+        $query = $this->model->with('orderDetails.product', 'orderDetails.productSize')
+            ->orderBy('buy_at', 'desc')
+            ->orderBy('id', 'desc');
+
+        if (!empty($filters['from_date'])) {
+            $query->whereDate('buy_at', '>=', $filters['from_date']);
+        }
+        if (!empty($filters['to_date'])) {
+            $query->whereDate('buy_at', '<=', $filters['to_date']);
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query->paginate(10);
     }
 
     public function findByUserId(int $userId)

@@ -2184,6 +2184,11 @@
                         "format": "float",
                         "example": 10
                     },
+                    "min_total": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
                     "start_date": {
                         "type": "string",
                         "format": "date-time",
@@ -2214,6 +2219,11 @@
                         "type": "number",
                         "format": "float",
                         "example": 10
+                    },
+                    "min_total": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
                     },
                     "start_date": {
                         "type": "string",
