@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\AutoImportReceiptController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\DiscountController;
@@ -37,6 +38,8 @@ Route::middleware(CheckJWT::class)->group(function () {
     Route::apiResource('orders',OrderController::class);
     
     Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
+
+    Route::resource('auto-import-receipts', AutoImportReceiptController::class);
 
 });
 Route::get('/admin/orders/details/{id}', [OrderController::class, 'show']);

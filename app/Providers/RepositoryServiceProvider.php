@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\AutoImportReceiptInterface;
 use App\Repositories\Contracts\DiscountRepositoryInterface;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -14,9 +15,11 @@ use App\Repositories\Contracts\FlowerTypeRepositoryInterface;
 use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Repositories\Eloquent\AutoImportReceiptRepository;
 use App\Repositories\Eloquent\FlowerTypeRepository;
 use App\Repositories\Eloquent\ImportReceiptRepository;
 use App\Repositories\Eloquent\ProductRepository;
+
 class RepositoryServiceProvider extends ServiceProvider
 {
     /**
@@ -26,15 +29,16 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
-         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         $this->app->bind(DiscountRepositoryInterface::class, DiscountRepository::class);
-         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
+        $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         // $this->app->bind(OrderDetailRepositoryInterface::class, OrderDetailRepository::class);
         // $this->app->bind(InvoiceRepositoryInterface::class, InvoiceRepository::class);
         $this->app->bind(FlowerTypeRepositoryInterface::class, FlowerTypeRepository::class);
         // $this->app->bind(FlowerRepositoryInterface::class, FlowerRepository::class);
         // $this->app->bind(RecipeRepositoryInterface::class, RecipeRepository::class);
-         $this->app->bind(ImportReceiptRepositoryInterface::class, ImportReceiptRepository::class);
+        $this->app->bind(ImportReceiptRepositoryInterface::class, ImportReceiptRepository::class);
+        $this->app->bind(AutoImportReceiptInterface::class, AutoImportReceiptRepository::class);
         // $this->app->bind(ImportReceiptDetailRepositoryInterface::class, ImportReceiptDetailRepository::class);
     }
 

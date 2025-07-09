@@ -18,7 +18,7 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
 
     public function all($filters = [])
     {
-        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc')->orderBy('id', 'desc'); ;
+        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc')->orderBy('id', 'desc');;
 
         if (!empty($filters['from_date'])) {
             $query->whereDate('import_date', '>=', $filters['from_date']);
@@ -67,13 +67,14 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
             foreach ($details as $detail) {
                 $detail['import_date'] = $data['import_date'];
                 $detail['subtotal'] = $detail['quantity'] * $detail['import_price'];
-                $detail['used_quantity'] = 0; // Thêm dòng này
+                $detail['used_quantity'] = 0;
                 $receipt->details()->create($detail);
             }
 
             return $this->find($receipt->id);
         });
     }
+
 
     public function updateWithDetails($id, array $data)
     {
@@ -89,23 +90,23 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
             $receipt = $this->update($id, $data);
 
             $existingDetails = $receipt->details()->get()->keyBy('flower_id');
-            
+
             $processedFlowerIds = [];
-            
+
             foreach ($details as $detail) {
                 $detail['import_date'] = $data['import_date'];
                 $detail['subtotal'] = $detail['quantity'] * $detail['import_price'];
 
                 if ($existingDetails->has($detail['flower_id'])) {
                     $existingDetail = $existingDetails->get($detail['flower_id']);
-                    
+
                     $existingDetail->update([
                         'quantity' => $detail['quantity'],
                         'import_price' => $detail['import_price'],
                         'import_date' => $detail['import_date'],
                         'subtotal' => $detail['subtotal'],
                     ]);
-                    
+
                     $processedFlowerIds[] = $detail['flower_id'];
                 } else {
                     $detail['used_quantity'] = 0;

@@ -16,6 +16,134 @@
         "/discounts": {},
         "/flower": {},
         "/flower-types": {},
+        "/api/auto-import-receipts": {
+            "get": {
+                "tags": [
+                    "Auto Import Receipts"
+                ],
+                "summary": "Get all auto import receipts",
+                "operationId": "2737ffec78fddc8285d30a40ef5419a0",
+                "responses": {
+                    "200": {
+                        "description": "List of auto import receipts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AutoImportReceipt"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Auto Import Receipts"
+                ],
+                "summary": "Create a new auto import receipt config",
+                "operationId": "78f3fcdf1eba72df70bbfa5dd1a02fad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AutoImportReceipt"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Auto import receipt created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AutoImportReceipt"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation errors"
+                    }
+                }
+            }
+        },
+        "/api/auto-import-receipts/{id}": {
+            "put": {
+                "tags": [
+                    "Auto Import Receipts"
+                ],
+                "summary": "Update an auto import receipt config",
+                "operationId": "f0bb9ce9dcfb14740c19bcef1612a05f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AutoImportReceipt"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Auto import receipt updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AutoImportReceipt"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Auto import receipt not found"
+                    },
+                    "422": {
+                        "description": "Validation errors"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Auto Import Receipts"
+                ],
+                "summary": "Delete an auto import receipt config",
+                "operationId": "5ebb991bb79c9fb42ae07b7f78a881b8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auto import receipt deleted"
+                    },
+                    "404": {
+                        "description": "Auto import receipt not found"
+                    }
+                }
+            }
+        },
         "/api/categories": {
             "get": {
                 "tags": [
@@ -2626,6 +2754,47 @@
                 },
                 "type": "object"
             },
+            "AutoImportReceipt": {
+                "title": "AutoImportReceipt",
+                "required": [
+                    "id",
+                    "import_date",
+                    "details",
+                    "enabled",
+                    "run_time"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "import_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-06-01"
+                    },
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "Detail 1",
+                            "Detail 2"
+                        ]
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "run_time": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "12:00:00"
+                    }
+                },
+                "type": "object"
+            },
             "Category": {
                 "title": "FlowerType",
                 "required": [
@@ -2691,6 +2860,11 @@
                     "status": {
                         "type": "boolean",
                         "example": true
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
                     },
                     "created_at": {
                         "type": "string",
@@ -3096,6 +3270,10 @@
         {
             "name": "Products",
             "description": "Quản lý sản phẩm hoa"
+        },
+        {
+            "name": "Auto Import Receipts",
+            "description": "Auto Import Receipts"
         },
         {
             "name": "Orders",

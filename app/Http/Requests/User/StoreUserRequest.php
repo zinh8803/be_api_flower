@@ -3,6 +3,7 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+
 /**
  * @OA\Schema(
  *     schema="RegisterRequest",
@@ -36,11 +37,17 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-             'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:6|confirmed', // Password must be confirmed
-            // 'address' => 'nullable|string|max:500',
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Optional avatar image
-            'role' => 'nullable|in:admin,user', // Optional role, default is 'user'
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:6|confirmed',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'role' => 'nullable|in:admin,user',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'email.unique' => 'Email này đã được đăng ký. Vui lòng dùng email khác.',
         ];
     }
 }
