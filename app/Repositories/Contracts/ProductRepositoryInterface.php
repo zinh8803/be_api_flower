@@ -5,6 +5,7 @@ namespace App\Repositories\Contracts;
 interface ProductRepositoryInterface
 {
     public function all();
+    public function filterTypeColor($filters = []);
     public function find($id);
     public function create(array $data);
     public function update($id, array $data);

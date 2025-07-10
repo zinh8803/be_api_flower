@@ -1208,6 +1208,54 @@
                 }
             }
         },
+        "/api/products/filter": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lọc sản phẩm theo loại, màu sắc và danh mục",
+                "operationId": "80abea5651593a5d4a8a36a1511515e5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "category_id": {
+                                        "description": "ID danh mục",
+                                        "type": "integer"
+                                    },
+                                    "color": {
+                                        "description": "Màu sắc",
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "description": "Loại sản phẩm",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm đã lọc",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/products/check-available-products": {
             "get": {
                 "tags": [

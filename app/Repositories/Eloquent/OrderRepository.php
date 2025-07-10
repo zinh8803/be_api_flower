@@ -98,7 +98,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'address' => $data['address'],
                 'note' => $data['note'] ?? null,
                 'payment_method' => $data['payment_method'],
-                'user_id' => $data['user_id'] ?? auth()->id() ?? 1,
+                'user_id' => $data['user_id'] ?? auth()->id() ?? null,
                 'status' => 'đang xử lý',
                 'buy_at' => now(),
                 'discount_id' => $data['discount_id'] ?? null,

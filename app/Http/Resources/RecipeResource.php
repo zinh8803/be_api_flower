@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+
 /**
  * @OA\Schema(
  *     schema="RecipeDetailResource",
@@ -51,6 +52,7 @@ class RecipeResource extends JsonResource
             'import_price' => $importReceiptDetail->import_price ?? null,
             'import_date' => $importReceiptDetail->import_date ?? null,
             'status' => $status,
+            'flower' => new FlowerResource($this->flower),
         ];
     }
 }

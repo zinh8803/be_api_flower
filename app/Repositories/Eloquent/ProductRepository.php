@@ -25,11 +25,34 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function all($filters = [])
     {
-        $query = $this->model->with(['category', 'productSizes.recipes.flower'])->orderBy('created_at', 'desc');
+        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType'])->orderBy('created_at', 'desc');
 
         if (!empty($filters['name'])) {
             $query->where('name', 'like', '%' . $filters['name'] . '%');
         }
+        if (!empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        return $query->paginate(10);
+    }
+
+    public function filterTypeColor($filters = [])
+    {
+        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType']);
+
+        if (!empty($filters['color'])) {
+            $query->whereHas('productSizes.recipes.flower', function ($q) use ($filters) {
+                $q->where('color', $filters['color']);
+            });
+        }
+
+        if (!empty($filters['flower_type_id'])) {
+            $query->whereHas('productSizes.recipes.flower.flowerType', function ($q) use ($filters) {
+                $q->where('id', $filters['flower_type_id']);
+            });
+        }
+
         if (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }

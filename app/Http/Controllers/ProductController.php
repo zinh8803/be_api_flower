@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
 /**
  * @OA\Tag(name="Products", description="Quản lý sản phẩm hoa")
  */
@@ -184,6 +185,38 @@ class ProductController extends Controller
             'total' => $total,
             'last_page' => $lastPage,
         ]);
+    }
+
+    /**
+     * @OA\get(
+     *     path="/api/products/filter",
+     *     tags={"Products"},
+     *     summary="Lọc sản phẩm theo loại, màu sắc và danh mục",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="category_id", type="integer", description="ID danh mục"),
+     *             @OA\Property(property="color", type="string", description="Màu sắc"),
+     *             @OA\Property(property="type", type="string", description="Loại sản phẩm")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách sản phẩm đã lọc",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/ProductResource"))
+     *     )
+     * )
+     */
+    public function filter(Request $request)
+    {
+        $filters = [
+            'category_id' => $request->input('category_id'),
+            'color' => $request->input('color'),
+            'flower_type_id' => $request->input('flower_type_id'),
+        ];
+        $products = $this->products->filterTypeColor($filters);
+        return ProductResource::collection($products);
     }
 
 
@@ -373,45 +406,45 @@ class ProductController extends Controller
      * Store a newly created resource in storage.
      */
     /**
- * @OA\Post(
- *     path="/api/products",
- *     tags={"Products"},
- *     summary="Tạo sản phẩm mới với nhiều size và công thức hoa",
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\MediaType(
- *             mediaType="multipart/form-data",
- *             @OA\Schema(
- *                 type="object",
- *                 required={"name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
- *                 
- *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đẹp", description="Tên sản phẩm"),
- *                 @OA\Property(property="description", type="string", example="Mẫu bó hoa cưới với nhiều hoa baby", description="Mô tả sản phẩm"),
- *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục"),
- *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
- *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
+     * @OA\Post(
+     *     path="/api/products",
+     *     tags={"Products"},
+     *     summary="Tạo sản phẩm mới với nhiều size và công thức hoa",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
+     *                 
+     *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đẹp", description="Tên sản phẩm"),
+     *                 @OA\Property(property="description", type="string", example="Mẫu bó hoa cưới với nhiều hoa baby", description="Mô tả sản phẩm"),
+     *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục"),
+     *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
+     *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
 
- *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ", description="Tên size 1"),
- *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
- *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1, description="ID hoa thứ 1 cho size Nhỏ"),
- *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10, description="Số lượng hoa thứ 1 cho size Nhỏ"),
- *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2, description="ID hoa thứ 2 cho size Nhỏ"),
- *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5, description="Số lượng hoa thứ 2 cho size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ", description="Tên size 1"),
+     *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1, description="ID hoa thứ 1 cho size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10, description="Số lượng hoa thứ 1 cho size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2, description="ID hoa thứ 2 cho size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5, description="Số lượng hoa thứ 2 cho size Nhỏ"),
 
- *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn", description="Tên size 2"),
- *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
- *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1, description="ID hoa cho size Lớn"),
- *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20, description="Số lượng hoa cho size Lớn")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Tạo sản phẩm thành công",
- *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
- *     )
- * )
- */
+     *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn", description="Tên size 2"),
+     *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
+     *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1, description="ID hoa cho size Lớn"),
+     *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20, description="Số lượng hoa cho size Lớn")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tạo sản phẩm thành công",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     )
+     * )
+     */
 
     public function store(StoreProductRequest $request)
     {
@@ -485,52 +518,52 @@ class ProductController extends Controller
 
 
     /**
- * @OA\Post(
- *     path="/api/products/{id}",
- *     tags={"Products"},
- *     summary="Cập nhật sản phẩm với nhiều size và công thức hoa",
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         required=true,
- *         description="ID sản phẩm cần cập nhật",
- *         @OA\Schema(type="integer", example=1)
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\MediaType(
- *             mediaType="multipart/form-data",
- *             @OA\Schema(
- *                 type="object",
- *                 required={"_method", "name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
- *                 @OA\Property(property="_method", type="string", example="PUT", description="Phương thức HTTP (đặt là PUT để cập nhật)"),
- *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
- *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
- *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm (tùy chọn)"),
- *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
- *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục sản phẩm"),
+     * @OA\Post(
+     *     path="/api/products/{id}",
+     *     tags={"Products"},
+     *     summary="Cập nhật sản phẩm với nhiều size và công thức hoa",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID sản phẩm cần cập nhật",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"_method", "name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
+     *                 @OA\Property(property="_method", type="string", example="PUT", description="Phương thức HTTP (đặt là PUT để cập nhật)"),
+     *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đỏ"),
+     *                 @OA\Property(property="description", type="string", example="Bó hoa cưới rực rỡ"),
+     *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm (tùy chọn)"),
+     *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
+     *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục sản phẩm"),
 
- *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ"),
- *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
- *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1),
- *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10),
- *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2),
- *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5),
+     *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ"),
+     *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
+     *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1),
+     *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10),
+     *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2),
+     *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5),
 
- *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn"),
- *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
- *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1),
- *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20)
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Cập nhật sản phẩm thành công",
- *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
- *     )
- * )
- */
+     *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn"),
+     *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
+     *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1),
+     *                 @OA\Property(property="sizes[1][recipes][0][quantity]", type="integer", example=20)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật sản phẩm thành công",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     )
+     * )
+     */
 
 
     public function update(UpdateProductRequest $request, $id)

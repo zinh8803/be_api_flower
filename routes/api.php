@@ -14,6 +14,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VnPayController;
 use App\Http\Middleware\CheckJWT;
+use App\Http\Middleware\CheckRole;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +27,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Route::middleware('auth:api')->group(function () {
-Route::middleware(CheckJWT::class)->group(function () {
+//Route::middleware(['checkjwt', 'check.role:admin'])->group(function () {
+Route::middleware(['checkjwt'])->group(function () {
 
     Route::get('profile', [UserController::class, 'profile']);
     Route::post('logout', [UserController::class, 'logout']);
@@ -35,13 +37,17 @@ Route::middleware(CheckJWT::class)->group(function () {
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
-    Route::apiResource('orders',OrderController::class);
-    
+    //Route::apiResource('orders',OrderController::class);
+    Route::get('orders', [OrderController::class, 'index']);
+    Route::get('orders/{order}', [OrderController::class, 'show']);
+    Route::put('orders/{order}', [OrderController::class, 'update']);
+    Route::delete('orders/{order}', [OrderController::class, 'destroy']);
     Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
 
     Route::resource('auto-import-receipts', AutoImportReceiptController::class);
-
 });
+
+Route::post('orders', [OrderController::class, 'store']);
 Route::get('/admin/orders/details/{id}', [OrderController::class, 'show']);
 Route::post('/refresh-token', [UserController::class, 'refreshToken']);
 Route::apiResource('flower-types', FlowerTypeController::class);
@@ -67,7 +73,7 @@ Route::prefix('products')->group(function () {
     Route::get('/stock', [ProductController::class, 'checkAllStock']);
     Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
     Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
-
+    Route::get('/filter', [ProductController::class, 'filter']);
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);
     Route::get('/search', [ProductController::class, 'search']);
@@ -75,10 +81,9 @@ Route::prefix('products')->group(function () {
     Route::put('/{id}', [ProductController::class, 'update']);
     Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::put('/{id}/hide', [ProductController::class, 'hide']);
-
 });
 
-Route::apiResource('discounts',DiscountController::class);
+Route::apiResource('discounts', DiscountController::class);
 Route::post('discounts/check-code', [DiscountController::class, 'checkCode']);
 
 Route::get('users/getall', [UserController::class, 'index']);
@@ -87,5 +92,5 @@ Route::post('login', [UserController::class, 'login']);
 
 Route::post('/send-otp', [UserController::class, 'sendOtp']);
 
-Route::post('/payment',[VnPayController::class, 'createPayment']); 
-Route::get('/vnpay_return', [VnPayController::class, 'vnpayReturn']); 
+Route::post('/payment', [VnPayController::class, 'createPayment']);
+Route::get('/vnpay_return', [VnPayController::class, 'vnpayReturn']);
