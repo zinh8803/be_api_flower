@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('token');
             $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('nguoi_dung')->onDelete('cascade');
             $table->timestamp('expires_at')->nullable();
             $table->string('ip_address')->nullable();
             $table->string('user_agent')->nullable();

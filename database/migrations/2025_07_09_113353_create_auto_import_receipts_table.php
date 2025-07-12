@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('auto_import_receipts', function (Blueprint $table) {
+        Schema::create('tu_dong_nhap_kho', function (Blueprint $table) {
             $table->id();
-            $table->date('import_date');
-            $table->json('details');
-            $table->boolean('enabled')->default(true);
-            $table->time('run_time')->default('11:50:00');
-            $table->unsignedBigInteger('auto_import_receipt_id')->nullable();
-            $table->foreign('auto_import_receipt_id')->references('id')->on('import_receipts')->nullOnDelete();
+            $table->date('ngay_nhap_kho')->default(now());
+            $table->json('chi_tiet')->nullable();
+            $table->boolean('kich_hoat')->default(true);
+            $table->time('thoi_gian_chay')->default('11:50:00');
+            $table->unsignedBigInteger('phieu_nhap_id')->nullable();
+            $table->foreign('phieu_nhap_id')->references('id')->on('phieu_nhap')->nullOnDelete();
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('auto_import_receipts');
+        Schema::dropIfExists('tu_dong_nhap_kho');
     }
 };

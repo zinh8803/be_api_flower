@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('import_receipt_details', function (Blueprint $table) {
+        Schema::create('chi_tiet_phieu_nhap', function (Blueprint $table) {
             $table->id();
-            $table->integer('quantity');
-            $table->decimal('import_price', 10, 2);
-            $table->decimal('subtotal', 15, 2);
-            $table->date('import_date')->nullable();
-            $table->foreignId('import_receipt_id')->constrained();
-            $table->foreignId('flower_id')->constrained();
+            $table->integer('so_luong');
+            $table->decimal('gia_nhap', 10, 2);
+            $table->decimal('thanh_tien', 15, 2);
+            $table->date('ngay_nhap')->nullable();
+            $table->foreignId('ma_phieu_nhap')->constrained('phieu_nhap');
+            $table->foreignId('ma_hoa')->constrained('hoa');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('import_receipt_details');
+        Schema::dropIfExists('chi_tiet_phieu_nhap');
     }
 };

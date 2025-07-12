@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->string('name')->after('id');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->string('ten_giam_gia')->after('id');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->dropColumn('name');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->dropColumn('ten_giam_gia');
         });
     }
 };

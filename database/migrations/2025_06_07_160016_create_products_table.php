@@ -10,13 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('san_pham', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('image_url')->nullable();
-            $table->boolean('status')->default(1);
-            $table->foreignId('category_id')->constrained()->onDelete('restrict')->onUpdate('cascade');
+            $table->string('ten_san_pham');
+            $table->text('mo_ta')->nullable();
+            $table->string('hinh_anh')->nullable();
+            $table->boolean('trang_thai')->default(1);
+            $table->foreignId('ma_danh_muc')->constrained()->onDelete('restrict')->onUpdate('cascade');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('san_pham');
     }
 };

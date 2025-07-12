@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'user', 'employee'])->default('user')->change();
+        Schema::table('nguoi_dung', function (Blueprint $table) {
+            $table->enum('vai_tro', ['admin', 'user', 'employee'])->default('user')->change();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'user'])->default('user')->change();
+        Schema::table('nguoi_dung', function (Blueprint $table) {
+            $table->enum('vai_tro', ['admin', 'user'])->default('user')->change();
         });
     }
 };

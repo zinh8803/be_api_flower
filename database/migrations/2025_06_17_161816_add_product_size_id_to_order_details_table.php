@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('order_details', function (Blueprint $table) {
-        $table->unsignedBigInteger('product_size_id')->after('product_id');
-        $table->foreign('product_size_id')->references('id')->on('product_sizes')->onDelete('cascade');
+        Schema::table('chi_tiet_don_hang', function (Blueprint $table) {
+            $table->unsignedBigInteger('ma_size')->after('ma_san_pham');
+            $table->foreign('ma_size')->references('id')->on('size_san_pham')->onDelete('cascade');
         });
     }
 
@@ -22,9 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('order_details', function (Blueprint $table) {
-            $table->dropForeign(['product_size_id']);
-            $table->dropColumn('product_size_id');
+        Schema::table('chi_tiet_don_hang', function (Blueprint $table) {
+            $table->dropForeign(['ma_size']);
+            $table->dropColumn('ma_size');
         });
     }
 };

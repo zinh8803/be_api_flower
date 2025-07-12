@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('flowers', function (Blueprint $table) {
+        Schema::create('hoa', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->decimal('price', 10, 2);
-            $table->string('color')->nullable();
-            $table->foreignId('flower_type_id')->constrained('flower_types');
+            $table->string('ten_hoa');
+            $table->decimal('gia', 10, 2);
+            $table->string('mau_sac')->nullable();
+            $table->foreignId('ma_loai_hoa')->constrained('loai_hoa');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('flowers');
+        Schema::dropIfExists('hoa');
     }
 };

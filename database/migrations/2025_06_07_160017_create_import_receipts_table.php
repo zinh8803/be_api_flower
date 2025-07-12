@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('import_receipts', function (Blueprint $table) {
+        Schema::create('phieu_nhap', function (Blueprint $table) {
             $table->id();
-            $table->string('note')->nullable();
-            $table->date('import_date');
-            $table->decimal('total_price', 12, 2);
-            $table->foreignId('user_id')->nullable()->constrained('users');
+            $table->string('ghi_chu')->nullable();
+            $table->date('ngay_nhap');
+            $table->decimal('tong_tien', 15, 2);
+            $table->foreignId('ma_nguoi_dung')->nullable()->constrained('nguoi_dung');
 
 
             $table->timestamps();
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('import_receipts');
+        Schema::dropIfExists('phieu_nhap');
     }
 };

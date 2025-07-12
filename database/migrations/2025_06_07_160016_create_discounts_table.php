@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('discounts', function (Blueprint $table) {
+        Schema::create('ma_giam_gia', function (Blueprint $table) {
             $table->id();
-            $table->string('type');
-            $table->decimal('value', 10, 2);
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->string('loai');
+            $table->decimal('gia_tri', 10, 2);
+            $table->date('ngay_bat_dau');
+            $table->date('ngay_ket_thuc');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('discounts');
+        Schema::dropIfExists('ma_giam_gia');
     }
 };

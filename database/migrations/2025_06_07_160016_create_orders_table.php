@@ -11,20 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('don_hang', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('ten_nguoi_mua');
             $table->string('email');
-            $table->string('phone');
-            $table->string('address');
-            $table->string('note')->nullable();
-            $table->decimal('total_price', 10, 2);
-            $table->string('status');
-            $table->decimal('discount_amount', 10, 2)->default(0);
-            $table->dateTime('buy_at')->useCurrent();
-            $table->string('payment_method');
-            $table->foreignId('discount_id')->nullable()->constrained();
-            $table->foreignId('user_id')->constrained();
+            $table->string('so_dien_thoai');
+            $table->string('dia_chi');
+            $table->string('ghi_chu')->nullable();
+            $table->decimal('tong_tien', 15, 2);
+            $table->string('trang_thai');
+            $table->decimal('so_tien_giam_gia', 10, 2)->default(0);
+            $table->dateTime('mua_luc')->useCurrent();
+            $table->string('phuong_thuc_thanh_toan')->default('cod');
+            $table->foreignId('ma_giam_gia')->nullable()->constrained();
+            $table->foreignId('ma_nguoi_dung')->constrained();
             $table->timestamps();
         });
     }
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('don_hang');
     }
 };

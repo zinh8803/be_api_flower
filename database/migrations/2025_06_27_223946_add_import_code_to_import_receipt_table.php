@@ -13,19 +13,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('import_receipts', function (Blueprint $table) {
-            $table->string('import_code')->unique()->nullable()->after('id');
+        Schema::table('phieu_nhap', function (Blueprint $table) {
+            $table->string('ma_phieu_nhap')->unique()->nullable()->after('id');
         });
 
-        $receipts = DB::table('import_receipts')->whereNull('import_code')->get();
+        $receipts = DB::table('phieu_nhap')->whereNull('ma_phieu_nhap')->get();
         foreach ($receipts as $receipt) {
             do {
                 $importCode = 'PN' . date('YmdHis') . rand(100, 999);
-            } while (DB::table('import_receipts')->where('import_code', $importCode)->exists());
+            } while (DB::table('phieu_nhap')->where('ma_phieu_nhap', $importCode)->exists());
 
-            DB::table('import_receipts')
+            DB::table('phieu_nhap')
                 ->where('id', $receipt->id)
-                ->update(['import_code' => $importCode]);
+                ->update(['ma_phieu_nhap' => $importCode]);
         }
     }
 

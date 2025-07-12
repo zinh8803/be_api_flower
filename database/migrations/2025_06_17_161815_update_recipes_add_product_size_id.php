@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('recipes', function (Blueprint $table) {
-            $table->foreignId('product_size_id')->nullable()->after('quantity')->constrained('product_sizes')->onDelete('cascade');
+        Schema::table('cong_thuc', function (Blueprint $table) {
+            $table->foreignId('ma_size')->nullable()->after('so_luong')->constrained('size_san_pham')->onDelete('cascade');
         });
     }
 
@@ -21,9 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('recipes', function (Blueprint $table) {
-            $table->dropForeign(['product_size_id']);
-            $table->dropColumn('product_size_id');
+        Schema::table('cong_thuc', function (Blueprint $table) {
+            $table->dropForeign(['ma_size']);
+            $table->dropColumn('ma_size');
         });
     }
 };

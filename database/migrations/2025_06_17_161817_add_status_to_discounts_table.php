@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->boolean('status')->default(true)->after('end_date');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->boolean('trang_thai')->default(true)->after('ngay_ket_thuc');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->dropColumn('trang_thai');
         });
     }
 };

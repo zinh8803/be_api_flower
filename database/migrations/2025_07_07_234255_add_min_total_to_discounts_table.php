@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->unsignedInteger('min_total')->default(0)->after('value');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->unsignedInteger('giam_gia_toi_thieu')->default(0)->after('value');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('discounts', function (Blueprint $table) {
-            $table->dropColumn('min_total');
+        Schema::table('ma_giam_gia', function (Blueprint $table) {
+            $table->dropColumn('giam_gia_toi_thieu');
         });
     }
 };

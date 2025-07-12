@@ -10,9 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('import_receipt_details', function (Blueprint $table) {
-            $table->integer('used_quantity')->default(0)->after('quantity');
-            $table->integer('remaining_quantity')->default(0)->after('used_quantity');
+        Schema::table('chi_tiet_phieu_nhap', function (Blueprint $table) {
+            $table->integer('so_luong_da_su_dung')->default(0)->after('so_luong');
+            $table->integer('so_luong_con_lai')->default(0)->after('so_luong_da_su_dung');
         });
     }
 
@@ -21,9 +21,9 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('import_receipt_details', function (Blueprint $table) {
-            $table->dropColumn('used_quantity');
-            $table->dropColumn('remaining_quantity');
+        Schema::table('chi_tiet_phieu_nhap', function (Blueprint $table) {
+            $table->dropColumn('so_luong_da_su_dung');
+            $table->dropColumn('so_luong_con_lai');
         });
     }
 };

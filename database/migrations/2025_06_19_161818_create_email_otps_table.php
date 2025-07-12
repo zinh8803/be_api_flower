@@ -15,7 +15,7 @@ return new class extends Migration {
             
             $table->string('email')->unique();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('nguoi_dung')->onDelete('cascade');
             $table->string('otp');
             $table->timestamp('expires_at');
             $table->timestamps();
