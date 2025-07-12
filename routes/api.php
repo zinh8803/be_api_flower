@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\AutoImportReceiptController;
 use App\Http\Controllers\CategoryController;
@@ -34,6 +35,11 @@ Route::middleware(['checkjwt'])->group(function () {
     Route::post('logout', [UserController::class, 'logout']);
     Route::Put('user/update', [UserController::class, 'updateProfile']);
 
+    Route::post('admin/create-employee', [AdminController::class, 'createEmployee'])
+        ->middleware('check.role:admin');
+
+    Route::put('admin/update-employee/{id}', [AdminController::class, 'updateEmployee'])
+        ->middleware('check.role:admin');
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);

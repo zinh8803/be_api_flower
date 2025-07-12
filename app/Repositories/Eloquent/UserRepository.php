@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\User;
@@ -7,27 +8,37 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\ImageHelper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+
 class UserRepository implements UserRepositoryInterface
 {
     public function create(array $data)
     {
         $data['password'] = bcrypt($data['password']);
-        $data['role'] = $data['role'] ?? 'user'; 
-        $data['status'] = $data['status'] ?? 1; 
+        $data['role'] = $data['role'] ?? 'user';
+        $data['status'] = $data['status'] ?? 1;
         return User::create($data);
     }
 
-    public function update(int $id, array $data)
+    public function createEmployee(array $data)
+    {
+        $data['password'] = bcrypt($data['password']);
+        $data['role'] = $data['role'] ?? 'employee';
+        $data['status'] = $data['status'] ?? 1;
+        return User::create($data);
+    }
+
+    public function updateEmployee(int $id, array $data)
     {
         $user = User::findOrFail($id);
-
+        $data['name'] = $data['name'] ?? $user->name;
+        $data['phone'] = $data['phone'] ?? $user->phone;
+        $data['address'] = $data['address'] ?? $user->address;
+        $data['status'] = $data['status'] ?? $user->status;
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         }
-
         $user->fill($data);
         $user->save();
-
         return $user;
     }
     public function findById(int $id)
@@ -67,9 +78,10 @@ class UserRepository implements UserRepositoryInterface
 
         return $user;
     }
+
+
     public function getAll()
     {
         return User::paginate(10);
     }
 }
-
