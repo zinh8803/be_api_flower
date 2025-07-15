@@ -50,7 +50,7 @@ class ProductController extends Controller
      */
     public function searchStockWarning(Request $request)
     {
-        $today = now()->format('Y-m-d');
+        $expiredDate = now()->yesterday()->format('Y-m-d');
         $query = $request->input('q', '');
         $productsQuery = Product::with(['productSizes.recipes.flower']);
 
@@ -69,7 +69,7 @@ class ProductController extends Controller
                     $flowerId = $recipe->flower_id;
                     $needed = $recipe->quantity;
                     $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereDate('import_date', $today)
+                        ->whereDate('import_date', $expiredDate)
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
@@ -238,7 +238,7 @@ class ProductController extends Controller
     public function checkAvailableProducts(Request $request)
     {
         $cartItems = $request->input('cart_items', []);
-        $today = Carbon::now()->format('Y-m-d');
+        $expiredDate = Carbon::yesterday()->format('Y-m-d');
 
         $products = Product::with(['productSizes.recipes.flower'])->get();
 
@@ -280,7 +280,7 @@ class ProductController extends Controller
                     $neededPerItem = $recipe->quantity;
 
                     $flowerStock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereDate('import_date', $today)
+                        ->whereDate('import_date', $expiredDate)
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
 
@@ -325,7 +325,7 @@ class ProductController extends Controller
 
         return response()->json([
             'available_products' => $availableProducts,
-            'checked_date' => $today
+            'checked_date' => $expiredDate
         ]);
     }
 

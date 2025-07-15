@@ -34,13 +34,14 @@ class RecipeResource extends JsonResource
 
         if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
             $importDate = Carbon::parse($importReceiptDetail->import_date);
-            $today = Carbon::today();
+            $now = Carbon::now();
 
-            if ($importDate->isSameDay($today)) {
-                $now = Carbon::now();
-                $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
-            } elseif ($importDate->lt($today)) {
-                $status = 'hoa ép';
+            $cutoff = $importDate->copy()->addDay()->setTime(22, 0, 0);
+
+            if ($now->lessThan($cutoff)) {
+            $status = 'hoa tươi';
+            } else {
+            $status = 'hoa ép';
             }
         }
 

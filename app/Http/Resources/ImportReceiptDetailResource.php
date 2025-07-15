@@ -34,12 +34,12 @@ class ImportReceiptDetailResource extends JsonResource
         if (!empty($this->import_date)) {
             $importDate = Carbon::parse($this->import_date);
             $today = Carbon::today();
+            $now = Carbon::now();
 
-            if ($importDate->isSameDay($today)) {
-                $now = Carbon::now();
-                $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
-            } elseif ($importDate->lt($today)) {
-                $status = 'hoa ép';
+            $nextDayAfterImport = $importDate->copy()->addDay()->setHour(22)->setMinute(0)->setSecond(0);
+
+            if ($now->gte($nextDayAfterImport)) {
+            $status = 'hoa ép';
             }
         }
 

@@ -129,11 +129,12 @@ class OrderRepository implements OrderRepositoryInterface
             $status = null;
             if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
                 $importDate = Carbon::parse($importReceiptDetail->import_date);
-                $today = Carbon::today();
-                if ($importDate->isSameDay($today)) {
-                    $now = Carbon::now();
-                    $status = $now->hour >= 22 ? 'hoa ép' : 'hoa tươi';
-                } elseif ($importDate->lt($today)) {
+                $now = Carbon::now();
+                $nextDayTenPM = $importDate->copy()->addDay()->setTime(22, 0, 0);
+
+                if ($now->lt($nextDayTenPM)) {
+                    $status = 'hoa tươi';
+                } else {
                     $status = 'hoa ép';
                 }
             }
@@ -147,7 +148,8 @@ class OrderRepository implements OrderRepositoryInterface
     public function deductStock($flowerId, $neededQty)
     {
         $now = now();
-        $today = $now->format('Y-m-d');
+        $tenPmNextDay = $now->copy()->addDay()->setTime(22, 0, 0);
+
         $stock = ImportReceiptDetail::where('flower_id', $flowerId)
             ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
             ->value('remaining') ?? 0;
@@ -155,12 +157,16 @@ class OrderRepository implements OrderRepositoryInterface
         if ($stock < $neededQty) {
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
-        $todayDetails = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->whereDate('import_date', $today)
+
+        $details = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->where(function ($query) use ($tenPmNextDay) {
+                $query->where('import_date', '>=', now()->subDays(2))
+                    ->where('import_date', '<=', $tenPmNextDay);
+            })
             ->orderByDesc('import_date')
             ->get();
 
-        foreach ($todayDetails as $detail) {
+        foreach ($details as $detail) {
             $available = $detail->quantity - $detail->used_quantity;
             if ($neededQty <= 0)
                 break;
@@ -173,26 +179,7 @@ class OrderRepository implements OrderRepositoryInterface
 
             $neededQty -= $used;
         }
-        // if ($neededQty > 0) {
-        //     $previousDetails = ImportReceiptDetail::where('flower_id', $flowerId)
-        //         ->whereDate('import_date', '<', $today)
-        //         ->orderByDesc('import_date')
-        //         ->get();
 
-        //     foreach ($previousDetails as $detail) {
-        //         $available = $detail->quantity - $detail->used_quantity;
-        //         if ($neededQty <= 0)
-        //             break;
-        //         if ($available <= 0)
-        //             continue;
-
-        //         $used = min($neededQty, $available);
-        //         $detail->used_quantity += $used;
-        //         $detail->save();
-
-        //         $neededQty -= $used;
-        //     }
-        // }
         if ($neededQty > 0) {
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
