@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdatePasswordRequest;
+use App\Http\Requests\User\UpdateResetPassword;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Jobs\SendOtpMail;
@@ -86,6 +88,7 @@ class UserController extends Controller
         }
 
         $user = $this->users->create($request->validated());
+        $otpRecord->delete();
         $token = JWTAuth::fromUser($user);
 
         $refreshToken = Str::random(60);
@@ -375,5 +378,165 @@ class UserController extends Controller
             'status' => true,
             'message' => 'OTP đã được gửi đến email',
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/send-otp-reset-password",
+     *     summary="Gửi mã OTP đến email",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mã OTP đã được gửi",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Mã OTP đã được gửi đến email")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
+     *         )
+     *     )
+     * )
+     */
+    public function sendOtpResetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email không tồn tại'
+            ], 404);
+        }
+
+        $otp = rand(100000, 999999);
+        EmailOtp::updateOrCreate(
+            ['email' => $request->email],
+            [
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(5),
+            ]
+        );
+
+        SendOtpMail::dispatch($request->email, $otp);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP đã được gửi đến email',
+        ]);
+    }
+    /**
+     * @OA\Put(
+     *     path="/api/change-password",
+     *     summary="Đổi mật khẩu người dùng",
+     *     tags={"User"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UpdatePasswordRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đổi mật khẩu thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đổi mật khẩu thành công")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Mật khẩu cũ không đúng hoặc xác nhận mật khẩu không khớp",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Mật khẩu cũ không đúng hoặc xác nhận mật khẩu không khớp")
+     *         )
+     *     )
+     * )
+     */
+
+    public function changePassword(UpdatePasswordRequest $request)
+    {
+        $request->validate([
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        // $user = auth()->user();
+        // if (!password_verify($request->old_password, $user->password)) {
+        //     return response()->json(['message' => 'Mật khẩu cũ không đúng'], 422);
+        // }
+
+        $this->users->changePassword($request->old_password, $request->new_password);
+
+        return response()->json(['message' => 'Đổi mật khẩu thành công']);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/reset-password",
+     *     summary="Đặt lại mật khẩu người dùng",
+     *     tags={"User"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *           //  @OA\Property(property="otp", type="integer", example=123456),
+     *             @OA\Property(property="new_password", type="string", format="password", example="newpassword"),
+     *            @OA\Property(property="new_password_confirmation", type="string", format="password", example="newpassword")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đặt lại mật khẩu thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Mật khẩu đã được cập nhật thành công")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ")
+     *         )
+     *     )
+     * )
+     */
+    public function resetPassword(UpdateResetPassword $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $otpRecord = EmailOtp::where('email', $request->email)->first();
+        // Log::info('otpRecord', [
+        //     'otpRecord' => $otpRecord,
+        //     'email' => $request->email,
+        //     'otp' => $request->otp,
+        //     'expires_at' => $otpRecord ? $otpRecord->expires_at : null
+        // ]);
+        if (!$otpRecord || $otpRecord->otp !== $request->otp || $otpRecord->expires_at < now()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mã OTP không đúng hoặc đã hết hạn',
+            ], 422);
+        }
+
+        $this->users->resetPassword($request->email, $request->new_password);
+        $otpRecord->delete();
+        return response()->json(['message' => 'Mật khẩu đã được cập nhật thành công']);
     }
 }

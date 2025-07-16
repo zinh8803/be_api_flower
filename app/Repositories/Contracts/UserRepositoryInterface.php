@@ -11,4 +11,6 @@ interface UserRepositoryInterface
     public function findById(int $id);
     public function updateEmployee(int $id, array $data);
     public function updateUser(int $id, array $data);
+    public function changePassword(string $oldPassword, string $newPassword);
+    public function resetPassword(string $email, string $newPassword);
 }

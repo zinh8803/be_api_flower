@@ -51,6 +51,9 @@ Route::middleware(['checkjwt'])->group(function () {
     Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
 
     Route::resource('auto-import-receipts', AutoImportReceiptController::class);
+
+
+    Route::put('change-password', [UserController::class, 'changePassword']);
 });
 
 Route::post('orders', [OrderController::class, 'store']);
@@ -97,6 +100,7 @@ Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 
 Route::post('/send-otp', [UserController::class, 'sendOtp']);
-
+Route::post('/send-otp-reset-password', [UserController::class, 'sendOtpResetPassword']);
+Route::put('/reset-password', [UserController::class, 'resetPassword']);
 Route::post('/payment', [VnPayController::class, 'createPayment']);
 Route::get('/vnpay_return', [VnPayController::class, 'vnpayReturn']);

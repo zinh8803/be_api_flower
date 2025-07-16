@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\ImageHelper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -78,8 +79,28 @@ class UserRepository implements UserRepositoryInterface
 
         return $user;
     }
+    public function changePassword(string $oldPassword, string $newPassword)
+    {
+        $user = Auth::user();
 
+        if (!password_verify($oldPassword, $user->password)) {
+            throw new \Exception('Mật khẩu cũ không khớp');
+        }
 
+        $user->password = bcrypt($newPassword);
+        $user->save();
+    }
+
+    public function resetPassword(string $email, string $newPassword)
+    {
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw new \Exception('Người dùng không tồn tại');
+        }
+        $user->password = bcrypt($newPassword);
+        $user->save();
+        return $user;
+    }
     public function getAll()
     {
         return User::paginate(10);

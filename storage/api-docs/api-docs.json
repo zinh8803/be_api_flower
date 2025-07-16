@@ -2332,6 +2332,201 @@
                 }
             }
         },
+        "/api/send-otp-reset-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Gửi mã OTP đến email",
+                "operationId": "a4b3c55d85f9f4c1ebb2e84959f0c238",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mã OTP đã được gửi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mã OTP đã được gửi đến email"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dữ liệu không hợp lệ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/change-password": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Đổi mật khẩu người dùng",
+                "operationId": "89ccbef32ad9270c249b001438ba7092",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đổi mật khẩu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đổi mật khẩu thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Mật khẩu cũ không đúng hoặc xác nhận mật khẩu không khớp",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mật khẩu cũ không đúng hoặc xác nhận mật khẩu không khớp"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reset-password": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Đặt lại mật khẩu người dùng",
+                "operationId": "29feb80a88106bdaef68fcaf6e692d0e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "otp": {
+                                        "type": "integer",
+                                        "example": 123456
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đặt lại mật khẩu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mật khẩu đã được cập nhật thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dữ liệu không hợp lệ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/payment": {
             "post": {
                 "tags": [
@@ -2952,6 +3147,27 @@
                         "description": "One-time password for email verification",
                         "type": "string",
                         "format": "binary"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdatePasswordRequest": {
+                "required": [
+                    "old_password",
+                    "new_password"
+                ],
+                "properties": {
+                    "old_password": {
+                        "type": "string",
+                        "example": "OldPassword123"
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "example": "NewPassword123"
+                    },
+                    "new_password_confirmation": {
+                        "type": "string",
+                        "example": "NewPassword123"
                     }
                 },
                 "type": "object"

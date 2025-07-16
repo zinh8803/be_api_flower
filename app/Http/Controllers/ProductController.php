@@ -50,7 +50,10 @@ class ProductController extends Controller
      */
     public function searchStockWarning(Request $request)
     {
-        $expiredDate = now()->yesterday()->format('Y-m-d');
+        // $expiredDate = now()->yesterday()->format('Y-m-d');
+        // $now = now()->setTime(22, 0, 0)->format('Y-m-d');
+        $start = now()->copy()->subDay()->setTime(22, 0, 0);
+        $end = now()->copy()->setTime(22, 0, 0);
         $query = $request->input('q', '');
         $productsQuery = Product::with(['productSizes.recipes.flower']);
 
@@ -68,10 +71,15 @@ class ProductController extends Controller
                 foreach ($size->recipes as $recipe) {
                     $flowerId = $recipe->flower_id;
                     $needed = $recipe->quantity;
+
+                    $start = now()->copy()->subDay()->setTime(22, 0, 0);
+                    $end = now()->copy()->setTime(22, 0, 0);
+
                     $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereDate('import_date', $expiredDate)
+                        ->whereBetween('import_date', [$start, $end])
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
+
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
                     if ($possible < $minStock) {
                         $minStock = $possible;
@@ -238,8 +246,8 @@ class ProductController extends Controller
     public function checkAvailableProducts(Request $request)
     {
         $cartItems = $request->input('cart_items', []);
-        $expiredDate = Carbon::yesterday()->format('Y-m-d');
-
+        $start = now()->copy()->subDay()->setTime(22, 0, 0);
+        $end = now()->copy()->setTime(22, 0, 0);
         $products = Product::with(['productSizes.recipes.flower'])->get();
 
         $usedFlowers = [];
@@ -280,10 +288,11 @@ class ProductController extends Controller
                     $neededPerItem = $recipe->quantity;
 
                     $flowerStock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereDate('import_date', $expiredDate)
+                        ->whereBetween('import_date', [$start, $end])
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
 
+                    Log::info("flowerStock", ['flower_id' => $flowerId, 'remaining' => $flowerStock]);
                     $remainingStock = $flowerStock - ($usedFlowers[$flowerId] ?? 0);
 
                     $possibleItems = floor($remainingStock / $neededPerItem);
@@ -325,7 +334,8 @@ class ProductController extends Controller
 
         return response()->json([
             'available_products' => $availableProducts,
-            'checked_date' => $expiredDate
+            'checked_date_start' => $start->format('Y-m-d H:i:s'),
+            'checked_date_end' => $end->format('Y-m-d H:i:s')
         ]);
     }
 
