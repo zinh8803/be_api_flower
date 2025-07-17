@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class ProductRepository implements ProductRepositoryInterface
@@ -60,7 +61,12 @@ class ProductRepository implements ProductRepositoryInterface
         return $query->paginate(10);
     }
 
-    public function find($id)
+    public function find($slug)
+    {
+        return $this->model->with(['category', 'productSizes.recipes.flower'])->where('slug', $slug)->first();
+    }
+
+    public function findById($id)
     {
         return $this->model->with(['category', 'productSizes.recipes.flower'])->find($id);
     }
@@ -70,18 +76,40 @@ class ProductRepository implements ProductRepositoryInterface
         return $this->model->create($data);
     }
 
-    public function getProductsByCategory($categoryId)
+    public function getProductsByCategory($categorySlug)
     {
-        $products = $this->model->where('category_id', $categoryId)->get();
+        $products = $this->model
+            ->whereHas('category', function ($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            })
+            ->get();
+
         if ($products->isEmpty()) {
-            throw new RuntimeException('No products found for the given category.');
+            throw new \RuntimeException('No products found for the given category.');
         }
+
+        return $products->load(['category', 'productSizes.recipes.flower']);
+    }
+
+    public function getProductsByCategoryId($categoryId)
+    {
+        $products = $this->model
+            ->where('category_id', $categoryId)
+            ->get();
+
+        if ($products->isEmpty()) {
+            throw new \RuntimeException('No products found for the given category ID.');
+        }
+
         return $products->load(['category', 'productSizes.recipes.flower']);
     }
 
     public function update($id, array $data)
     {
-        $record = $this->find($id);
+        $record = $this->findById($id);
+        if (isset($data['name'])) {
+            $data['slug'] = Str::slug($data['name']);
+        }
         $record->update($data);
         return $record;
     }
@@ -117,24 +145,19 @@ class ProductRepository implements ProductRepositoryInterface
                 }
             }
 
-            // Lấy ra size và recipes
             $sizes = $data['sizes'] ?? $data['productSizes'] ?? [];
             unset($data['sizes'], $data['productSizes']);
 
-            // Tạo sản phẩm
             $product = $this->model->create($data);
 
             foreach ($sizes as $sizeData) {
-                // Sử dụng giá do người dùng nhập thay vì tự động tính
                 $price = $sizeData['price'];
 
-                // Tạo product_size với giá đã nhập
                 $productSize = $product->productSizes()->create([
                     'size' => $sizeData['size'],
                     'price' => $price,
                 ]);
 
-                // Tạo recipes cho từng size
                 foreach ($sizeData['recipes'] as $recipe) {
                     $productSize->recipes()->create([
                         'flower_id' => $recipe['flower_id'],
@@ -154,7 +177,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function updateWithRecipes($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
-            $product = $this->model->find($id);
+            $product = $this->findById($id);
 
             if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
                 try {
@@ -166,6 +189,10 @@ class ProductRepository implements ProductRepositoryInterface
                 } catch (\Exception $e) {
                     Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
                 }
+            }
+
+            if (isset($data['name'])) {
+                $data['slug'] = Str::slug($data['name']);
             }
 
             // Xóa toàn bộ productSizes và recipes cũ
@@ -180,16 +207,13 @@ class ProductRepository implements ProductRepositoryInterface
             $product->update($data);
 
             foreach ($sizes as $sizeData) {
-                // Sử dụng giá do người dùng nhập thay vì tự động tính
                 $price = $sizeData['price'];
 
-                // Tạo product_size với giá đã nhập
                 $productSize = $product->productSizes()->create([
                     'size' => $sizeData['size'],
                     'price' => $price,
                 ]);
 
-                // Tạo recipes cho từng size
                 foreach ($sizeData['recipes'] as $recipe) {
                     $productSize->recipes()->create([
                         'flower_id' => $recipe['flower_id'],

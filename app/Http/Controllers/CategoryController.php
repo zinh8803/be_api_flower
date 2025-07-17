@@ -26,7 +26,7 @@ class CategoryController extends Controller
     {
         $this->categoryRepository = $categoryRepository;
     }
-  /**
+    /**
      * @OA\Get(
      *     path="/api/categories",
      *     tags={"Category"},
@@ -67,10 +67,9 @@ class CategoryController extends Controller
     {
         // $category = $this->categoryRepository->create($request->validated());
         // return (new CategoryResource($category));
-    
+
         $category = $this->categoryRepository->create($request->validated());
         return new CategoryResource($category);
-   
     }
 
     /**
@@ -87,9 +86,9 @@ class CategoryController extends Controller
      *     @OA\Response(response=404, description="Danh mục không tồn tại")
      * )
      */
-    public function show($id)
+    public function show($slug)
     {
-        $category = $this->categoryRepository->find($id);
+        $category = $this->categoryRepository->find($slug);
         if (!$category) {
             return response()->json(['message' => 'Category not found'], 404);
         }
@@ -119,20 +118,18 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, $id)
     {
-        $category = $this->categoryRepository->find($id);
+        $category = $this->categoryRepository->findById($id);
         if (!$category) {
             return response()->json(['message' => 'Category not found'], 404);
         }
-
-        $category = $this->categoryRepository->update($id, $request->validated());
-        Log::info('Category updated successfully', ['id' => $id, 'data' => $request->all()]);
+        $category = $this->categoryRepository->update($category->id, $request->validated());
         return new CategoryResource($category);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-        /**
+    /**
      * @OA\Delete(
      *     path="/api/categories/{id}",
      *     tags={"Category"},
@@ -142,17 +139,13 @@ class CategoryController extends Controller
      *     @OA\Response(response=404, description="Danh mục không tồn tại")
      * )
      */
-    public function destroy($id)
+    public function destroy($slug)
     {
-        $category = $this->categoryRepository->find($id);
+        $category = $this->categoryRepository->find($slug);
         if (!$category) {
             return response()->json(['message' => 'Category not found'], 404);
         }
-
-        $this->categoryRepository->delete($id);
+        $this->categoryRepository->delete($category->id);
         return response()->json(['message' => 'Category deleted successfully']);
     }
- 
-    
-
 }

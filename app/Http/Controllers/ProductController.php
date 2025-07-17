@@ -494,6 +494,8 @@ class ProductController extends Controller
         }
         return new ProductResource($product);
     }
+
+
     /**
      * @OA\Get(
      *     path="/api/products/category/{categoryId}",
@@ -522,6 +524,17 @@ class ProductController extends Controller
             return response()->json(["message" => $e->getMessage()], 404);
         }
     }
+
+    public function getProductsByCategoryId($categoryId)
+    {
+        try {
+            $products = $this->products->getProductsByCategoryId($categoryId)->load('recipes', 'recipes.flower', 'recipes.flower.importReceiptDetails');
+            return ProductResource::collection($products);
+        } catch (\RuntimeException $e) {
+            return response()->json(["message" => $e->getMessage()], 404);
+        }
+    }
+
     /**
      * Update the specified resource in storage.
      */
@@ -584,7 +597,7 @@ class ProductController extends Controller
             'validated' => $request->validated()
         ]);
 
-        $product = $this->products->find($id);
+        $product = $this->products->findById($id);
         if (!$product) {
             Log::info('Product not found for update', ['id' => $id]);
             return response()->json(["message" => "Product not found"], 404);

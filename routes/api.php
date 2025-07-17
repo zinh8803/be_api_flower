@@ -66,9 +66,12 @@ Route::apiResource('import-receipts', ImportReceiptController::class);
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
     Route::post('/', [CategoryController::class, 'store']);
-    Route::get('/{id}', [CategoryController::class, 'show']);
+    Route::get('/{category}', [CategoryController::class, 'show']);
     Route::post('/{id}', [CategoryController::class, 'update']);
     Route::delete('/{id}', [CategoryController::class, 'destroy']);
+    Route::get('/{slug}', [CategoryController::class, 'show']);
+    Route::post('/{slug}', [CategoryController::class, 'update']);
+    Route::delete('/{slug}', [CategoryController::class, 'destroy']);
 });
 
 
@@ -81,7 +84,8 @@ Route::prefix('products')->group(function () {
     Route::get('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
     Route::get('/stock', [ProductController::class, 'checkAllStock']);
     Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
-    Route::get('/category/{categoryId}', [ProductController::class, 'getProductsByCategory']);
+    Route::get('/category/id={categoryId}', [ProductController::class, 'getProductsByCategoryId']);
+    Route::get('/category/{slug}', [ProductController::class, 'getProductsByCategory']);
     Route::get('/filter', [ProductController::class, 'filter']);
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);

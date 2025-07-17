@@ -20,7 +20,9 @@ class DashBoardController extends Controller
         $end = $request->input('end_date');
 
         if (!$start && !$end) {
-            $orders = Order::with('orderDetails.product', 'orderDetails.productSize')->get();
+            $orders = Order::with('orderDetails.product', 'orderDetails.productSize')
+                ->where('status', '!=', 'đã hủy')
+                ->get();
             $receipts = ImportReceipt::with('details.flower')->get();
             Log::info("No date filter - getting all data");
         } else {
@@ -29,26 +31,29 @@ class DashBoardController extends Controller
 
             Log::info("DateTime range - Start: {$startDateTime}, End: {$endDateTime}");
 
-            $orders = Order::where(function($query) use ($startDateTime, $endDateTime) {
+            $orders = Order::where(function ($query) use ($startDateTime, $endDateTime) {
                 $query->whereBetween('buy_at', [$startDateTime, $endDateTime])
-                      ->orWhere(function($q) use ($startDateTime, $endDateTime) {
-                          $q->whereNull('buy_at')
+                    ->orWhere(function ($q) use ($startDateTime, $endDateTime) {
+                        $q->whereNull('buy_at')
                             ->whereBetween('created_at', [$startDateTime, $endDateTime]);
-                      });
-            })->with('orderDetails.product', 'orderDetails.productSize')->get();
+                    });
+            })
+                ->where('status', '!=', 'đã hủy')
+                ->with('orderDetails.product', 'orderDetails.productSize')
+                ->get();
 
-            $receipts = ImportReceipt::where(function($query) use ($startDateTime, $endDateTime) {
+            $receipts = ImportReceipt::where(function ($query) use ($startDateTime, $endDateTime) {
                 $query->whereBetween('import_date', [$startDateTime, $endDateTime])
-                      ->orWhere(function($q) use ($startDateTime, $endDateTime) {
-                          $q->whereNull('import_date')
+                    ->orWhere(function ($q) use ($startDateTime, $endDateTime) {
+                        $q->whereNull('import_date')
                             ->whereBetween('created_at', [$startDateTime, $endDateTime]);
-                      });
+                    });
             })->with('details.flower')->get();
         }
 
         $sampleOrders = Order::select('id', 'order_code', 'buy_at', 'created_at')
-                             ->take(3)
-                             ->get();
+            ->take(3)
+            ->get();
         Log::info("Sample orders dates:", $sampleOrders->toArray());
 
         Log::info("Filtered orders count: " . $orders->count());
@@ -89,7 +94,7 @@ class DashBoardController extends Controller
         }
         $topProducts = collect($productStats)->sortByDesc('sold')->take(5)->values();
 
-        $recentOrders = $orders->sortByDesc(function($order) {
+        $recentOrders = $orders->sortByDesc(function ($order) {
             return $order->buy_at ?? $order->created_at;
         })->take(10)->map(function ($o) {
             $date = $o->buy_at ?? $o->created_at;
@@ -126,7 +131,7 @@ class DashBoardController extends Controller
                 $endDateTime->copy()->addDay()
             );
         }
-        
+
         $labels = [];
         $revenueByDate = [];
         $orderCountByDate = [];
@@ -135,20 +140,20 @@ class DashBoardController extends Controller
         foreach ($period as $date) {
             $d = $date->format('Y-m-d');
             $labels[] = $d;
-            
-            $dayRevenue = $orders->filter(function($order) use ($d) {
+
+            $dayRevenue = $orders->filter(function ($order) use ($d) {
                 $orderDate = $order->buy_at ?? $order->created_at;
                 return $orderDate && Carbon::parse($orderDate)->format('Y-m-d') === $d;
             })->sum('total_price');
             $revenueByDate[] = (int)$dayRevenue;
-            
-            $dayOrderCount = $orders->filter(function($order) use ($d) {
+
+            $dayOrderCount = $orders->filter(function ($order) use ($d) {
                 $orderDate = $order->buy_at ?? $order->created_at;
                 return $orderDate && Carbon::parse($orderDate)->format('Y-m-d') === $d;
             })->count();
             $orderCountByDate[] = $dayOrderCount;
-            
-            $dayImport = $receipts->filter(function($receipt) use ($d) {
+
+            $dayImport = $receipts->filter(function ($receipt) use ($d) {
                 $receiptDate = $receipt->import_date ?? $receipt->created_at;
                 return $receiptDate && Carbon::parse($receiptDate)->format('Y-m-d') === $d;
             })->sum('total_price');
@@ -187,14 +192,14 @@ class DashBoardController extends Controller
     public function testData(Request $request)
     {
         $orders = Order::select('id', 'order_code', 'buy_at', 'created_at', 'total_price', 'status')
-                      ->orderBy('created_at', 'desc')
-                      ->take(10)
-                      ->get();
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
 
         $receipts = ImportReceipt::select('id', 'import_date', 'created_at', 'total_price')
-                                ->orderBy('created_at', 'desc')
-                                ->take(5)
-                                ->get();
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
 
         return response()->json([
             'orders' => $orders,
@@ -206,30 +211,30 @@ class DashBoardController extends Controller
     {
         $year = $request->input('year', Carbon::now()->year);
         $month = $request->input('month', Carbon::now()->month);
-        
+
         $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endOfMonth = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-        
+
         $newRequest = new Request([
             'start_date' => $startOfMonth->toDateString(),
             'end_date' => $endOfMonth->toDateString()
         ]);
-        
+
         return $this->statistics($newRequest);
     }
 
     public function yearlyStats(Request $request)
     {
         $year = $request->input('year', Carbon::now()->year);
-        
+
         $startOfYear = Carbon::createFromDate($year, 1, 1)->startOfYear();
         $endOfYear = Carbon::createFromDate($year, 12, 31)->endOfYear();
-        
+
         $newRequest = new Request([
             'start_date' => $startOfYear->toDateString(),
             'end_date' => $endOfYear->toDateString()
         ]);
-        
+
         return $this->statistics($newRequest);
     }
 
@@ -237,12 +242,12 @@ class DashBoardController extends Controller
     {
         $endDate = Carbon::now();
         $startDate = Carbon::now()->subDays(6);
-        
+
         $newRequest = new Request([
             'start_date' => $startDate->toDateString(),
             'end_date' => $endDate->toDateString()
         ]);
-        
+
         return $this->statistics($newRequest);
     }
 }

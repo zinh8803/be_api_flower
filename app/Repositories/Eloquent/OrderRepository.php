@@ -195,6 +195,54 @@ class OrderRepository implements OrderRepositoryInterface
         $order = $this->findById($id);
         $status = $order->status;
 
+        $statusFlow = ['đang xử lý', 'đã xác nhận', 'đang giao hàng', 'hoàn thành'];
+        $currentIndex = array_search($status, $statusFlow);
+
+        if (isset($data['status'])) {
+            $newStatus = $data['status'];
+
+            if ($newStatus === 'đã hủy') {
+                if ($status !== 'đang xử lý') {
+                    throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
+                }
+
+                // Trả lại số lượng hoa về kho
+                foreach ($order->orderDetails as $detail) {
+                    $productSize = $detail->productSize;
+                    if ($productSize && $productSize->recipes) {
+                        foreach ($productSize->recipes as $recipe) {
+                            $qtyReturn = $recipe->quantity * $detail->quantity;
+                            $importDetails = \App\Models\ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                                ->orderByDesc('import_date')
+                                ->get();
+
+                            $remain = $qtyReturn;
+                            foreach ($importDetails as $importDetail) {
+                                $used = $importDetail->used_quantity;
+                                if ($used > 0) {
+                                    $returnQty = min($remain, $used);
+                                    $importDetail->used_quantity -= $returnQty;
+                                    $importDetail->save();
+                                    $remain -= $returnQty;
+                                    if ($remain <= 0) break;
+                                }
+                            }
+                        }
+                    }
+                }
+                // Giữ nguyên giá, KHÔNG tính vào doanh thu (xử lý ở báo cáo doanh thu bằng status)
+                // Không cần set lại total_price
+            } else {
+                $nextStatus = $currentIndex !== false && $currentIndex < count($statusFlow) - 1
+                    ? $statusFlow[$currentIndex + 1]
+                    : $statusFlow[$currentIndex];
+
+                if ($newStatus !== $nextStatus) {
+                    throw new \Exception('Không thể chuyển trạng thái đơn hàng không đúng thứ tự.');
+                }
+            }
+        }
+
         $order->update($data);
 
         if (isset($data['status']) && $data['status'] !== $status && !empty($order->email)) {
