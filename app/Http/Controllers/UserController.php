@@ -492,7 +492,6 @@ class UserController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *           //  @OA\Property(property="otp", type="integer", example=123456),
      *             @OA\Property(property="new_password", type="string", format="password", example="newpassword"),
      *            @OA\Property(property="new_password_confirmation", type="string", format="password", example="newpassword")
      *         )

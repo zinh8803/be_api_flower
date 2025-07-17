@@ -10,6 +10,7 @@ use App\Http\Controllers\FlowerController;
 use App\Http\Controllers\FlowerTypeController;
 use App\Http\Controllers\ImportReceiptController;
 use App\Http\Controllers\MoMoController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
@@ -54,6 +55,12 @@ Route::middleware(['checkjwt'])->group(function () {
 
 
     Route::put('change-password', [UserController::class, 'changePassword']);
+
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'delete']);
+    Route::delete('/notifications', [NotificationController::class, 'deleteAll']);
 });
 
 Route::post('orders', [OrderController::class, 'store']);

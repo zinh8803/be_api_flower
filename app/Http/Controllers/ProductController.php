@@ -292,7 +292,7 @@ class ProductController extends Controller
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
 
-                    Log::info("flowerStock", ['flower_id' => $flowerId, 'remaining' => $flowerStock]);
+                    //   Log::info("flowerStock", ['flower_id' => $flowerId, 'remaining' => $flowerStock]);
                     $remainingStock = $flowerStock - ($usedFlowers[$flowerId] ?? 0);
 
                     $possibleItems = floor($remainingStock / $neededPerItem);

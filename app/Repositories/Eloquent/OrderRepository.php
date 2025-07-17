@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Events\OrderCreated;
 use App\Jobs\SendOrderMail;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
 use App\Models\ProductSize;
+use App\Models\User;
+use App\Notifications\OrderPlacedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -105,10 +108,21 @@ class OrderRepository implements OrderRepositoryInterface
                 'discount_amount' => $discountAmount,
                 'total_price' => $orderTotal,
             ]);
-
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
             }
+
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new OrderPlacedNotification($order));
+            }
+
+            $employees = User::where('role', 'employee')->get();
+            foreach ($employees as $employee) {
+                $employee->notify(new OrderPlacedNotification($order));
+            }
+            event(new OrderCreated($order));
+
             $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
 
             if (!empty($order->email)) {
