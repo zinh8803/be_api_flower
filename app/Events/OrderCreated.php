@@ -48,13 +48,7 @@ class OrderCreated implements ShouldBroadcast
             'payment_method' => $this->order->payment_method,
             'created_at' => $this->order->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->order->updated_at->format('Y-m-d H:i:s'),
-            'user' => [
-                'id' => $this->order->user->id,
-                'name' => $this->order->user->name,
-                'email' => $this->order->user->email,
-                'phone' => $this->order->user->phone,
-                'address' => $this->order->user->address,
-            ],
+            'user_id' => $this->order->user_id ?? null,
             'discount' => $this->order->discount ? [
                 'id' => $this->order->discount->id,
                 'name' => $this->order->discount->name,

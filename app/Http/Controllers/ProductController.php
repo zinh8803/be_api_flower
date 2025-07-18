@@ -52,11 +52,17 @@ class ProductController extends Controller
     {
         // $expiredDate = now()->yesterday()->format('Y-m-d');
         // $now = now()->setTime(22, 0, 0)->format('Y-m-d');
-        $start = now()->copy()->subDay()->setTime(22, 0, 0);
-        $end = now()->copy()->setTime(22, 0, 0);
+        // $start = now()->copy()->subDay()->setTime(22, 0, 0);
+        // $end = now()->copy()->setTime(22, 0, 0);
+        $end = now()->startOfDay()->setTime(23, 59, 59);
+        $start = $end->copy()->subDay()->setTime(0, 0, 0);
         $query = $request->input('q', '');
         $productsQuery = Product::with(['productSizes.recipes.flower']);
-
+        Log::info('Searching stock warning products', [
+            'query' => $query,
+            'start' => $start->toDateTimeString(),
+            'end' => $end->toDateTimeString()
+        ]);
         if ($query) {
             $productsQuery->where('name', 'like', '%' . $query . '%');
         }
@@ -71,15 +77,22 @@ class ProductController extends Controller
                 foreach ($size->recipes as $recipe) {
                     $flowerId = $recipe->flower_id;
                     $needed = $recipe->quantity;
-
-                    $start = now()->copy()->subDay()->setTime(22, 0, 0);
-                    $end = now()->copy()->setTime(22, 0, 0);
-
                     $stock = ImportReceiptDetail::where('flower_id', $flowerId)
                         ->whereBetween('import_date', [$start, $end])
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
 
+                    $stockLog = ImportReceiptDetail::where('flower_id', $flowerId)
+                        ->whereBetween('import_date', [$start, $end]);
+
+                    Log::info('Checking flower stock', [
+                        'flower_id' => $flowerId,
+                        'needed' => $needed,
+                        'stock' => $stock,
+                        'log' => $stockLog,
+                        'start' => $start->toDateTimeString(),
+                        'end' => $end->toDateTimeString()
+                    ]);
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
                     if ($possible < $minStock) {
                         $minStock = $possible;
@@ -246,8 +259,8 @@ class ProductController extends Controller
     public function checkAvailableProducts(Request $request)
     {
         $cartItems = $request->input('cart_items', []);
-        $start = now()->copy()->subDay()->setTime(22, 0, 0);
-        $end = now()->copy()->setTime(22, 0, 0);
+        $end = now()->startOfDay()->setTime(23, 59, 59);
+        $start = $end->copy()->subDay()->setTime(0, 0, 0);
         $products = Product::with(['productSizes.recipes.flower'])->get();
 
         $usedFlowers = [];

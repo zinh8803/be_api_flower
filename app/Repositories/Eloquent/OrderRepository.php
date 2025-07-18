@@ -101,7 +101,8 @@ class OrderRepository implements OrderRepositoryInterface
                 'address' => $data['address'],
                 'note' => $data['note'] ?? null,
                 'payment_method' => $data['payment_method'],
-                'user_id' => $data['user_id'] ?? auth()->id() ?? null,
+                // 'user_id' => $data['user_id'] ?? auth()->id() ?? null,
+                'user_id' => $data['user_id'] ?? auth()->id() ?? 4,
                 'status' => 'đang xử lý',
                 'buy_at' => now(),
                 'discount_id' => $data['discount_id'] ?? null,
@@ -121,10 +122,11 @@ class OrderRepository implements OrderRepositoryInterface
             foreach ($employees as $employee) {
                 $employee->notify(new OrderPlacedNotification($order));
             }
+
+            $order->load(['user', 'discount']);
             event(new OrderCreated($order));
 
             $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
-
             if (!empty($order->email)) {
                 SendOrderMail::dispatch($order, $order->email);
             }

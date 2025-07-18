@@ -20,6 +20,7 @@ class OrderPlacedNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
+            'order_code' => $this->order->order_code,
             'order_id' => $this->order->id,
             'customer_name' => $this->order->name,
             'total_price' => $this->order->total_price,
@@ -29,6 +30,7 @@ class OrderPlacedNotification extends Notification
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([
+            'order_code' => $this->order->order_code,
             'order_id' => $this->order->id,
             'customer_name' => $this->order->customer_name,
             'total_price' => $this->order->total_price,
