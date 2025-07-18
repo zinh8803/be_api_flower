@@ -90,7 +90,7 @@ class CategoryController extends Controller
     {
         $category = $this->categoryRepository->find($slug);
         if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return response()->json(['message' => 'Không có danh mục'], 404);
         }
         return new CategoryResource($category);
     }
@@ -120,7 +120,7 @@ class CategoryController extends Controller
     {
         $category = $this->categoryRepository->findById($id);
         if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return response()->json(['message' => 'Không có danh mục'], 404);
         }
         $category = $this->categoryRepository->update($category->id, $request->validated());
         return new CategoryResource($category);
@@ -141,11 +141,11 @@ class CategoryController extends Controller
      */
     public function destroy($slug)
     {
-        $category = $this->categoryRepository->find($slug);
+        $category = $this->categoryRepository->findById($slug);
         if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return response()->json(['message' => 'Không có danh mục'], 404);
         }
         $this->categoryRepository->delete($category->id);
-        return response()->json(['message' => 'Category deleted successfully']);
+        return response()->json(['message' => 'Xóa danh mục thành công']);
     }
 }

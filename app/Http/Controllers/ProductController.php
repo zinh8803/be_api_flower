@@ -50,25 +50,30 @@ class ProductController extends Controller
      */
     public function searchStockWarning(Request $request)
     {
-        // $expiredDate = now()->yesterday()->format('Y-m-d');
-        // $now = now()->setTime(22, 0, 0)->format('Y-m-d');
-        // $start = now()->copy()->subDay()->setTime(22, 0, 0);
-        // $end = now()->copy()->setTime(22, 0, 0);
-        $end = now()->startOfDay()->setTime(23, 59, 59);
-        $start = $end->copy()->subDay()->setTime(0, 0, 0);
         $query = $request->input('q', '');
+        $date = $request->input('date');
+        $page = (int) $request->input('page', 1);
+        $perPage = 10;
+
+        if ($date) {
+            $start = Carbon::parse($date)->startOfDay();
+            $end = Carbon::parse($date)->endOfDay();
+        } else {
+            $end = now()->startOfDay()->setTime(23, 59, 59);
+            $start = $end->copy()->subDay()->setTime(0, 0, 0);
+        }
+
         $productsQuery = Product::with(['productSizes.recipes.flower']);
-        Log::info('Searching stock warning products', [
-            'query' => $query,
-            'start' => $start->toDateTimeString(),
-            'end' => $end->toDateTimeString()
-        ]);
         if ($query) {
             $productsQuery->where('name', 'like', '%' . $query . '%');
         }
+        $products = $productsQuery->get();
 
-        $products = $productsQuery->paginate(10);
-        $result = [];
+        $result = [
+            'available' => [],
+            'low' => [],
+            'out' => []
+        ];
 
         foreach ($products as $product) {
             foreach ($product->productSizes as $size) {
@@ -81,19 +86,11 @@ class ProductController extends Controller
                         ->whereBetween('import_date', [$start, $end])
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
-
-                    $stockLog = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereBetween('import_date', [$start, $end]);
-
-                    Log::info('Checking flower stock', [
-                        'flower_id' => $flowerId,
-                        'needed' => $needed,
-                        'stock' => $stock,
-                        'log' => $stockLog,
-                        'start' => $start->toDateTimeString(),
-                        'end' => $end->toDateTimeString()
-                    ]);
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
+                    // Log::info(
+                    //     "flowerStock",
+                    //     ['flower_id' => $flowerId, 'stock' => $stock, 'needed' => $needed, 'possible' => $possible]
+                    // );
                     if ($possible < $minStock) {
                         $minStock = $possible;
                         $limitingFlower = [
@@ -104,35 +101,50 @@ class ProductController extends Controller
                         ];
                     }
                 }
-                $result[] = [
+                $item = [
                     'product_id' => $product->id,
                     'product_image' => $product->image_url,
                     'product_name' => $product->name,
                     'size_id' => $size->id,
                     'size' => $size->size,
                     'max_quantity' => $minStock,
-                    'limiting_flower' => $limitingFlower,
-                    'warning' => $minStock <= 3
+                    'limiting_flower' => $limitingFlower
                 ];
+
+
+                if ($minStock === 0.0) {
+                    $result['out'][] = $item;
+                } elseif ($minStock <= 10) {
+                    $result['low'][] = $item;
+                } else {
+                    $result['available'][] = $item;
+                }
             }
         }
 
-        // Sắp xếp gần hết lên trên
-        usort($result, function ($a, $b) {
-            return $a['max_quantity'] <=> $b['max_quantity'];
-        });
+        foreach ($result as &$group) {
+            usort($group, function ($a, $b) {
+                return $a['max_quantity'] <=> $b['max_quantity'];
+            });
+        }
 
-        $currentPage = $products->currentPage();
-        $perPage = $products->perPage();
-        $total = $products->total();
-        $lastPage = $products->lastPage();
+        $paginateGroup = function ($group) use ($page, $perPage) {
+            $total = count($group);
+            $lastPage = ceil($total / $perPage);
+            $paged = array_slice($group, ($page - 1) * $perPage, $perPage);
+            return [
+                'data' => $paged,
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => $lastPage
+            ];
+        };
 
         return response()->json([
-            'data' => $result,
-            'current_page' => $currentPage,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => $lastPage,
+            'available' => $paginateGroup($result['available']),
+            'low' => $paginateGroup($result['low']),
+            'out' => $paginateGroup($result['out']),
         ]);
     }
 
@@ -235,6 +247,7 @@ class ProductController extends Controller
             'category_id' => $request->input('category_id'),
             'color' => $request->input('color'),
             'flower_type_id' => $request->input('flower_type_id'),
+            'price' => $request->input('price'),
         ];
         $products = $this->products->filterTypeColor($filters);
         return ProductResource::collection($products);
@@ -507,7 +520,14 @@ class ProductController extends Controller
         }
         return new ProductResource($product);
     }
-
+    public function showbyId($id)
+    {
+        $product = $this->products->findById($id);
+        if (!$product) {
+            return response()->json(["message" => "Product not found"], 404);
+        }
+        return new ProductResource($product);
+    }
 
     /**
      * @OA\Get(
@@ -646,7 +666,7 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = $this->products->find($id);
+        $product = $this->products->findById($id);
         if (!$product) {
             return response()->json(["message" => "Product not found"], 404);
         }

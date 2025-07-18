@@ -43,20 +43,32 @@ class ProductRepository implements ProductRepositoryInterface
         $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType']);
 
         if (!empty($filters['color'])) {
-            $query->whereHas('productSizes.recipes.flower', function ($q) use ($filters) {
-                $q->where('color', $filters['color']);
+            $colors = is_array($filters['color']) ? $filters['color'] : [$filters['color']];
+            $query->whereHas('productSizes.recipes.flower', function ($q) use ($colors) {
+                $q->whereIn('color', $colors);
             });
         }
 
         if (!empty($filters['flower_type_id'])) {
-            $query->whereHas('productSizes.recipes.flower.flowerType', function ($q) use ($filters) {
-                $q->where('id', $filters['flower_type_id']);
+            $flowerTypeIds = is_array($filters['flower_type_id']) ? $filters['flower_type_id'] : [$filters['flower_type_id']];
+            $query->whereHas('productSizes.recipes.flower.flowerType', function ($q) use ($flowerTypeIds) {
+                $q->whereIn('id', $flowerTypeIds);
             });
         }
 
         if (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
+
+        if (!empty($filters['price'])) {
+            $minPrice = $filters['price'][0];
+            $maxPrice = $filters['price'][1];
+            $query->whereHas('productSizes', function ($q) use ($minPrice, $maxPrice) {
+                $q->where('size', 'Nhỏ')
+                    ->whereBetween('price', [$minPrice, $maxPrice]);
+            });
+        }
+        Log::info('Product filter applied', ['filters' => $filters]);
 
         return $query->paginate(10);
     }
@@ -195,7 +207,6 @@ class ProductRepository implements ProductRepositoryInterface
                 $data['slug'] = Str::slug($data['name']);
             }
 
-            // Xóa toàn bộ productSizes và recipes cũ
             foreach ($product->productSizes as $size) {
                 $size->recipes()->delete();
                 $size->delete();
@@ -280,7 +291,6 @@ class ProductRepository implements ProductRepositoryInterface
                     $canBeMade = false;
                 }
 
-                // Thêm chi tiết về tồn kho của hoa
                 $sizeStatus['flower_details'][] = [
                     'flower_id' => $recipe->flower_id,
                     'flower_name' => $recipe->flower->name,
@@ -366,32 +376,32 @@ class ProductRepository implements ProductRepositoryInterface
                 $q->where('name', 'like', '%' . $params['product'] . '%');
             })->get();
             if ($categoryProducts->count() > 0) {
-                return $categoryProducts->load('category', 'recipes', 'recipes.flower');
+                return $categoryProducts->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
             }
 
             $flowerProducts = $this->model->whereHas('recipes.flower', function ($q) use ($params) {
                 $q->where('name', 'like', '%' . $params['product'] . '%');
             })->get();
-            return $flowerProducts->load('category', 'recipes', 'recipes.flower');
+            return $flowerProducts->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
         }
 
-        if (!empty($params['name'])) {
-            $query->where('name', 'like', '%' . $params['name'] . '%');
-        }
-        if (!empty($params['category_id'])) {
-            $query->where('category_id', $params['category_id']);
-        }
-        if (!empty($params['flower_name'])) {
-            $query->whereHas('recipes.flower', function ($q) use ($params) {
-                $q->where('name', 'like', '%' . $params['flower_name'] . '%');
-            });
-        }
+        // if (!empty($params['name'])) {
+        //     $query->where('name', 'like', '%' . $params['name'] . '%');
+        // }
+        // if (!empty($params['category_id'])) {
+        //     $query->where('category_id', $params['category_id']);
+        // }
+        // if (!empty($params['flower_name'])) {
+        //     $query->whereHas('recipes.flower', function ($q) use ($params) {
+        //         $q->where('name', 'like', '%' . $params['flower_name'] . '%');
+        //     });
+        // }
 
         return $query->with([
             'category',
             'recipes',
-            'recipes.flower',
+            'recipes.flower.flowerType',
             'productSizes.recipes.flower'
-        ])->get();
+        ])->paginate(10);
     }
 }

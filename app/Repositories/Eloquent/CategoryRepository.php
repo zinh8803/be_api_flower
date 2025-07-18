@@ -69,8 +69,8 @@ class CategoryRepository implements CategoryRepositoryInterface
         //     }
         // }
         if (isset($data['name'])) {
-        $data['slug'] = Str::slug($data['name']);
-    }
+            $data['slug'] = Str::slug($data['name']);
+        }
 
         $record->update($data);
         return $record;

@@ -88,7 +88,7 @@ Route::prefix('categories')->group(function () {
 Route::prefix('products')->group(function () {
     Route::get('/stock-warning/search', [ProductController::class, 'searchStockWarning']);
     Route::get('/stock-warning', [ProductController::class, 'stockWarning']);
-    Route::post('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
+    Route::get('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
     Route::get('/stock', [ProductController::class, 'checkAllStock']);
     Route::get('/{id}/stock', [ProductController::class, 'checkStock']);
     Route::get('/category/id={categoryId}', [ProductController::class, 'getProductsByCategoryId']);
@@ -97,6 +97,7 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::post('/', [ProductController::class, 'store']);
     Route::get('/search', [ProductController::class, 'search']);
+    Route::get('/detailId/{id}', [ProductController::class, 'showbyId']);
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::put('/{id}', [ProductController::class, 'update']);
     Route::delete('/{id}', [ProductController::class, 'destroy']);
