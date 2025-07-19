@@ -6,12 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Recipe extends Model
 {
-    protected $fillable = ['quantity', 'product_id', 'flower_id'];
+    protected $fillable = ['quantity', 'flower_id'];
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
 
     public function flower()
     {

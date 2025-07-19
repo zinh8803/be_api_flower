@@ -21,23 +21,35 @@ class StoreProductRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-public function rules(): array
-{
-    return [
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string|max:1000',
-        'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
-        'status' => 'boolean',
-        'category_id' => 'required|integer|exists:categories,id',
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
+            'status' => 'boolean',
+            'category_id' => 'required|integer|exists:categories,id',
 
-        'sizes' => 'required|array|min:1',
-        'sizes.*.size' => 'required|string|max:255',
-        'sizes.*.price' => 'required|numeric|min:0',
-        'sizes.*.recipes' => 'required|array|min:1',
-        'sizes.*.recipes.*.flower_id' => 'required|integer|exists:flowers,id',
-        'sizes.*.recipes.*.quantity' => 'required|integer|min:1',
-    ];
-}
+            'sizes' => 'required|array|min:1',
+            'sizes.*.size' => 'required|string|max:255',
+            'sizes.*.price' => 'required|numeric|min:0',
+            'sizes.*.recipes' => 'required|array|min:1',
+            'sizes.*.recipes.*.flower_id' => 'required|integer|exists:flowers,id',
+            'sizes.*.recipes.*.quantity' => 'required|integer|min:1',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Tên sản phẩm là bắt buộc.',
+            'category_id.required' => 'Danh mục sản phẩm là bắt buộc.',
+            'sizes.required' => 'Cần ít nhất một kích thước sản phẩm.',
+            'sizes.*.size.required' => 'Kích thước là bắt buộc cho mỗi kích thước sản phẩm.',
+            'sizes.*.price.required' => 'Giá là bắt buộc cho mỗi kích thước sản phẩm.',
+            'sizes.*.recipes.required' => 'Cần ít nhất một công thức cho mỗi kích thước sản phẩm.',
+        ];
+    }
 
     public function all($keys = null)
     {

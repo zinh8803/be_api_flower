@@ -28,15 +28,6 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-
-    public function orders()
-    {
-        return $this->belongsToMany(Order::class)->withPivot('quantity', 'subtotal');
-    }
-    public function recipes()
-    {
-        return $this->hasMany(Recipe::class);
-    }
     public function productSizes()
     {
         return $this->hasMany(ProductSize::class);
