@@ -65,8 +65,8 @@ class AutoImportReceiptController extends Controller
     {
         $data = $request->validated();
         $data['import_date'] = $data['import_date'] ?? now()->format('Y-m-d');
+        $data['run_time'] = $data['run_time'] ?? now()->format('H:i');
 
-        // Validate chi tiết nhập
         if (empty($data['details'])) {
             return response()->json(['message' => 'Phải có ít nhất một sản phẩm để nhập'], 422);
         }

@@ -29,23 +29,28 @@ class AutoCreateImportReceipt extends Command
      */
     public function handle(ImportReceiptRepository $repo)
     {
-        //Log::info("AutoCreateImportReceipt đã được gọi lúc " . now());
+        Log::info("AutoCreateImportReceipt đã được gọi lúc " . now());
         $today = now()->toDateString();
         $nowTime = now()->format('H:i');
-        //Log::info("Ngày: $today, Giờ: $nowTime");
-        $configs = AutoImportReceipt::where('enabled', 1)
-            ->where('import_date', $today)
-            ->where('run_time', 'like', $nowTime . '%')
-            ->get();
+        Log::info("Ngày: $today, Giờ: $nowTime");
 
-        //Log::info("Số cấu hình tìm thấy: " . $configs->count());
-        foreach ($configs as $config) {
+        $config = AutoImportReceipt::where('enabled', 1)
+            ->where('import_date', $today)
+            ->whereRaw("DATE_FORMAT(run_time, '%H:%i') = ?", [$nowTime])
+            ->orderByDesc('id')
+            ->first();
+        if ($config) {
+            Log::info("Kết quả truy vấn:", $config->toArray());
+
+            Log::info("Đã tìm thấy cấu hình id: " . $config->id);
             $data = [
                 'import_date' => $today,
                 'details' => $config->details,
             ];
             $repo->createWithDetails($data);
             $this->info("Đã tạo phiếu nhập tự động cho ngày $today lúc $nowTime");
+        } else {
+            Log::info("Không tìm thấy cấu hình phù hợp để tạo phiếu nhập.");
         }
     }
     public static function schedule(Schedule $schedule)
