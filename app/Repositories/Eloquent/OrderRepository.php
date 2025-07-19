@@ -126,7 +126,7 @@ class OrderRepository implements OrderRepositoryInterface
             $order->load(['user', 'discount']);
             event(new OrderCreated($order));
 
-            $order->load('orderDetails.product', 'discount', 'orderDetails.productSize');
+            $order->load('discount', 'orderDetails.productSize');
             if (!empty($order->email)) {
                 SendOrderMail::dispatch($order, $order->email);
             }
@@ -222,13 +222,12 @@ class OrderRepository implements OrderRepositoryInterface
                     throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
                 }
 
-                // Trả lại số lượng hoa về kho
                 foreach ($order->orderDetails as $detail) {
                     $productSize = $detail->productSize;
                     if ($productSize && $productSize->recipes) {
                         foreach ($productSize->recipes as $recipe) {
                             $qtyReturn = $recipe->quantity * $detail->quantity;
-                            $importDetails = \App\Models\ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                            $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
                                 ->orderByDesc('import_date')
                                 ->get();
 
@@ -246,8 +245,6 @@ class OrderRepository implements OrderRepositoryInterface
                         }
                     }
                 }
-                // Giữ nguyên giá, KHÔNG tính vào doanh thu (xử lý ở báo cáo doanh thu bằng status)
-                // Không cần set lại total_price
             } else {
                 $nextStatus = $currentIndex !== false && $currentIndex < count($statusFlow) - 1
                     ? $statusFlow[$currentIndex + 1]
@@ -283,7 +280,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function all($filters = [])
     {
         // return $this->model->orderBy('id', 'desc')->paginate(10);
-        $query = $this->model->with('orderDetails.product', 'orderDetails.productSize')
+        $query = $this->model->with('orderDetails.productSize.product')
             ->orderBy('buy_at', 'desc')
             ->orderBy('id', 'desc');
 
@@ -329,7 +326,7 @@ class OrderRepository implements OrderRepositoryInterface
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }
 
-        $order = $this->model->with('orderDetails.product', 'orderDetails.productSize')->find($id);
+        $order = $this->model->with('orderDetails.productSize.product')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }
@@ -342,7 +339,7 @@ class OrderRepository implements OrderRepositoryInterface
     }
     public function show(int $id)
     {
-        $order = $this->model->with('orderDetails.product', 'orderDetails.productSize')->find($id);
+        $order = $this->model->with('orderDetails.productSize.product')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }

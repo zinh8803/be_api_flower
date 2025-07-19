@@ -29,13 +29,16 @@ class AutoCreateImportReceipt extends Command
      */
     public function handle(ImportReceiptRepository $repo)
     {
-        Log::info("AutoCreateImportReceipt đã được gọi lúc " . now());
+        //Log::info("AutoCreateImportReceipt đã được gọi lúc " . now());
         $today = now()->toDateString();
         $nowTime = now()->format('H:i');
-        $configs = AutoImportReceipt::where('enabled', true)
+        //Log::info("Ngày: $today, Giờ: $nowTime");
+        $configs = AutoImportReceipt::where('enabled', 1)
             ->where('import_date', $today)
-            ->where('run_time', $nowTime)
+            ->where('run_time', 'like', $nowTime . '%')
             ->get();
+
+        //Log::info("Số cấu hình tìm thấy: " . $configs->count());
         foreach ($configs as $config) {
             $data = [
                 'import_date' => $today,

@@ -175,7 +175,7 @@ class ProductRepository implements ProductRepositoryInterface
                         'flower_id' => $recipe['flower_id'],
                         'quantity' => $recipe['quantity'],
                         'product_size_id' => $productSize->id,
-                        'product_id' => $product->id,
+                        // 'product_id' => $product->id,
                     ]);
                 }
             }
@@ -230,7 +230,7 @@ class ProductRepository implements ProductRepositoryInterface
                         'flower_id' => $recipe['flower_id'],
                         'quantity' => $recipe['quantity'],
                         'product_size_id' => $productSize->id,
-                        'product_id' => $product->id,
+                        // 'product_id' => $product->id,
                     ]);
                 }
             }

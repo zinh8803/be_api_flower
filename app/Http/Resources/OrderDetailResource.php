@@ -21,7 +21,7 @@ class OrderDetailResource extends JsonResource
             'quantity' => $this->quantity,
             'subtotal' => $this->subtotal,
             'product_price' => $this->product ? $this->product->price : null,
-            'product' => new ProductResource($this->whenLoaded('product')),
+            //'product' => new ProductResource($this->whenLoaded('product')),
             'product_size' => new ProductSizeResource($this->whenLoaded('productSize')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
