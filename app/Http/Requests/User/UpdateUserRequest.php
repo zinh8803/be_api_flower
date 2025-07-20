@@ -3,8 +3,9 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+
 /**
-* @OA\Schema(
+ * @OA\Schema(
  *     schema="UserUpdateRequest",
  *     required={"_method", "name", "phone", "address"},
  *      @OA\Property(property="_method", type="string", example="PUT"),
@@ -36,7 +37,7 @@ class UpdateUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ];
     }
 }

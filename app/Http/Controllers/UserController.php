@@ -149,7 +149,7 @@ class UserController extends Controller
                 'message' => 'Email hoặc mật khẩu không đúng',
             ], 401);
         }
-        if (Auth::guard('api')->user()->status !== true) {
+        if (Auth::guard('api')->user()->status === 0) {
             return response()->json([
                 'status' => false,
                 'message' => 'Tài khoản của bạn đã bị khóa.',

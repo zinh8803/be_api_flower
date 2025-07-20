@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Order;
 
 use Illuminate\Foundation\Http\FormRequest;
+
 /**
  * @OA\Schema(
  *     schema="OrderStoreRequest",
@@ -57,6 +58,16 @@ class StoreOrderRequest extends FormRequest
             'products.*.product_id' => 'required|integer|exists:products,id',
             'products.*.product_size_id' => 'required|integer|exists:product_sizes,id',
             'products.*.quantity' => 'required|integer|min:1',
+        ];
+    }
+    public function messages()
+    {
+        return [
+            'name.required' => 'Tên là bắt buộc.',
+            'email.required' => 'Email là bắt buộc.',
+            'phone.required' => 'Số điện thoại là bắt buộc.',
+            'address.required' => 'Địa chỉ là bắt buộc.',
+            'payment_method.required' => 'Phương thức thanh toán là bắt buộc.',
         ];
     }
 }

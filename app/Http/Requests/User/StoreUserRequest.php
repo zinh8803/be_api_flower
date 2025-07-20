@@ -37,7 +37,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|unique:users,phone|string|max:20',
             'password' => 'required|string|min:6|confirmed',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'role' => 'nullable|in:admin,user',
@@ -48,6 +48,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'email.unique' => 'Email này đã được đăng ký. Vui lòng dùng email khác.',
+            'phone.unique' => 'Số điện thoại này đã được đăng ký. Vui lòng dùng số khác.',
         ];
     }
 }

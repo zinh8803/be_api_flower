@@ -24,7 +24,7 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|unique:products,name|string|max:255',
             'description' => 'nullable|string|max:1000',
             'image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'boolean',
@@ -42,6 +42,7 @@ class StoreProductRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.unique' => 'Tên sản phẩm đã tồn tại, vui lòng chọn tên khác.',
             'name.required' => 'Tên sản phẩm là bắt buộc.',
             'category_id.required' => 'Danh mục sản phẩm là bắt buộc.',
             'sizes.required' => 'Cần ít nhất một kích thước sản phẩm.',
