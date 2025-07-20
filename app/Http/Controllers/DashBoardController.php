@@ -39,7 +39,7 @@ class DashBoardController extends Controller
                     });
             })
                 ->where('status', '!=', 'đã hủy')
-                ->with('orderDetails.product', 'orderDetails.productSize')
+                ->with('orderDetails.productSize.product', 'orderDetails.productSize')
                 ->get();
 
             $receipts = ImportReceipt::where(function ($query) use ($startDateTime, $endDateTime) {

@@ -35,10 +35,23 @@ class StoreEmployeeRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            //'password' => 'required|string|min:6',
             'phone' => 'nullable|string|max:15',
             'address' => 'nullable|string|max:255',
             'role' => 'required|in:employee',
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Tên nhân viên là bắt buộc.',
+            'email.required' => 'Email là bắt buộc.',
+            'email.email' => 'Email không hợp lệ.',
+            'email.unique' => 'Email đã được sử dụng.',
+            // 'password.required' => 'Mật khẩu là bắt buộc.',
+            // 'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+            'role.required' => 'Vai trò là bắt buộc.',
+            'role.in' => 'Vai trò không hợp lệ.',
         ];
     }
 }

@@ -124,7 +124,10 @@ class ProductController extends Controller
 
         foreach ($result as &$group) {
             usort($group, function ($a, $b) {
-                return $a['max_quantity'] <=> $b['max_quantity'];
+                if ($a['product_id'] === $b['product_id']) {
+                    return $a['size_id'] <=> $b['size_id'];
+                }
+                return $a['product_id'] <=> $b['product_id'];
             });
         }
 
@@ -551,7 +554,7 @@ class ProductController extends Controller
     public function getProductsByCategory($categoryId)
     {
         try {
-            $products = $this->products->getProductsByCategory($categoryId)->load('recipes', 'recipes.flower', 'recipes.flower.importReceiptDetails');
+            $products = $this->products->getProductsByCategory($categoryId);
             return ProductResource::collection($products);
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);
@@ -561,7 +564,7 @@ class ProductController extends Controller
     public function getProductsByCategoryId($categoryId)
     {
         try {
-            $products = $this->products->getProductsByCategoryId($categoryId)->load('recipes', 'recipes.flower', 'recipes.flower.importReceiptDetails');
+            $products = $this->products->getProductsByCategoryId($categoryId);
             return ProductResource::collection($products);
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);

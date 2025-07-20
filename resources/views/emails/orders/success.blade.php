@@ -30,13 +30,15 @@
                         @foreach ($order->orderDetails as $detail)
                         <tr>
                             <td style="padding:8px 4px;text-align:center;">
-                                @if(!empty($detail->product->image_url))
-                                <img src="{{ $detail->product->image_url }}" alt="{{ $detail->product->name }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                                @if(!empty($detail->productSize->product->image_url))
+                                <img src="{{ $detail->productSize->product->image_url }}" alt="{{ $detail->productSize->product->name }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
                                 @else
                                 <span style="color:#ccc;">Không có ảnh</span>
                                 @endif
                             </td>
-                            <td style="padding:8px 4px;">{{ $detail->product->name }}</td>
+                            <td style="padding:8px 4px;">
+                                {{ $detail->productSize->product->name ?? 'Không xác định' }}
+                            </td>
                             <td style="padding:8px 4px;text-align:center;">x{{ $detail->quantity }}</td>
                             <td style="padding:8px 4px;text-align:right;">{{ number_format($detail->subtotal) }} VND</td>
                         </tr>

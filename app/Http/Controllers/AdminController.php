@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
+use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
 
@@ -87,5 +88,27 @@ class AdminController extends Controller
             'status' => true,
             'message' => 'Cập nhật nhân viên thành công',
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/employees",
+     *     tags={"Admin"},
+     *     summary="Get all employees",
+     *     operationId="getAllEmployees",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of employees",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/User")
+     *         )
+     *     )
+     * )
+     */
+    public function index()
+    {
+        $employees = $this->users->getAllEmployees();
+        return UserResource::collection($employees);
     }
 }

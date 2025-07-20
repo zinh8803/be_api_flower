@@ -134,6 +134,30 @@
                 }
             }
         },
+        "/api/admin/employees": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get all employees",
+                "operationId": "getAllEmployees",
+                "responses": {
+                    "200": {
+                        "description": "List of employees",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/auto-import-receipts": {
             "get": {
                 "tags": [
@@ -1258,6 +1282,38 @@
                     },
                     "422": {
                         "description": "Lỗi xác thực"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/cancel/{id}": {
+            "put": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Hủy đơn hàng",
+                "operationId": "83d97f3ab7db241691c080de44d1fa7e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đơn hàng đã được hủy thành công"
+                    },
+                    "404": {
+                        "description": "Đơn hàng không tồn tại"
                     }
                 },
                 "security": [
@@ -2476,11 +2532,12 @@
                                         "format": "email",
                                         "example": "user@example.com"
                                     },
-                                    "otp": {
-                                        "type": "integer",
-                                        "example": 123456
-                                    },
                                     "new_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword"
+                                    },
+                                    "new_password_confirmation": {
                                         "type": "string",
                                         "format": "password",
                                         "example": "newpassword"
@@ -3260,6 +3317,10 @@
                     "name": {
                         "type": "string",
                         "example": "Hoa tặng mẹ"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "hoa-tang-me"
                     },
                     "image_url": {
                         "type": "string",

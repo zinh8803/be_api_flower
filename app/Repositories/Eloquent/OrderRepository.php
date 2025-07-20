@@ -45,9 +45,9 @@ class OrderRepository implements OrderRepositoryInterface
                 $productSize = ProductSize::with(['recipes.flower', 'product'])->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
 
-                if ($this->isForcedFlower($productSize)) {
-                    throw new \Exception("Sản phẩm {$productSize->product->name} hiện đang ở trạng thái hoa ép, không thể đặt mua.");
-                }
+                // if ($this->isForcedFlower($productSize)) {
+                //     throw new \Exception("Sản phẩm {$productSize->product->name} hiện đang ở trạng thái hoa ép, không thể đặt mua.");
+                // }
 
                 foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
@@ -126,7 +126,7 @@ class OrderRepository implements OrderRepositoryInterface
             $order->load(['user', 'discount']);
             event(new OrderCreated($order));
 
-            $order->load('discount', 'orderDetails.productSize');
+            $order->load('discount', 'orderDetails.productSize.product');
             if (!empty($order->email)) {
                 SendOrderMail::dispatch($order, $order->email);
             }
@@ -163,10 +163,11 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function deductStock($flowerId, $neededQty)
     {
-        $now = now();
-        $tenPmNextDay = $now->copy()->addDay()->setTime(22, 0, 0);
+        $end = now()->startOfDay()->setTime(23, 59, 59);
+        $start = $end->copy()->subDay()->setTime(0, 0, 0);
 
         $stock = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->whereBetween('import_date', [$start, $end])
             ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
             ->value('remaining') ?? 0;
 
@@ -175,10 +176,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         $details = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->where(function ($query) use ($tenPmNextDay) {
-                $query->where('import_date', '>=', now()->subDays(2))
-                    ->where('import_date', '<=', $tenPmNextDay);
-            })
+            ->whereBetween('import_date', [$start, $end])
             ->orderByDesc('import_date')
             ->get();
 
@@ -200,7 +198,6 @@ class OrderRepository implements OrderRepositoryInterface
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
     }
-
     public function findById(int $id)
     {
         return $this->model->find($id);
@@ -272,6 +269,71 @@ class OrderRepository implements OrderRepositoryInterface
 
         return $order;
     }
+
+    public function cancelOrderByUser(int $id)
+    {
+        $user = Auth()->user();
+        if (!$user) {
+            throw new \Exception('Bạn cần đăng nhập để hủy đơn hàng.');
+        }
+
+        $order = $this->findById($id);
+        if (!$order) {
+            throw new \Exception('Đơn hàng không tồn tại.');
+        }
+
+        if ($order->user_id !== $user->id) {
+            throw new \Exception('Bạn không có quyền hủy đơn hàng này.');
+        }
+
+        if ($order->status !== 'đang xử lý') {
+            throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
+        }
+
+        // Trả lại tồn kho cho các hoa đã dùng
+        foreach ($order->orderDetails as $detail) {
+            $productSize = $detail->productSize;
+            if ($productSize && $productSize->recipes) {
+                foreach ($productSize->recipes as $recipe) {
+                    $qtyReturn = $recipe->quantity * $detail->quantity;
+                    $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                        ->orderByDesc('import_date')
+                        ->get();
+
+                    $remain = $qtyReturn;
+                    foreach ($importDetails as $importDetail) {
+                        $used = $importDetail->used_quantity;
+                        if ($used > 0) {
+                            $returnQty = min($remain, $used);
+                            $importDetail->used_quantity -= $returnQty;
+                            $importDetail->save();
+                            $remain -= $returnQty;
+                            if ($remain <= 0) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        $order->status = 'đã hủy';
+        $order->save();
+
+        // Gửi mail nếu có email
+        if (!empty($order->email)) {
+            try {
+                SendOrderStatusMailJob::dispatch($order, 'đã hủy');
+            } catch (\Exception $e) {
+                Log::error('Gửi mail trạng thái đơn hàng thất bại', [
+                    'order_id' => $order->id,
+                    'email' => $order->email,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return $order;
+    }
+
     public function delete(int $id)
     {
         return $this->model->destroy($id);

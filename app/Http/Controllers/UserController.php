@@ -149,6 +149,12 @@ class UserController extends Controller
                 'message' => 'Email hoặc mật khẩu không đúng',
             ], 401);
         }
+        if (Auth::guard('api')->user()->status !== true) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tài khoản của bạn đã bị khóa.',
+            ], 403);
+        }
         $user = Auth::guard('api')->user();
         $refreshToken = Str::random(60);
         RefreshToken::create([

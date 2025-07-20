@@ -149,14 +149,38 @@ class OrderController extends Controller
     {
         $order = $this->orderRepository->findById($id);
         if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
+            return response()->json(['message' => 'Đơn hàng không tồn tại'], 404);
         }
         $order = $this->orderRepository->update($id, $request->validated());
-        Log::info('Order updated successfully', ['id' => $id, 'data' => $request->all()]);
         return response()->json([
-            'message' => 'Order updated successfully',
+            'message' => 'Cập nhật đơn hàng thành công',
         ], 200);
     }
+    /**
+     * @OA\Put(
+     *     path="/api/orders/cancel/{id}",
+     *     tags={"Orders"},
+     *     summary="Hủy đơn hàng",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Đơn hàng đã được hủy thành công"),
+     *     @OA\Response(response=404, description="Đơn hàng không tồn tại")
+     * )
+     */
+
+    public function cancelOrder($id)
+    {
+        $order = $this->orderRepository->findById($id);
+        if (!$order) {
+            return response()->json(['message' => 'Đơn hàng không tồn tại'], 404);
+        }
+        $this->orderRepository->cancelOrderByUser($id);
+        return response()->json([
+            'message' => 'Đơn hàng đã được hủy thành công',
+        ], 200);
+    }
+
+
     /**
      * @OA\Delete(
      *     path="/api/orders/{id}",

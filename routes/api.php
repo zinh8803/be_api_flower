@@ -48,9 +48,11 @@ Route::middleware(['checkjwt'])->group(function () {
     Route::get('orders', [OrderController::class, 'index']);
     Route::get('orders/{order}', [OrderController::class, 'show']);
     Route::put('orders/{order}', [OrderController::class, 'update']);
+    Route::put('orders/cancel/{id}', [OrderController::class, 'cancelOrder']);
     Route::delete('orders/{order}', [OrderController::class, 'destroy']);
     Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
 
+    Route::get('/admin/employees', [AdminController::class, 'index']);
     Route::resource('auto-import-receipts', AutoImportReceiptController::class);
 
 

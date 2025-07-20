@@ -369,20 +369,20 @@ class ProductRepository implements ProductRepositoryInterface
         if (!empty($params['product'])) {
             $products = $this->model->where('name', 'like', '%' . $params['product'] . '%')->get();
             if ($products->count() > 0) {
-                return $products->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
+                return $products->load('category', 'productSizes.recipes.flower');
             }
 
             $categoryProducts = $this->model->whereHas('category', function ($q) use ($params) {
                 $q->where('name', 'like', '%' . $params['product'] . '%');
             })->get();
             if ($categoryProducts->count() > 0) {
-                return $categoryProducts->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
+                return $categoryProducts->load('category', 'productSizes.recipes.flower');
             }
 
-            $flowerProducts = $this->model->whereHas('recipes.flower', function ($q) use ($params) {
+            $flowerProducts = $this->model->whereHas('productSizes.recipes.flower', function ($q) use ($params) {
                 $q->where('name', 'like', '%' . $params['product'] . '%');
             })->get();
-            return $flowerProducts->load('category', 'recipes', 'recipes.flower', 'productSizes.recipes.flower');
+            return $flowerProducts->load('category', 'productSizes.recipes.flower');
         }
 
         // if (!empty($params['name'])) {
@@ -399,9 +399,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $query->with([
             'category',
-            'recipes',
-            'recipes.flower.flowerType',
-            'productSizes.recipes.flower'
+            'productSizes.recipes.flower.flowerType'
         ])->paginate(10);
     }
 }

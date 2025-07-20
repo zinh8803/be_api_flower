@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Password;
 
 class UserRepository implements UserRepositoryInterface
 {
+
+    public function getAllEmployees()
+    {
+        return User::where('role', 'employee')->paginate(10);
+    }
+
+
     public function create(array $data)
     {
         $data['password'] = bcrypt($data['password']);
@@ -22,7 +29,7 @@ class UserRepository implements UserRepositoryInterface
 
     public function createEmployee(array $data)
     {
-        $data['password'] = bcrypt($data['password']);
+        $data['password'] = bcrypt('admin123');
         $data['role'] = $data['role'] ?? 'employee';
         $data['status'] = $data['status'] ?? 1;
         return User::create($data);
@@ -103,6 +110,6 @@ class UserRepository implements UserRepositoryInterface
     }
     public function getAll()
     {
-        return User::paginate(10);
+        return User::where('role', '=', 'user',)->paginate(10);
     }
 }
