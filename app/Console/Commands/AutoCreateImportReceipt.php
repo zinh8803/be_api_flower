@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Events\AutoImport;
 use App\Models\AutoImportReceipt;
+use App\Models\User;
+use App\Notifications\AutoImportNotification;
 use App\Repositories\Eloquent\ImportReceiptRepository;
 use Illuminate\Console\Command;
 use Illuminate\Console\Scheduling\Schedule;
@@ -49,6 +52,18 @@ class AutoCreateImportReceipt extends Command
             ];
             $repo->createWithDetails($data);
             $this->info("Đã tạo phiếu nhập tự động cho ngày $today lúc $nowTime");
+
+
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new AutoImportNotification($config));
+            }
+
+            $employees = User::where('role', 'employee')->get();
+            foreach ($employees as $employee) {
+                $employee->notify(new AutoImportNotification($config));
+            }
+            event(new AutoImport($config));
         } else {
             Log::info("Không tìm thấy cấu hình phù hợp để tạo phiếu nhập.");
         }

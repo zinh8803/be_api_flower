@@ -163,22 +163,28 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function deductStock($flowerId, $neededQty)
     {
-        $end = now()->startOfDay()->setTime(23, 59, 59);
-        $start = $end->copy()->subDay()->setTime(0, 0, 0);
+        $today = now()->format('Y-m-d');
+        $yesterday = now()->subDay()->format('Y-m-d');
 
-        $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->whereBetween('import_date', [$start, $end])
-            ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-            ->value('remaining') ?? 0;
+        $detailsYesterday = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->whereDate('import_date', $yesterday)
+            ->orderBy('import_date')
+            ->get();
+
+        $detailsToday = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->whereDate('import_date', $today)
+            ->orderBy('import_date')
+            ->get();
+
+        $details = $detailsYesterday->concat($detailsToday);
+
+        $stock = $details->sum(function ($detail) {
+            return $detail->quantity - $detail->used_quantity;
+        });
 
         if ($stock < $neededQty) {
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
-
-        $details = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->whereBetween('import_date', [$start, $end])
-            ->orderByDesc('import_date')
-            ->get();
 
         foreach ($details as $detail) {
             $available = $detail->quantity - $detail->used_quantity;

@@ -44,4 +44,16 @@ class UpdateDiscountRequest extends FormRequest
             'min_total'  => 'nullable|numeric|min:0',
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Tên mã giảm giá là bắt buộc.',
+            'type.required' => 'Loại mã giảm giá là bắt buộc.',
+            'value.required' => 'Giá trị mã giảm giá là bắt buộc.',
+            'value.min' => 'Giá trị mã giảm giá phải lớn hơn hoặc bằng 0.',
+            'start_date.required' => 'Ngày bắt đầu là bắt buộc.',
+            'end_date.required' => 'Ngày kết thúc là bắt buộc.',
+            'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
+        ];
+    }
 }
