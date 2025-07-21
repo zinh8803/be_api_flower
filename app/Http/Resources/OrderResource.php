@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+
 /**
  * @OA\Schema(
  *     schema="Order",
@@ -52,6 +53,7 @@ class OrderResource extends JsonResource
             'updated_at' => $this->updated_at,
             'user' => new UserResource($this->whenLoaded('user')),
             'order_details' => OrderDetailResource::collection($this->whenLoaded('orderDetails')),
+            'product_reports' => ProductReportResource::collection($this->whenLoaded('productReports'))
         ];
     }
 }

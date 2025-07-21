@@ -14,7 +14,7 @@ interface OrderRepositoryInterface
     public function delete(int $id);
 
     public function all();
-
+    public function createReport(array $data);
     public function findByUserId(int $userId);
     public function OrderByUser();
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use App\Events\OrderCreated;
+use App\Helpers\ImageHelper;
 use App\Jobs\SendOrderMail;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
@@ -15,11 +16,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
+use App\Models\OrderDetail;
+use App\Models\ProductReport;
 use App\Models\ProductSize;
 use App\Models\User;
 use App\Notifications\OrderPlacedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\UploadedFile;
 
 class OrderRepository implements OrderRepositoryInterface
 {
@@ -348,7 +352,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function all($filters = [])
     {
         // return $this->model->orderBy('id', 'desc')->paginate(10);
-        $query = $this->model->with('orderDetails.productSize.product')
+        $query = $this->model->with('orderDetails.productSize.product', 'productReports')
             ->orderBy('buy_at', 'desc')
             ->orderBy('id', 'desc');
 
@@ -394,7 +398,7 @@ class OrderRepository implements OrderRepositoryInterface
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }
 
-        $order = $this->model->with('orderDetails.productSize.product')->find($id);
+        $order = $this->model->with('orderDetails.productSize.product', 'productReports')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }
@@ -407,10 +411,93 @@ class OrderRepository implements OrderRepositoryInterface
     }
     public function show(int $id)
     {
-        $order = $this->model->with('orderDetails.productSize.product')->find($id);
+        $order = $this->model->with('orderDetails.productSize.product', 'productReports')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }
         return $order;
+    }
+    protected function handleImageUpload(&$data)
+    {
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
+            try {
+                $imageUrl = ImageHelper::uploadImage($data['image'], 'products');
+                Log::info('Image uploaded successfully', ['image_url' => $imageUrl]);
+                if ($imageUrl) {
+                    $data['image_url'] = $imageUrl;
+                }
+                unset($data['image']);
+            } catch (\Exception $e) {
+                Log::error('Image upload failed', ['error' => $e->getMessage()]);
+            }
+        }
+    }
+    public function createReport(array $data)
+    {
+        if (!isset($data['reports']) || !is_array($data['reports']) || count($data['reports']) === 0) {
+            throw new \Exception('Không có dữ liệu báo cáo.');
+        }
+
+        $orderId = $data['reports'][0]['order_id'] ?? null;
+        $order = Order::find($orderId);
+        if (!$order || $order->status !== 'hoàn thành') {
+            throw new \Exception('Chỉ báo cáo đơn đã giao thành công!');
+        }
+
+        $userId = $data['user_id'] ?? auth()->id();
+        $toInsert = [];
+        foreach ($data['reports'] as $report) {
+            $this->handleImageUpload($report);
+            $orderDetail = OrderDetail::find($report['order_detail_id']);
+            if (!$orderDetail) {
+                throw new \Exception('Chi tiết đơn hàng không hợp lệ!');
+            }
+            if ($report['quantity'] > $orderDetail->quantity) {
+                throw new \Exception('Số lượng báo cáo vượt quá số lượng đã mua!');
+            }
+            $toInsert[] = [
+                'order_id' => $report['order_id'],
+                'order_detail_id' => $report['order_detail_id'],
+                'user_id' => $userId,
+                'quantity' => $report['quantity'],
+                'reason' => $report['reason'] ?? null,
+                'image_url' => $report['image_url'] ?? null,
+                'status' => 'đang xử lý',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+
+        $order->status = 'đang xử lý báo cáo';
+        $order->save();
+
+        ProductReport::insert($toInsert);
+
+        return true;
+    }
+    public function updateReport(int $reportId, array $data)
+    {
+        $report = Order::find($reportId);
+        if (!$report) {
+            throw new \Exception('Báo cáo không tồn tại!');
+        }
+        $report->update($data);
+        return $report;
+    }
+
+    public function deleteReport($orderId): bool
+    {
+        $reports = ProductReport::where('order_id', $orderId)->get();
+        if ($reports->isEmpty()) {
+            throw new \Exception('Báo cáo không tồn tại!');
+        }
+        foreach ($reports as $report) {
+            $report->delete();
+        }
+        $order = Order::find($orderId);
+        $order->status = 'hoàn thành';
+        $order->save();
+        return true;
     }
 }

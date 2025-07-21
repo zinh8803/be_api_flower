@@ -13,6 +13,7 @@ use App\Http\Controllers\MoMoController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VnPayController;
 use App\Http\Middleware\CheckJWT;
@@ -41,6 +42,10 @@ Route::middleware(['checkjwt'])->group(function () {
 
     Route::put('admin/update-employee/{id}', [AdminController::class, 'updateEmployee'])
         ->middleware('check.role:admin');
+
+    Route::post('/orders/product-reports', [ProductReportController::class, 'store']);
+    Route::delete('/orders/product-reports/{id}', [ProductReportController::class, 'delete']);
+
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);
 
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
@@ -63,6 +68,11 @@ Route::middleware(['checkjwt'])->group(function () {
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'delete']);
     Route::delete('/notifications', [NotificationController::class, 'deleteAll']);
+
+
+
+    // Route::get('/product-reports', [ProductReportController::class, 'index']);
+    // Route::get('/product-reports/{id}', [ProductReportController::class, 'show']);
 });
 
 Route::post('orders', [OrderController::class, 'store']);
