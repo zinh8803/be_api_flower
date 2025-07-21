@@ -17,4 +17,8 @@ class OrderDetail extends Model
     {
         return $this->belongsTo(ProductSize::class, 'product_size_id');
     }
+    public function productReports()
+    {
+        return $this->hasMany(ProductReport::class, 'order_detail_id');
+    }
 }

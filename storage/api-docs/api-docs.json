@@ -1323,6 +1323,38 @@
                 ]
             }
         },
+        "/api/orders/product-reports": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Tạo báo cáo sản phẩm",
+                "operationId": "148f9ecb7c4c67cd9b88791941b310cc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreProductReportRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Báo cáo sản phẩm đã được tạo thành công"
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products/stock-warning/search": {
             "get": {
                 "tags": [
@@ -3093,6 +3125,20 @@
                 },
                 "type": "object"
             },
+            "StoreProductReportRequest": {
+                "required": [
+                    "reports"
+                ],
+                "properties": {
+                    "reports": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductReportItem"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "RecipeInputForUpdate": {
                 "required": [
                     "flower_id",
@@ -3238,7 +3284,6 @@
                 ],
                 "properties": {
                     "_method": {
-                        "description": "* @OA\\Schema(\n    schema=\"UserUpdateRequest\",\n    required={\"_method\", \"name\", \"phone\", \"address\"},",
                         "type": "string",
                         "example": "PUT"
                     },
@@ -3579,6 +3624,37 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ProductReportItem": {
+                "required": [
+                    "order_id",
+                    "order_detail_id",
+                    "quantity",
+                    "reason"
+                ],
+                "properties": {
+                    "order_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "order_detail_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Product damaged"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "example": "http://example.com/image.jpg"
                     }
                 },
                 "type": "object"

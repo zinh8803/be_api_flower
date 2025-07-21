@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderRequest;
+use App\Http\Requests\ProductReport\StoreProductReportRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Repositories\Eloquent\OrderRepository;
@@ -199,4 +200,41 @@ class OrderController extends Controller
     {
         //
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders/product-reports",
+     *     tags={"Orders"},
+     *     summary="Tạo báo cáo sản phẩm",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/StoreProductReportRequest")
+     *     ),
+     *     @OA\Response(response=200, description="Báo cáo sản phẩm đã được tạo thành công"),
+     *     @OA\Response(response=422, description="Lỗi xác thực")
+     * )
+     */
+    public function createReport(Request $request)
+    {
+        Log::info('Creating product report', ['data' => $request->all()]);
+
+        $data = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'order_detail_id' => 'required|exists:order_details,id',
+            'quantity' => 'required|integer|min:1',
+            'reason' => 'required|string|max:255',
+            'image_url' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $this->orderRepository->createReport($data);
+            return response()->json(['message' => 'Báo cáo sản phẩm thành công'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error creating product report: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi tạo báo cáo sản phẩm'], 500);
+        }
+    }
+
+    
 }
