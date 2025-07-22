@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AutoImport
+class AutoImport implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -31,7 +31,7 @@ class AutoImport
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('admin-auto-imports'),
+            new Channel('admin-auto-imports'),
         ];
     }
     public function broadcastWith()

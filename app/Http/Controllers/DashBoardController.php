@@ -79,11 +79,11 @@ class DashBoardController extends Controller
         $productStats = [];
         foreach ($orders as $order) {
             foreach ($order->orderDetails as $detail) {
-                $pid = $detail->product_id;
+                $pid = $detail->productSize->product_id;
                 if (!isset($productStats[$pid])) {
                     $productStats[$pid] = [
-                        'name' => $detail->product->name ?? 'Sản phẩm',
-                        'image' => $detail->product->image_url ?? null,
+                        'name' => $detail->productSize->product->name ?? 'Sản phẩm',
+                        'image' => $detail->productSize->product->image_url ?? null,
                         'sold' => 0,
                         'revenue' => 0
                     ];
