@@ -37,6 +37,17 @@ class ProductReportController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+        try {
+            $this->model->handleProductReport($request->all());
+            return response()->json(['message' => 'Cập nhật báo cáo thành công'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error updating product report: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi cập nhật báo cáo sản phẩm'], 500);
+        }
+    }
+
     public function delete($id)
     {
         // $report = ProductReport::find($id);

@@ -33,8 +33,10 @@ class ProductReportResource extends JsonResource
             'user_id' => $this->user_id,
             'quantity' => $this->quantity,
             'reason' => $this->reason,
+            'admin_note' => $this->admin_note,
             'image_url' => $this->image_url,
             'status' => $this->status,
+            'action' => $this->action,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

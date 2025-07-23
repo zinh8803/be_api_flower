@@ -13,7 +13,9 @@ class ProductReport extends Model
         'reason',
         'image_url',
         'status',
-        'quantity'
+        'quantity',
+        'admin_note',
+        'action'
     ];
 
     public function order()

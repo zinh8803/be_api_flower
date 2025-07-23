@@ -14,6 +14,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="quantity", type="integer", example=2),
  *     @OA\Property(property="reason", type="string", example="Product damaged"),
  *     @OA\Property(property="image_url", type="string", example="http://example.com/image.jpg"),
+ *     @OA\Property(property="action", type="string", example="Đổi hàng"),
  * )
  */
 
@@ -54,6 +55,7 @@ class StoreProductReportRequest extends FormRequest
             'reports.*.quantity' => 'required|integer|min:1',
             'reports.*.reason' => 'required|string|max:255',
             'reports.*.image' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
+            'reports.*.action' => 'sometimes|string',
         ];
     }
 }

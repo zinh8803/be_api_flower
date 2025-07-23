@@ -33,9 +33,40 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $this->model = $order;
     }
+    protected function validateDeliveryTime(array $data)
+    {
+        if (!empty($data['delivery_date']) && !empty($data['delivery_time'])) {
+            $openTime = Carbon::createFromTime(8, 0);
+            $closeTime = Carbon::createFromTime(18, 0);
+            $requested = Carbon::parse($data['delivery_date'] . ' ' . $data['delivery_time']);
 
+            if ($requested->lt(now())) {
+                throw new \Exception('Không thể chọn thời gian giao hàng trong quá khứ.');
+            }
+            if ($requested->hour < 8 || $requested->hour > 18) {
+                throw new \Exception('Thời gian giao hàng phải từ 08:00 đến 18:00.');
+            }
+
+            if (!empty($data['is_express'])) {
+                $now = Carbon::now();
+                $minExpressTime = $now->copy()->addHours(2);
+
+                if ($now->hour >= 16) {
+                    $nextDay = $now->copy()->addDay()->setTime(8, 0, 0);
+                    if ($requested->ne($nextDay)) {
+                        throw new \Exception('Giao nhanh sau 16h sẽ được giao vào 08:00 ngày hôm sau.');
+                    }
+                } else {
+                    if ($requested->lt($minExpressTime)) {
+                        throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 2 tiếng.');
+                    }
+                }
+            }
+        }
+    }
     public function createOrder(array $data)
     {
+        $this->validateDeliveryTime($data);
         return DB::transaction(function () use ($data) {
 
             $items = $data['products'];
@@ -106,6 +137,11 @@ class OrderRepository implements OrderRepositoryInterface
                 'note' => $data['note'] ?? null,
                 'payment_method' => $data['payment_method'],
                 // 'user_id' => $data['user_id'] ?? auth()->id() ?? null,
+
+                'delivery_date' => $data['delivery_date'] ?? null,
+                'delivery_time' => !empty($data['is_express']) ? null : ($data['delivery_time'] ?? null),
+                'is_express' => $data['is_express'] ?? false,
+
                 'user_id' => $data['user_id'] ?? auth()->id() ?? 4,
                 'status' => 'đang xử lý',
                 'buy_at' => now(),
@@ -462,6 +498,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'quantity' => $report['quantity'],
                 'reason' => $report['reason'] ?? null,
                 'image_url' => $report['image_url'] ?? null,
+                'action' => $report['action'] ?? null,
                 'status' => 'đang xử lý',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -469,13 +506,64 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
 
-        $order->status = 'đang xử lý báo cáo';
-        $order->save();
 
-        ProductReport::insert($toInsert);
+        return DB::transaction(function () use ($order, $toInsert) {
+            ProductReport::insert($toInsert);
+            $order->status = 'đang xử lý báo cáo';
+            $order->save();
 
-        return true;
+            return true;
+        });
     }
+
+    public function handleProductReport(array $data)
+    {
+        if (!isset($data['order_id'])) {
+            throw new \Exception('Thiếu ID báo cáo!');
+        }
+
+        $report = ProductReport::where('order_id', $data['order_id'])->first();
+        if (!$report) {
+            throw new \Exception('Báo cáo không tồn tại!');
+        }
+
+        return DB::transaction(function () use ($report, $data) {
+            if (isset($data['admin_note'])) {
+                $report->admin_note = $data['admin_note'];
+            }
+
+            if (isset($data['status'])) {
+                $report->status = $data['status'];
+            }
+
+            $report->save();
+
+            if (isset($data['order_status'])) {
+                $order = Order::find($report->order_id);
+                if ($order) {
+                    $order->status = $data['order_status'];
+                    $order->save();
+                }
+            }
+
+            if (!isset($data['order_status'])) {
+                $order = Order::find($report->order_id);
+                if ($order) {
+                    $pendingReports = ProductReport::where('order_id', $order->id)
+                        ->where('status', 'đang xử lý')
+                        ->count();
+
+                    if ($pendingReports === 0) {
+                        $order->status = 'hoàn thành';
+                        $order->save();
+                    }
+                }
+            }
+
+            return $report;
+        });
+    }
+
     public function updateReport(int $reportId, array $data)
     {
         $report = Order::find($reportId);
