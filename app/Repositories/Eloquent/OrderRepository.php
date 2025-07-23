@@ -35,38 +35,42 @@ class OrderRepository implements OrderRepositoryInterface
     }
     protected function validateDeliveryTime(array $data)
     {
-        if (!empty($data['delivery_date']) && !empty($data['delivery_time'])) {
-            $openTime = Carbon::createFromTime(8, 0);
-            $closeTime = Carbon::createFromTime(18, 0);
-            $requested = Carbon::parse($data['delivery_date'] . ' ' . $data['delivery_time']);
+        $now = Carbon::now();
 
+        if ($now->hour > 16 || ($now->hour == 16 && $now->minute > 0)) {
+            $requested = Carbon::parse($data['delivery_date'] . ' ' . ($data['delivery_time'] ?? '08:00'));
+            if (Carbon::parse($data['delivery_date'])->isToday()) {
+                throw new \Exception('Sau 16h không nhận đơn giao trong ngày hôm nay.');
+            }
+            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
+                throw new \Exception('Thời gian giao hàng phải từ 08:00 đến 18:00.');
+            }
+            return;
+        }
+
+        if (!empty($data['is_express'])) {
+            $minExpressTime = $now->copy()->addHours(3);
+            $requested = Carbon::parse($data['delivery_date'] . ' ' . ($data['delivery_time'] ?? '08:00'));
+            if ($requested->lt($minExpressTime)) {
+                throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 3 tiếng.');
+            }
+            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
+                throw new \Exception('Giao nhanh chỉ trong khung giờ 08:00 đến 18:00.');
+            }
+        } else if (!empty($data['delivery_date']) && !empty($data['delivery_time'])) {
+            $requested = Carbon::parse($data['delivery_date'] . ' ' . $data['delivery_time']);
             if ($requested->lt(now())) {
                 throw new \Exception('Không thể chọn thời gian giao hàng trong quá khứ.');
             }
-            if ($requested->hour < 8 || $requested->hour > 18) {
+            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
                 throw new \Exception('Thời gian giao hàng phải từ 08:00 đến 18:00.');
-            }
-
-            if (!empty($data['is_express'])) {
-                $now = Carbon::now();
-                $minExpressTime = $now->copy()->addHours(2);
-
-                if ($now->hour >= 16) {
-                    $nextDay = $now->copy()->addDay()->setTime(8, 0, 0);
-                    if ($requested->ne($nextDay)) {
-                        throw new \Exception('Giao nhanh sau 16h sẽ được giao vào 08:00 ngày hôm sau.');
-                    }
-                } else {
-                    if ($requested->lt($minExpressTime)) {
-                        throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 2 tiếng.');
-                    }
-                }
             }
         }
     }
     public function createOrder(array $data)
     {
         $this->validateDeliveryTime($data);
+        Log::info("1");
         return DB::transaction(function () use ($data) {
 
             $items = $data['products'];
@@ -90,6 +94,10 @@ class OrderRepository implements OrderRepositoryInterface
 
                     if ($stock < $need) {
                         throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
+                    }
+                    $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : $data['delivery_date'];
+                    if (Carbon::parse($deliveryDate)->gt(now())) {
+                        continue;
                     }
                     $this->deductStock($recipe->flower_id, $need);
                 }
@@ -141,7 +149,11 @@ class OrderRepository implements OrderRepositoryInterface
                 'delivery_date' => $data['delivery_date'] ?? null,
                 'delivery_time' => !empty($data['is_express']) ? null : ($data['delivery_time'] ?? null),
                 'is_express' => $data['is_express'] ?? false,
-
+                'status_stock' => (
+                    (!empty($data['delivery_date']) && Carbon::parse($data['delivery_date'])->isToday())
+                    ? 'đã trừ kho'
+                    : 'chưa trừ kho'
+                ),
                 'user_id' => $data['user_id'] ?? auth()->id() ?? 4,
                 'status' => 'đang xử lý',
                 'buy_at' => now(),
@@ -174,6 +186,26 @@ class OrderRepository implements OrderRepositoryInterface
 
             return $order;
         });
+    }
+
+    public function processOrdersForToday()
+    {
+        $today = now()->format('Y-m-d');
+        $orders = Order::where('delivery_date', $today)
+            ->where('status_stock', '!=', 'đã trừ kho')
+            ->get();
+
+        foreach ($orders as $order) {
+            foreach ($order->orderDetails as $detail) {
+                $productSize = $detail->productSize;
+                foreach ($productSize->recipes as $recipe) {
+                    $need = $recipe->quantity * $detail->quantity;
+                    $this->deductStock($recipe->flower_id, $need);
+                }
+            }
+            $order->status_stock = 'đã trừ kho';
+            $order->save();
+        }
     }
 
     protected function isForcedFlower(ProductSize $productSize)
@@ -337,6 +369,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         // Trả lại tồn kho cho các hoa đã dùng
+        if (!empty($order->delivery_date) && Carbon::parse($order->delivery_date)->isToday() && $order->status_stock === 'đã trừ kho') {
         foreach ($order->orderDetails as $detail) {
             $productSize = $detail->productSize;
             if ($productSize && $productSize->recipes) {
@@ -360,8 +393,10 @@ class OrderRepository implements OrderRepositoryInterface
                 }
             }
         }
+    }
 
         $order->status = 'đã hủy';
+        $order->status_stock = 'đã hủy';
         $order->save();
 
         // Gửi mail nếu có email
@@ -387,6 +422,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function all($filters = [])
     {
+        $this->processOrdersForToday();
         // return $this->model->orderBy('id', 'desc')->paginate(10);
         $query = $this->model->with('orderDetails.productSize.product', 'productReports')
             ->orderBy('buy_at', 'desc')
