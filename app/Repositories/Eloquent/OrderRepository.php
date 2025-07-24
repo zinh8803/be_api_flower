@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Events\OrderCreated;
 use App\Helpers\ImageHelper;
+use App\Jobs\sendDiscountReport;
 use App\Jobs\SendOrderMail;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
@@ -49,10 +50,10 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         if (!empty($data['is_express'])) {
-            $minExpressTime = $now->copy()->addHours(3);
+            $minExpressTime = $now->copy()->addHours(2);
             $requested = Carbon::parse($data['delivery_date'] . ' ' . ($data['delivery_time'] ?? '08:00'));
             if ($requested->lt($minExpressTime)) {
-                throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 3 tiếng.');
+                throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 2 tiếng.');
             }
             if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
                 throw new \Exception('Giao nhanh chỉ trong khung giờ 08:00 đến 18:00.');
@@ -368,32 +369,31 @@ class OrderRepository implements OrderRepositoryInterface
             throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
         }
 
-        // Trả lại tồn kho cho các hoa đã dùng
         if (!empty($order->delivery_date) && Carbon::parse($order->delivery_date)->isToday() && $order->status_stock === 'đã trừ kho') {
-        foreach ($order->orderDetails as $detail) {
-            $productSize = $detail->productSize;
-            if ($productSize && $productSize->recipes) {
-                foreach ($productSize->recipes as $recipe) {
-                    $qtyReturn = $recipe->quantity * $detail->quantity;
-                    $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
-                        ->orderByDesc('import_date')
-                        ->get();
+            foreach ($order->orderDetails as $detail) {
+                $productSize = $detail->productSize;
+                if ($productSize && $productSize->recipes) {
+                    foreach ($productSize->recipes as $recipe) {
+                        $qtyReturn = $recipe->quantity * $detail->quantity;
+                        $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                            ->orderByDesc('import_date')
+                            ->get();
 
-                    $remain = $qtyReturn;
-                    foreach ($importDetails as $importDetail) {
-                        $used = $importDetail->used_quantity;
-                        if ($used > 0) {
-                            $returnQty = min($remain, $used);
-                            $importDetail->used_quantity -= $returnQty;
-                            $importDetail->save();
-                            $remain -= $returnQty;
-                            if ($remain <= 0) break;
+                        $remain = $qtyReturn;
+                        foreach ($importDetails as $importDetail) {
+                            $used = $importDetail->used_quantity;
+                            if ($used > 0) {
+                                $returnQty = min($remain, $used);
+                                $importDetail->used_quantity -= $returnQty;
+                                $importDetail->save();
+                                $remain -= $returnQty;
+                                if ($remain <= 0) break;
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
         $order->status = 'đã hủy';
         $order->status_stock = 'đã hủy';
@@ -554,52 +554,98 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function handleProductReport(array $data)
     {
-        if (!isset($data['order_id'])) {
-            throw new \Exception('Thiếu ID báo cáo!');
+        if (empty($data['order_id']) || empty($data['reports']) || !is_array($data['reports'])) {
+            throw new \Exception('Thiếu dữ liệu báo cáo!');
         }
 
-        $report = ProductReport::where('order_id', $data['order_id'])->first();
-        if (!$report) {
-            throw new \Exception('Báo cáo không tồn tại!');
-        }
+        return DB::transaction(function () use ($data) {
+            $orderId = $data['order_id'];
+            $userId = null;
 
-        return DB::transaction(function () use ($report, $data) {
-            if (isset($data['admin_note'])) {
-                $report->admin_note = $data['admin_note'];
+            foreach ($data['reports'] as $item) {
+                $report = ProductReport::find($item['id']);
+                if (!$report) continue;
+
+                if (isset($item['admin_note'])) {
+                    $report->admin_note = $item['admin_note'];
+                }
+                if (isset($item['status'])) {
+                    $report->status = $item['status'];
+                }
+                $report->save();
+                $userId = $report->user_id;
             }
 
-            if (isset($data['status'])) {
-                $report->status = $data['status'];
+            $allReports = ProductReport::where('order_id', $orderId)
+                ->whereIn('action', ['Mã giảm giá', 'Đổi hàng'])
+                ->where('status', 'Đã giải quyết')
+                ->get();
+
+            $totalDiscountValue = 0;
+            foreach ($allReports as $r) {
+                $orderDetail = OrderDetail::find($r->order_detail_id);
+                if (!$orderDetail) continue;
+                if ($r->action === 'Mã giảm giá') {
+                    $totalDiscountValue += $r->quantity * ($orderDetail->subtotal / $orderDetail->quantity);
+                } elseif ($r->action === 'Đổi hàng') {
+                    $productSize = $orderDetail->productSize;
+                    if ($productSize && $productSize->recipes) {
+                        foreach ($productSize->recipes as $recipe) {
+                            $need = $recipe->quantity * $r->quantity;
+                            $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
+                            if ($stock < $need) {
+                                throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
+                            }
+                            $this->deductStock($recipe->flower_id, $need);
+                        }
+                    }
+                }
             }
 
-            $report->save();
+            if ($totalDiscountValue > 0) {
+                $discountExists = Discount::where('name', 'like', 'DISCOUNT' . $orderId . '%')->exists();
+                if (!$discountExists) {
+                    $discount = Discount::create([
+                        'name' => 'DISCOUNT' . $orderId . random_int(1000, 9999),
+                        'type' => 'fixed',
+                        'value' => $totalDiscountValue,
+                        'status' => 1,
+                        'start_date' => now()->toDateString(),
+                        'end_date' => now()->addDays(30)->toDateString(),
+                        'min_total' => 0,
+                    ]);
+                    if ($userId && $discount) {
+                        $user = User::find($userId);
+                        if ($user && !empty($user->email)) {
+                            sendDiscountReport::dispatch($discount, $user->email);
+                        }
+                    }
+                }
+            }
 
             if (isset($data['order_status'])) {
-                $order = Order::find($report->order_id);
+                $order = Order::find($orderId);
                 if ($order) {
                     $order->status = $data['order_status'];
                     $order->save();
                 }
-            }
-
-            if (!isset($data['order_status'])) {
-                $order = Order::find($report->order_id);
+            } else {
+                $order = Order::find($orderId);
                 if ($order) {
-                    $pendingReports = ProductReport::where('order_id', $order->id)
+                    $pendingReports = ProductReport::where('order_id', $orderId)
                         ->where('status', 'đang xử lý')
                         ->count();
 
                     if ($pendingReports === 0) {
-                        $order->status = 'hoàn thành';
+                        $order->status = 'Xử Lý Báo Cáo';
                         $order->save();
                     }
                 }
             }
 
-            return $report;
+            return true;
         });
     }
-
     public function updateReport(int $reportId, array $data)
     {
         $report = Order::find($reportId);
