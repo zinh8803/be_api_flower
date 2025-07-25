@@ -21,4 +21,8 @@ class OrderDetail extends Model
     {
         return $this->hasMany(ProductReport::class, 'order_detail_id');
     }
+    public function orderReturns()
+    {
+        return $this->hasMany(OrderReturn::class);
+    }
 }

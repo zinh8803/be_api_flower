@@ -17,6 +17,9 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="payment_method", type="string", example="cod"),
  *      @OA\Property(property="user_id", type="integer", example=1, nullable=true),
  *     @OA\Property(property="discount_id", type="integer", example=null, nullable=true),
+ *    @OA\Property(property="delivery_date", type="string", format="date", example="2025-07-23", nullable=true),
+ *    @OA\Property(property="delivery_time", type="string", format="time", example="14:00", nullable=true),
+ *    @OA\Property(property="is_express", type="boolean", example=false, nullable=true),
  *     @OA\Property(
  *         property="products",
  *         type="array",
@@ -58,6 +61,9 @@ class StoreOrderRequest extends FormRequest
             'products.*.product_id' => 'required|integer|exists:products,id',
             'products.*.product_size_id' => 'required|integer|exists:product_sizes,id',
             'products.*.quantity' => 'required|integer|min:1',
+            'delivery_date' => 'nullable|date|after_or_equal:today',
+            'delivery_time' => 'nullable|date_format:H:i',
+            'is_express' => 'nullable|boolean',
         ];
     }
     public function messages()
@@ -68,6 +74,7 @@ class StoreOrderRequest extends FormRequest
             'phone.required' => 'Số điện thoại là bắt buộc.',
             'address.required' => 'Địa chỉ là bắt buộc.',
             'payment_method.required' => 'Phương thức thanh toán là bắt buộc.',
+            'delivery_time.date_format' => 'Giờ nhận hàng phải có định dạng HH:mm (vd: 14:00).',
         ];
     }
 }

@@ -49,11 +49,15 @@ class OrderResource extends JsonResource
             ] : null,
             'buy_at' => $this->buy_at,
             'total_price' => $this->total_price,
+            'delivery_date' => $this->delivery_date,
+            'delivery_time' => $this->delivery_time,
+            'is_express' => $this->is_express,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'user' => new UserResource($this->whenLoaded('user')),
             'order_details' => OrderDetailResource::collection($this->whenLoaded('orderDetails')),
-            'product_reports' => ProductReportResource::collection($this->whenLoaded('productReports'))
+            'product_reports' => ProductReportResource::collection($this->whenLoaded('productReports')),
+            'order_returns' => OrderReturnResource::collection($this->whenLoaded('orderReturns')),
         ];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -10,17 +9,17 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OrderSuccessMail extends Mailable
+class DiscountMailReport extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $order;
+    public $discount;
     /**
      * Create a new message instance.
      */
-    public function __construct(Order $order)
+    public function __construct($discount)
     {
-        $this->order = $order;
+        $this->discount = $discount;
     }
 
     /**
@@ -29,7 +28,7 @@ class OrderSuccessMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Đặt hàng thành công',
+            subject: 'Thông báo hoàn mã giảm giá',
         );
     }
 
@@ -39,9 +38,9 @@ class OrderSuccessMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.orders.success',
+            view: 'emails.discounts.discount_mail_report',
             with: [
-                'order' => $this->order,
+                'discount' => $this->discount,
             ],
         );
     }

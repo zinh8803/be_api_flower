@@ -143,7 +143,7 @@ class ProductController extends Controller
                 'last_page' => $lastPage
             ];
         };
-
+        //$products->processOrdersForToday();
         return response()->json([
             'available' => $paginateGroup($result['available']),
             'low' => $paginateGroup($result['low']),

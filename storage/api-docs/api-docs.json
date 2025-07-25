@@ -3093,6 +3093,23 @@
                         "example": null,
                         "nullable": true
                     },
+                    "delivery_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-07-23",
+                        "nullable": true
+                    },
+                    "delivery_time": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "14:00",
+                        "nullable": true
+                    },
+                    "is_express": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
                     "products": {
                         "type": "array",
                         "items": {

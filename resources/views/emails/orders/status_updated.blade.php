@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Cập nhật trạng thái đơn hàng</title>
 </head>
+
 <body style="background: #f7f7f7; font-family: Arial, sans-serif;">
     <div style="max-width:500px;margin:40px auto;background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;">
         <img src="https://tools.dalathasfarm.com/assets/_file/2025/2025-06/diudang_banner11.jpg" style="width:100%;display:block;">
@@ -20,11 +22,12 @@
                 Cảm ơn bạn đã mua hàng tại cửa hàng của chúng tôi.<br>
                 Nếu có thắc mắc, hãy liên hệ chúng tôi bất cứ lúc nào.
             </p>
-            <div style="margin-top:24px;color:#888;font-size:13px;">
+            <!-- <div style="margin-top:24px;color:#888;font-size:13px;">
                 Thanks,<br>
                 {{ config('app.name') }}
-            </div>
+            </div> -->
         </div>
     </div>
 </body>
+
 </html>
