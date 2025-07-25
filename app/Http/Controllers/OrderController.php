@@ -36,7 +36,7 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['from_date', 'to_date', 'status', 'has_report']);
+        $filters = $request->only(['from_date', 'to_date', 'status', 'has_report', 'order_code']);
         return OrderResource::collection($this->orderRepository->all($filters));
     }
 

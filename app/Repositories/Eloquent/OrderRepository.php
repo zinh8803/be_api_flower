@@ -429,6 +429,9 @@ class OrderRepository implements OrderRepositoryInterface
             ->orderBy('buy_at', 'desc')
             ->orderBy('id', 'desc');
 
+        if (!empty($filters['order_code'])) {
+            $query->where('order_code', 'like', '%' . $filters['order_code'] . '%');
+        }
         if (!empty($filters['from_date'])) {
             $query->whereDate('buy_at', '>=', $filters['from_date']);
         }
