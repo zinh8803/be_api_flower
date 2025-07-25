@@ -36,7 +36,7 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['from_date', 'to_date', 'status']);
+        $filters = $request->only(['from_date', 'to_date', 'status', 'has_report']);
         return OrderResource::collection($this->orderRepository->all($filters));
     }
 
@@ -236,5 +236,17 @@ class OrderController extends Controller
         }
     }
 
-    
+    public function updateStatusOrderReturn(Request $request)
+    {
+        $orderId = $request->input('order_id');
+        $status = $request->input('status');
+
+        try {
+            $this->orderRepository->updateStatusOrderReturn($orderId, $status);
+            return response()->json(['message' => 'Cập nhật trạng thái đơn hàng trả hàng thành công'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error updating order return status: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi cập nhật trạng thái đơn hàng trả hàng'], 500);
+        }
+    }
 }

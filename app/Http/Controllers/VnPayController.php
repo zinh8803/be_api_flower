@@ -32,64 +32,63 @@ class VnPayController extends Controller
      */
 
 
-     public function createPayment(Request $request)
-     {
-        $orderCode = 'SP'. random_int(100000, 999999);
-         $validated = $request->validate([
-             'order_code' => $orderCode,
-             'amount' => 'required|numeric|min:1000',
-         ]);
-     
-         $vnp_TmnCode = config('vnpay.vnp_TmnCode');
-         $vnp_HashSecret = config('vnpay.vnp_HashSecret');
-         $vnp_Url = config('vnpay.vnp_Url');
-         $vnp_Returnurl = config('vnpay.vnp_Returnurl');
-     
-         if (!$vnp_TmnCode || !$vnp_HashSecret || !$vnp_Url || !$vnp_Returnurl) {
-             return response()->json([
-                 'status' => 500,
-                 'message' => 'Cấu hình VNPAY không hợp lệ!',
-             ]);
-         }
+    public function createPayment(Request $request)
+    {
+        $orderCode = 'SP' . random_int(100000, 999999);
+        $validated = $request->validate([
+            'order_code' => $orderCode,
+            'amount' => 'required|numeric|min:1000',
+        ]);
 
-         $vnp_TxnRef = $orderCode;
-         $vnp_OrderInfo = 'Thanh toán đơn hàng ' . $vnp_TxnRef;
-         $vnp_OrderType = 'other';
-         $vnp_Amount = $validated['amount'] * 100; 
-         $vnp_Locale = 'vn';
-         $vnp_IpAddr = $request->ip();
-     
-         $inputData = [
-             "vnp_Version" => "2.1.0",
-             "vnp_TmnCode" => $vnp_TmnCode,
-             "vnp_Amount" => $vnp_Amount,
-             "vnp_Command" => "pay",
-             "vnp_CreateDate" => now()->format('YmdHis'),
-             "vnp_CurrCode" => "VND",
-             "vnp_IpAddr" => $vnp_IpAddr,
-             "vnp_Locale" => $vnp_Locale,
-             "vnp_OrderInfo" => $vnp_OrderInfo,
-             "vnp_OrderType" => $vnp_OrderType,
-             "vnp_ReturnUrl" => $vnp_Returnurl,
-             "vnp_TxnRef" => $vnp_TxnRef,
-         ];
-     
-         ksort($inputData);
-         $query = http_build_query($inputData);
-         $hashData = $query;
-         $vnp_SecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
-     
-         $paymentUrl = $vnp_Url . '?' . $query . '&vnp_SecureHash=' . $vnp_SecureHash;
-     
-         return response()->json([
-             'status' => 200,
-             'message' => 'Tạo URL thanh toán thành công',
-             'payment_url' => $paymentUrl
-         ]);
+        $vnp_TmnCode = config('vnpay.vnp_TmnCode');
+        $vnp_HashSecret = config('vnpay.vnp_HashSecret');
+        $vnp_Url = config('vnpay.vnp_Url');
+        $vnp_Returnurl = config('vnpay.vnp_Returnurl');
 
-     }
-     
-        /**
+        if (!$vnp_TmnCode || !$vnp_HashSecret || !$vnp_Url || !$vnp_Returnurl) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Cấu hình VNPAY không hợp lệ!',
+            ]);
+        }
+
+        $vnp_TxnRef = $orderCode;
+        $vnp_OrderInfo = 'Thanh toán đơn hàng ' . $vnp_TxnRef;
+        $vnp_OrderType = 'other';
+        $vnp_Amount = $validated['amount'] * 100;
+        $vnp_Locale = 'vn';
+        $vnp_IpAddr = $request->ip();
+
+        $inputData = [
+            "vnp_Version" => "2.1.0",
+            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Amount" => $vnp_Amount,
+            "vnp_Command" => "pay",
+            "vnp_CreateDate" => now()->format('YmdHis'),
+            "vnp_CurrCode" => "VND",
+            "vnp_IpAddr" => $vnp_IpAddr,
+            "vnp_Locale" => $vnp_Locale,
+            "vnp_OrderInfo" => $vnp_OrderInfo,
+            "vnp_OrderType" => $vnp_OrderType,
+            "vnp_ReturnUrl" => $vnp_Returnurl,
+            "vnp_TxnRef" => $vnp_TxnRef,
+        ];
+
+        ksort($inputData);
+        $query = http_build_query($inputData);
+        $hashData = $query;
+        $vnp_SecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+        $paymentUrl = $vnp_Url . '?' . $query . '&vnp_SecureHash=' . $vnp_SecureHash;
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Tạo URL thanh toán thành công',
+            'payment_url' => $paymentUrl
+        ]);
+    }
+
+    /**
      * @OA\Get(
      *     path="/api/vnpay_return",
      *     tags={"VnPay"},
@@ -153,17 +152,17 @@ class VnPayController extends Controller
         //         'message' => 'Chữ ký không hợp lệ'
         //     ]);
         // } $frontendUrl = 'http://localhost:5173/vnpay_return';
-$frontendUrl = 'http://localhost:5173/vnpay_return';
-    if ($secureHash === $vnp_SecureHash) {
-        if ($request->vnp_ResponseCode == '00') {
+        $frontendUrl = env('URL_FRONTEND', 'http://localhost:5173/vnpay_return');
+        if ($secureHash === $vnp_SecureHash) {
+            if ($request->vnp_ResponseCode == '00') {
 
-            return redirect($frontendUrl . '?' . http_build_query($request->all()));
+                return redirect($frontendUrl . '?' . http_build_query($request->all()));
+            } else {
+                return redirect($frontendUrl . '?' . http_build_query($request->all()));
+            }
         } else {
-            return redirect($frontendUrl . '?' . http_build_query($request->all()));
+            // Chữ ký không hợp lệ, cũng redirect về frontend với thông báo lỗi
+            return redirect($frontendUrl . '?status=fail&message=Chữ ký không hợp lệ');
         }
-    } else {
-        // Chữ ký không hợp lệ, cũng redirect về frontend với thông báo lỗi
-        return redirect($frontendUrl . '?status=fail&message=Chữ ký không hợp lệ');
-    }
     }
 }

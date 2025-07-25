@@ -45,6 +45,7 @@ Route::middleware(['checkjwt'])->group(function () {
 
     Route::post('/orders/product-reports', [ProductReportController::class, 'store']);
     Route::put('/orders/product-reports', [ProductReportController::class, 'update']);
+    Route::put('/orders/returns/status', [OrderController::class, 'updateStatusOrderReturn']);
     Route::delete('/orders/product-reports/{id}', [ProductReportController::class, 'delete']);
 
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);

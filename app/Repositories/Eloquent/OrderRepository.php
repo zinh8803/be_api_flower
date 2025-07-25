@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderSuccessMail;
 use App\Models\OrderDetail;
+use App\Models\OrderReturn;
 use App\Models\ProductReport;
 use App\Models\ProductSize;
 use App\Models\User;
@@ -424,7 +425,7 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $this->processOrdersForToday();
         // return $this->model->orderBy('id', 'desc')->paginate(10);
-        $query = $this->model->with('orderDetails.productSize.product', 'productReports')
+        $query = $this->model->with('orderDetails.productSize.product', 'productReports', 'orderReturns')
             ->orderBy('buy_at', 'desc')
             ->orderBy('id', 'desc');
 
@@ -437,7 +438,9 @@ class OrderRepository implements OrderRepositoryInterface
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-
+        if (!empty($filters['has_report'])) {
+            $query->whereHas('productReports');
+        }
         return $query->paginate(10);
     }
 
@@ -470,7 +473,7 @@ class OrderRepository implements OrderRepositoryInterface
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }
 
-        $order = $this->model->with('orderDetails.productSize.product', 'productReports')->find($id);
+        $order = $this->model->with('orderDetails.productSize.product', 'productReports', 'orderReturns')->find($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại.'], 404);
         }
@@ -587,24 +590,6 @@ class OrderRepository implements OrderRepositoryInterface
                 if (!$orderDetail) continue;
                 if ($r->action === 'Mã giảm giá') {
                     $totalDiscountValue += $r->quantity * ($orderDetail->subtotal / $orderDetail->quantity);
-                } elseif ($r->action === 'Đổi hàng') {
-                    $productSize = $orderDetail->productSize;
-                    if ($productSize && $productSize->recipes) {
-                        foreach ($productSize->recipes as $recipe) {
-                            $need = $recipe->quantity * $r->quantity;
-                            $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
-                            if ($stock < $need) {
-                                throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
-                            }
-                            $this->deductStock($recipe->flower_id, $need);
-                        }
-                    }
-                }
-            }
-
-            if ($totalDiscountValue > 0) {
-                $discountExists = Discount::where('name', 'like', 'DISCOUNT' . $orderId . '%')->exists();
-                if (!$discountExists) {
                     $discount = Discount::create([
                         'name' => 'DISCOUNT' . $orderId . random_int(1000, 9999),
                         'type' => 'fixed',
@@ -620,8 +605,44 @@ class OrderRepository implements OrderRepositoryInterface
                             sendDiscountReport::dispatch($discount, $user->email);
                         }
                     }
+                } elseif ($r->action === 'Đổi hàng') {
+                    OrderReturn::create([
+                        'order_return_code' => 'OR' . date('YmdHis') . random_int(1000, 9999),
+                        'order_id' => $orderId,
+                        'order_detail_id' => $r->order_detail_id,
+                        'quantity_returned' => $r->quantity,
+                        'user_id' => $r->user_id,
+                    ]);
+                    $productSize = $orderDetail->productSize;
+                    if ($productSize && $productSize->recipes) {
+                        foreach ($productSize->recipes as $recipe) {
+                            $need = $recipe->quantity * $r->quantity;
+                            $this->deductStock($recipe->flower_id, $need);
+                        }
+                    }
                 }
             }
+
+            // if ($totalDiscountValue > 0) {
+            //     $discountExists = Discount::where('name', 'like', 'DISCOUNT' . $orderId . '%')->exists();
+            //     if (!$discountExists) {
+            //         $discount = Discount::create([
+            //             'name' => 'DISCOUNT' . $orderId . random_int(1000, 9999),
+            //             'type' => 'fixed',
+            //             'value' => $totalDiscountValue,
+            //             'status' => 1,
+            //             'start_date' => now()->toDateString(),
+            //             'end_date' => now()->addDays(30)->toDateString(),
+            //             'min_total' => 0,
+            //         ]);
+            //         if ($userId && $discount) {
+            //             $user = User::find($userId);
+            //             if ($user && !empty($user->email)) {
+            //                 sendDiscountReport::dispatch($discount, $user->email);
+            //             }
+            //         }
+            //     }
+            // }
 
             if (isset($data['order_status'])) {
                 $order = Order::find($orderId);
@@ -646,6 +667,30 @@ class OrderRepository implements OrderRepositoryInterface
             return true;
         });
     }
+
+    public function updateStatusOrderReturn($orderId, string $status)
+    {
+        $orderReturns = OrderReturn::where('order_id', $orderId)->get();
+        if ($orderReturns->isEmpty()) {
+            throw new \Exception('Đơn trả hàng không tồn tại!');
+        }
+
+        foreach ($orderReturns as $orderReturn) {
+            $orderReturn->status = $status;
+            $orderReturn->save();
+        }
+
+        // if ($status === 'hoàn thành') {
+        //     $order = Order::find($orderId);
+        //     if ($order) {
+        //         $order->status = 'hoàn thành';
+        //         $order->save();
+        //     }
+        // }
+
+        return $orderReturns;
+    }
+
     public function updateReport(int $reportId, array $data)
     {
         $report = Order::find($reportId);

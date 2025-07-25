@@ -17,4 +17,6 @@ interface OrderRepositoryInterface
     public function createReport(array $data);
     public function findByUserId(int $userId);
     public function OrderByUser();
+
+    public function updateStatusOrderReturn($orderId, string $status);
 }

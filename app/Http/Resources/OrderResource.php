@@ -56,7 +56,8 @@ class OrderResource extends JsonResource
             'updated_at' => $this->updated_at,
             'user' => new UserResource($this->whenLoaded('user')),
             'order_details' => OrderDetailResource::collection($this->whenLoaded('orderDetails')),
-            'product_reports' => ProductReportResource::collection($this->whenLoaded('productReports'))
+            'product_reports' => ProductReportResource::collection($this->whenLoaded('productReports')),
+            'order_returns' => OrderReturnResource::collection($this->whenLoaded('orderReturns')),
         ];
     }
 }

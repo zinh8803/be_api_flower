@@ -30,6 +30,10 @@ class Order extends Model
     {
         return $this->hasMany(ProductReport::class);
     }
+    public function orderReturns()
+    {
+        return $this->hasMany(OrderReturn::class);
+    }
     // public function getTotalPriceAttribute($value)
     // {
     //     return number_format($value, 0, ',', '.');
