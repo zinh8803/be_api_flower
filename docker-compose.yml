@@ -6,8 +6,6 @@ services:
     container_name: flowershop_app
     ports:
       - "8000:8000"
-    volumes:
-      - .:/var/www
     environment:
       - TZ=Asia/Ho_Chi_Minh
     restart: unless-stopped
@@ -16,8 +14,6 @@ services:
     build: .
     container_name: flowershop_queue
     command: php artisan queue:work --sleep=3 --tries=3
-    volumes:
-      - .:/var/www
     depends_on:
       - app
     restart: unless-stopped
@@ -26,8 +22,6 @@ services:
     build: .
     container_name: flowershop_schedule
     command: php artisan schedule:work
-    volumes:
-      - .:/var/www
     depends_on:
       - app
     restart: unless-stopped
