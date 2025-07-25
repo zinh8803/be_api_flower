@@ -15,12 +15,9 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-COPY [nginx.conf](http://_vscodecontentref_/2) /etc/nginx/nginx.conf
-COPY [supervisord.conf](http://_vscodecontentref_/3) /etc/supervisor/conf.d/supervisord.conf
-COPY docker/startup.sh /usr/local/bin/startup.sh
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN chmod +x /usr/local/bin/startup.sh
+EXPOSE 8000
 
-EXPOSE 10000
-
-CMD ["/usr/local/bin/startup.sh"]
+CMD ["/usr/bin/supervisord"]
