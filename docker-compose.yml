@@ -1,27 +1,42 @@
-version: '3.8'
-
 services:
   app:
     build: .
     container_name: flowershop_app
     ports:
       - "8000:8000"
+    volumes:
+      - .:/var/www
     environment:
       - TZ=Asia/Ho_Chi_Minh
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    working_dir: /var/www
+    command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
 
   queue:
     build: .
     container_name: flowershop_queue
+    volumes:
+      - .:/var/www
     command: php artisan queue:work --sleep=3 --tries=3
     depends_on:
       - app
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
   schedule:
     build: .
     container_name: flowershop_schedule
+    volumes:
+      - .:/var/www
     command: php artisan schedule:work
     depends_on:
       - app
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
