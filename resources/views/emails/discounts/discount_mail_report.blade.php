@@ -31,10 +31,6 @@
                 Mã giảm giá này có thể sử dụng cho đơn hàng tiếp theo.<br>
                 Nếu cần hỗ trợ, hãy liên hệ với chúng tôi bất cứ lúc nào.
             </p>
-            <!-- <div style="margin-top:24px;color:#888;font-size:13px;">
-                Trân trọng,<br>
-                {{ config('app.name') }}
-            </div> -->
         </div>
     </div>
 </body>

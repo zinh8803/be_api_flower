@@ -565,4 +565,32 @@ class UserController extends Controller
         $otpRecord->delete();
         return response()->json(['message' => 'Mật khẩu đã được cập nhật thành công']);
     }
+
+    /**
+     * @OA\Put(
+     *     path="/api/users/update-subscribed",
+     *     summary="Cập nhật trạng thái đăng ký nhận bản tin",
+     *     tags={"User"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật trạng thái đăng ký thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cập nhật trạng thái đăng ký thành công")
+     *         )
+     *     )
+     * )
+     */
+    public function updateUserSubscribed(Request $request)
+    {
+        $this->users->updateUserSubscribed(auth()->id());
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cập nhật trạng thái đăng ký thành công',
+            'data' => new UserResource(auth()->user())
+        ]);
+    }
 }

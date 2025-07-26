@@ -15,4 +15,5 @@ interface UserRepositoryInterface
     public function resetPassword(string $email, string $newPassword);
     public function getAllEmployees();
     public function getAllUserSubscribed();
+    public function updateUserSubscribed(int $id);
 }

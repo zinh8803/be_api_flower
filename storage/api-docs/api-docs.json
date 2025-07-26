@@ -631,6 +631,41 @@
                 }
             }
         },
+        "/api/discounts/send-discount": {
+            "post": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Gửi mã giảm giá cho người dùng đăng ký nhận email",
+                "operationId": "cbe4c557e4d3572f6fd6a343efdad22f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "discount_ids"
+                                ],
+                                "properties": {
+                                    "discount_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gửi thành công"
+                    }
+                }
+            }
+        },
         "/api/flower": {
             "get": {
                 "tags": [
@@ -2656,6 +2691,42 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/users/update-subscribed": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật trạng thái đăng ký nhận bản tin",
+                "operationId": "7c5e44a60c6fd10c9af148250267116c",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái đăng ký thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật trạng thái đăng ký thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/payment": {

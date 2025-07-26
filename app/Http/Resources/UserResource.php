@@ -40,7 +40,7 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'role' => $this->role,
-            'id_subscribe' => $this->id_subscribe,
+            'is_subscribe' => $this->is_subscribe,
             'status' => $this->status,
             'image_url' => $this->image_url,
             'created_at' => $this->created_at,

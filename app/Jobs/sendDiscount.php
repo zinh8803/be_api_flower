@@ -18,11 +18,13 @@ class sendDiscount implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public $discount;
+    public $discounts;
     public $email;
-    public function __construct($discount, $email)
+    public function __construct($discounts, $email)
     {
-        $this->discount = $discount;
+        $this->discounts = is_array($discounts) || $discounts instanceof \Illuminate\Database\Eloquent\Collection
+            ? $discounts
+            : [$discounts];
         $this->email = $email;
     }
 
@@ -32,9 +34,11 @@ class sendDiscount implements ShouldQueue
     public function handle(): void
     {
         try {
-            Mail::to($this->email)->send(new DiscountMail($this->discount));
+            if (count($this->discounts) > 0) {
+                Mail::to($this->email)->send(new DiscountMail($this->discounts));
+            }
         } catch (\Throwable $e) {
-            Log::error('Error sending discount report email: ' . $e->getMessage());
+            Log::error('Error sending discount email: ' . $e->getMessage());
         }
     }
 }

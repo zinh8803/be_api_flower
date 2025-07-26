@@ -61,6 +61,7 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::post('/', [DiscountController::class, 'store']);
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
+        Route::post('/send-discount', [DiscountController::class, 'sendDiscountToSubscribers']);
     });
 
     //flower-types
@@ -112,7 +113,7 @@ Route::middleware(['check.role:admin,employee,user'])->group(function () {
     });
 
     //discounts
-
+    Route::put('/users/update-subscribed', [UserController::class, 'updateUserSubscribed']);
 });
 
 Route::middleware(['check.role:admin,employee'])->group(function () {

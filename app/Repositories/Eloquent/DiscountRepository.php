@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Jobs\sendDiscount;
 use App\Models\Discount;
+use App\Models\User;
 use App\Repositories\Contracts\DiscountRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
@@ -70,4 +72,15 @@ class DiscountRepository implements DiscountRepositoryInterface
 
         return ['status' => true, 'discount' => $discount];
     }
+
+    public function sentDiscountEmail($discounts)
+    {
+        $users = User::where('is_subscribe', true)->get();
+
+        foreach ($users as $user) {
+            sendDiscount::dispatch($discounts, $user->email);
+        }
+    }
+
+    
 }

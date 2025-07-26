@@ -114,6 +114,14 @@ class UserRepository implements UserRepositoryInterface
     }
     public function getAllUserSubscribed()
     {
-        return User::where('role', '=', 'user')->where('id_subscribe', '=', true)->paginate(10);
+        return User::where('role', '=', 'user')->where('is_subscribe', '=', true)->paginate(10);
+    }
+
+    public function updateUserSubscribed(int $id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_subscribe = !$user->is_subscribe;
+        $user->save();
+        return $user;
     }
 }

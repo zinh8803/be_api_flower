@@ -12,13 +12,13 @@ use Illuminate\Queue\SerializesModels;
 class DiscountMail extends Mailable
 {
     use Queueable, SerializesModels;
-    public $discount;
+    public $discounts;
     /**
      * Create a new message instance.
      */
-    public function __construct($discount)
+    public function __construct($discounts)
     {
-        $this->discount = $discount;
+        $this->discounts = $discounts;
     }
 
     /**
@@ -39,7 +39,7 @@ class DiscountMail extends Mailable
         return new Content(
             view: 'emails.discounts.discount_mail',
             with: [
-                'discount' => $this->discount,
+                'discounts' => $this->discounts,
             ],
         );
     }

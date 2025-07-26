@@ -221,4 +221,32 @@ class DiscountController extends Controller
             'message' => 'Xóa mã giảm giá thành công'
         ], 200);
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/discounts/send-discount",
+     *     tags={"Discount"},
+     *     summary="Gửi mã giảm giá cho người dùng đăng ký nhận email",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"discount_ids"},
+     *             @OA\Property(property="discount_ids", type="array", @OA\Items(type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Gửi thành công"
+     *     )
+     * )
+     */
+    public function sendDiscountToSubscribers(Request $request)
+    {
+        $discountIds = $request->input('discount_ids', []);
+        $discounts = Discount::whereIn('id', $discountIds)->get();
+        $this->discountRepository->sentDiscountEmail($discounts);
+
+        return response()->json(['message' => 'Đã gửi mã giảm giá cho các user đăng ký nhận mail!']);
+    }
 }
