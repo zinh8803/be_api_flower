@@ -26,7 +26,7 @@ class DiscountController extends Controller
     {
         $this->discountRepository = $discountRepository;
     }
-       /**
+    /**
      * @OA\Get(
      *     path="/api/discounts",
      *     tags={"Discount"},
@@ -71,11 +71,25 @@ class DiscountController extends Controller
     public function checkCode(Request $request)
     {
         $code = $request->input('name');
-        $discount = $this->discountRepository->checkCodeValidity($code);
-        if (!$discount) {
-            return response()->json(['message' => 'Mã giảm giá không hợp lệ'], 404);
+        $userId = $request->input('user_id');
+        $result = $this->discountRepository->checkCodeValidity($code, $userId);
+
+        if (!$result['status']) {
+            switch ($result['reason']) {
+                case 'not_found':
+                    return response()->json(['message' => 'Mã giảm giá không đúng hoặc không tồn tại'], 404);
+                case 'expired':
+                    return response()->json(['message' => 'Mã giảm giá đã hết hạn'], 400);
+                case 'usage_limit':
+                    return response()->json(['message' => 'Mã giảm giá đã hết lượt sử dụng'], 400);
+                case 'not_allowed':
+                    return response()->json(['message' => 'Bạn không được phép sử dụng mã giảm giá này'], 403);
+                default:
+                    return response()->json(['message' => 'Mã giảm giá không hợp lệ'], 400);
+            }
         }
-        return new DiscountResource($discount);
+
+        return new DiscountResource($result['discount']);
     }
 
 
@@ -83,7 +97,7 @@ class DiscountController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-       /**
+    /**
      * @OA\Post(
      *     path="/api/discounts",
      *     tags={"Discount"},
@@ -108,7 +122,7 @@ class DiscountController extends Controller
     /**
      * Display the specified resource.
      */
-          /**
+    /**
      * @OA\Get(
      *     path="/api/discounts/{id}",
      *     tags={"Discount"},
@@ -130,10 +144,10 @@ class DiscountController extends Controller
     public function show($id)
     {
         $discount = $this->discountRepository->findById($id);
-        if(!$discount){
+        if (!$discount) {
             return response()->json([
-                'message'=>'không tìm thấy mã giảm giá'
-            ],404);
+                'message' => 'không tìm thấy mã giảm giá'
+            ], 404);
         }
         return new DiscountResource($discount);
     }
@@ -178,7 +192,7 @@ class DiscountController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-       /**
+    /**
      * @OA\Delete(
      *     path="/api/discounts/{id}",
      *     tags={"Discount"},
@@ -199,12 +213,12 @@ class DiscountController extends Controller
     public function destroy($id)
     {
         $discount = $this->discountRepository->findById($id);
-        if(!$discount){
-             return response()->json(['message' => 'Không tìm thấy mã giảm giá'], 404);
+        if (!$discount) {
+            return response()->json(['message' => 'Không tìm thấy mã giảm giá'], 404);
         }
         $this->discountRepository->delete($id);
         return response()->json([
-            'message'=>'Xóa mã giảm giá thành công'
-        ],200);
+            'message' => 'Xóa mã giảm giá thành công'
+        ], 200);
     }
 }

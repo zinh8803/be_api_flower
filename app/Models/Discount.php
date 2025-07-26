@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Discount extends Model
 {
-    protected $fillable = ['name', 'type','status', 'value', 'start_date', 'end_date', 'min_total'];
+    protected $fillable = ['user_id', 'name', 'type', 'status', 'value', 'start_date', 'end_date', 'min_total', 'usage_limit', 'usage_count'];
 
     public function orders()
     {
@@ -18,5 +18,4 @@ class Discount extends Model
         return (!$this->start_date || $this->start_date <= $today)
             && (!$this->end_date || $this->end_date >= $today);
     }
-
 }

@@ -112,4 +112,8 @@ class UserRepository implements UserRepositoryInterface
     {
         return User::where('role', '=', 'user',)->paginate(10);
     }
+    public function getAllUserSubscribed()
+    {
+        return User::where('role', '=', 'user')->where('id_subscribe', '=', true)->paginate(10);
+    }
 }

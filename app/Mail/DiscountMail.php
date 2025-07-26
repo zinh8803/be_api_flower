@@ -12,13 +12,13 @@ use Illuminate\Queue\SerializesModels;
 class DiscountMail extends Mailable
 {
     use Queueable, SerializesModels;
-
+    public $discount;
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct($discount)
     {
-        //
+        $this->discount = $discount;
     }
 
     /**
@@ -27,7 +27,7 @@ class DiscountMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Discount Mail',
+            subject: 'Thông báo mã giảm giá',
         );
     }
 
@@ -37,7 +37,10 @@ class DiscountMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.discounts.discount_mail',
+            with: [
+                'discount' => $this->discount,
+            ],
         );
     }
 

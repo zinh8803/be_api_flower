@@ -53,6 +53,27 @@ class UserController extends Controller
         return UserResource::collection($this->users->getAll());
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/users/getall-subscribed",
+     *     summary="Lấy danh sách người dùng đã đăng ký nhận bản tin",
+     *     tags={"User"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách người dùng đã đăng ký nhận bản tin",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Danh sách người dùng đã đăng ký nhận bản tin"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *         )
+     *     )
+     * )
+     */
+    public function getAllUserSubscribed()
+    {
+        return UserResource::collection($this->users->getAllUserSubscribed());
+    }
 
     /**
      * @OA\Post(

@@ -76,6 +76,12 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::put('/{id}', [FlowerController::class, 'update']);
         Route::delete('/{id}', [FlowerController::class, 'destroy']);
     });
+
+    //users
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('/getall-subscribed', [UserController::class, 'getAllUserSubscribed']);
+    });
 });
 
 Route::middleware(['check.role:user'])->group(function () {
@@ -87,7 +93,6 @@ Route::middleware(['check.role:user'])->group(function () {
     Route::get('orders/details', [OrderController::class, 'OrderDetailUser']);
 
     //discounts
-    Route::post('discounts/check-code', [DiscountController::class, 'checkCode']);
 });
 
 Route::middleware(['check.role:admin,employee,user'])->group(function () {
@@ -202,4 +207,5 @@ Route::post('orders', [OrderController::class, 'store']);
 Route::prefix('discounts')->group(function () {
     Route::get('/', [DiscountController::class, 'index']);
     Route::get('/{id}', [DiscountController::class, 'show']);
+    Route::post('/check-code', [DiscountController::class, 'checkCode']);
 });

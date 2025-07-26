@@ -20,6 +20,10 @@ class DiscountRepository implements DiscountRepositoryInterface
         Discount::where('end_date', '<', now())
             ->where('status', true)
             ->update(['status' => false]);
+        Discount::whereNotNull('usage_limit')
+            ->whereColumn('usage_count', '>=', 'usage_limit')
+            ->where('status', true)
+            ->update(['status' => false]);
     }
 
     public function findById($id)
@@ -44,14 +48,26 @@ class DiscountRepository implements DiscountRepositoryInterface
         return Discount::destroy($id);
     }
 
-    public function checkCodeValidity($code)
+    public function checkCodeValidity($code, $userId = null)
     {
-        $discount = Discount::where('name', $code)
-            ->where('status', true) // Ensure the discount is active
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
-            ->first();
-        //Log::info('Checking discount code validity', ['code' => $code, 'result' => $discount]);
-        return $discount ? $discount : null;
+        $discount = Discount::where('name', $code)->first();
+        Log::info('discounts', ['code' => $code, 'discount' => $discount]);
+        if (!$discount) {
+            return ['status' => false, 'reason' => 'not_found'];
+        }
+
+        if (!is_null($discount->user_id) && $discount->user_id != $userId) {
+            return ['status' => false, 'reason' => 'not_allowed'];
+        }
+
+        if (now()->lt($discount->start_date) || now()->gt($discount->end_date)) {
+            return ['status' => false, 'reason' => 'expired'];
+        }
+
+        if (!is_null($discount->usage_limit) && $discount->usage_count >= $discount->usage_limit) {
+            return ['status' => false, 'reason' => 'usage_limit'];
+        }
+
+        return ['status' => true, 'discount' => $discount];
     }
 }

@@ -14,6 +14,8 @@ use Illuminate\Foundation\Http\FormRequest;
  *      @OA\Property(property="min_total", type="float", example=100000),
  *     @OA\Property(property="start_date", type="string", format="date-time", example="2025-06-01"),
  *     @OA\Property(property="end_date", type="string", format="date-time", example="2025-06-01"),
+ * @OA\Property(property="status", type="boolean", example=true),
+ * @OA\Property(property="usage_limit", type="integer", example=10),
  * )
  */
 class StoreDiscountRequest extends FormRequest
@@ -40,6 +42,8 @@ class StoreDiscountRequest extends FormRequest
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'min_total' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:0',
+            // 'usage_count' => 'nullable|integer|min:0',
         ];
     }
     public function messages(): array

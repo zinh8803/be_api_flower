@@ -2049,6 +2049,48 @@
                 ]
             }
         },
+        "/api/users/getall-subscribed": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Lấy danh sách người dùng đã đăng ký nhận bản tin",
+                "operationId": "e118a1890473db216f30903ec1ac1fc3",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách người dùng đã đăng ký nhận bản tin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Danh sách người dùng đã đăng ký nhận bản tin"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -2776,6 +2818,14 @@
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-06-01"
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "usage_limit": {
+                        "type": "integer",
+                        "example": 10
                     }
                 },
                 "type": "object"
@@ -2816,6 +2866,10 @@
                     "status": {
                         "type": "boolean",
                         "example": true
+                    },
+                    "usage_limit": {
+                        "type": "integer",
+                        "example": 10
                     }
                 },
                 "type": "object"
@@ -3431,6 +3485,19 @@
                         "format": "date-time",
                         "example": "2025-06-01T12:00:00Z"
                     },
+                    "min_total": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "usage_limit": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "usage_count": {
+                        "type": "integer",
+                        "example": 0
+                    },
                     "status": {
                         "type": "boolean",
                         "example": true
@@ -3820,6 +3887,11 @@
                     "status": {
                         "type": "string",
                         "example": "active"
+                    },
+                    "id_subscribe": {
+                        "description": "Indicates if the user is subscribed to newsletters",
+                        "type": "boolean",
+                        "example": true
                     },
                     "image_url": {
                         "type": "string",

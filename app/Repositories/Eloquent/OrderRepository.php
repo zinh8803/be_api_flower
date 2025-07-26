@@ -127,6 +127,11 @@ class OrderRepository implements OrderRepositoryInterface
                 if ($orderSubtotal < ($discount->min_total ?? 0)) {
                     throw new \Exception('Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã giảm giá.');
                 }
+                if ($discount->usage_limit !== null && $discount->usage_count >= $discount->usage_limit) {
+                    throw new \Exception('Mã giảm giá đã hết lượt sử dụng.');
+                }
+                $discount->increment('usage_count');
+
                 $discountAmount = $discount->type === 'percent'
                     ? $orderSubtotal * $discount->value / 100
                     : $discount->value;
@@ -594,6 +599,7 @@ class OrderRepository implements OrderRepositoryInterface
                 if ($r->action === 'Mã giảm giá') {
                     $totalDiscountValue += $r->quantity * ($orderDetail->subtotal / $orderDetail->quantity);
                     $discount = Discount::create([
+                        'user_id' => $userId,
                         'name' => 'DISCOUNT' . $orderId . random_int(1000, 9999),
                         'type' => 'fixed',
                         'value' => $totalDiscountValue,
@@ -601,6 +607,7 @@ class OrderRepository implements OrderRepositoryInterface
                         'start_date' => now()->toDateString(),
                         'end_date' => now()->addDays(30)->toDateString(),
                         'min_total' => 0,
+                        'usage_limit' => 1,
                     ]);
                     if ($userId && $discount) {
                         $user = User::find($userId);
