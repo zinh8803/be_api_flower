@@ -124,4 +124,12 @@ class UserRepository implements UserRepositoryInterface
         $user->save();
         return $user;
     }
+
+    public function handleUpdateStatus(int $id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = !$user->status;
+        $user->save();
+        return $user;
+    }
 }

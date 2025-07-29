@@ -16,4 +16,5 @@ interface UserRepositoryInterface
     public function getAllEmployees();
     public function getAllUserSubscribed();
     public function updateUserSubscribed(int $id);
+    public function handleUpdateStatus(int $id);
 }

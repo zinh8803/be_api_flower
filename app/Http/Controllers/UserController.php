@@ -593,4 +593,36 @@ class UserController extends Controller
             'data' => new UserResource(auth()->user())
         ]);
     }
+
+    /**
+     * @OA\Put(
+     *     path="/api/users/update-status/{id}",
+     *     summary="Cập nhật trạng thái người dùng",
+     *     tags={"User"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật trạng thái thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cập nhật trạng thái thành công")
+     *         )
+     *     )
+     * )
+     */
+    public function updateStatus(int $id)
+    {
+        $user = $this->users->handleUpdateStatus($id);
+        return response()->json([
+            'status' => true,
+            'message' => 'Cập nhật trạng thái thành công',
+            'data' => new UserResource($user)
+        ]);
+    }
 }

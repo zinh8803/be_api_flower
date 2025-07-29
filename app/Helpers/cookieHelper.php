@@ -16,7 +16,7 @@ if (!function_exists('make_cookie')) {
             filter_var(env('COOKIE_SECURE', false), FILTER_VALIDATE_BOOLEAN),
             $httpOnly,
             false, // raw
-            env('COOKIE_SAMESITE', 'Lax')
+            env('COOKIE_SAMESITE', 'none')
         );
     }
 }

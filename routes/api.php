@@ -39,6 +39,9 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::post('admin/create-employee', [AdminController::class, 'createEmployee']);
     Route::put('admin/update-employee/{id}', [AdminController::class, 'updateEmployee']);
 
+    //auth
+    Route::put('users/update-status/{id}', [UserController::class, 'updateStatus']);
+
     //categories
     Route::prefix('categories')->group(function () {
         Route::post('/', [CategoryController::class, 'store']);
