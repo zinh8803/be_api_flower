@@ -75,6 +75,8 @@ class StoreOrderRequest extends FormRequest
             'address.required' => 'Địa chỉ là bắt buộc.',
             'payment_method.required' => 'Phương thức thanh toán là bắt buộc.',
             'delivery_time.date_format' => 'Giờ nhận hàng phải có định dạng HH:mm (vd: 14:00).',
+            'delivery_date.after_or_equal' => 'Ngày giao hàng phải là ngày hôm nay hoặc trong tương lai.',
+            'delivery_time.after_or_equal' => 'Thời gian giao hàng phải là thời gian hiện tại hoặc trong tương lai.',
         ];
     }
 }

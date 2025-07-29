@@ -666,6 +666,35 @@
                 }
             }
         },
+        "/api/discounts/stats": {
+            "get": {
+                "tags": [
+                    "Discount"
+                ],
+                "summary": "Lấy thống kê mã giảm giá",
+                "operationId": "f91b1f0dc6b2a8de1f2606ecc67eff4e",
+                "responses": {
+                    "200": {
+                        "description": "Thống kê mã giảm giá",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "stats": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/flower": {
             "get": {
                 "tags": [

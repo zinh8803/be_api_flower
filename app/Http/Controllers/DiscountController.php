@@ -40,8 +40,8 @@ class DiscountController extends Controller
      */
     public function index()
     {
-        $discount = $this->discountRepository->getAll();
-        return DiscountResource::collection($discount);
+        $filter = request()->only(['name', 'type', 'status', 'start_date', 'end_date']);
+        return DiscountResource::collection($this->discountRepository->getAll($filter));
     }
 
 
@@ -248,5 +248,23 @@ class DiscountController extends Controller
         $this->discountRepository->sentDiscountEmail($discounts);
 
         return response()->json(['message' => 'Đã gửi mã giảm giá cho các user đăng ký nhận mail!']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/discounts/stats",
+     *     tags={"Discount"},
+     *     summary="Lấy thống kê mã giảm giá",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thống kê mã giảm giá",
+     *         @OA\JsonContent(type="object", @OA\Property(property="stats", type="array", @OA\Items(type="object")))
+     *     )
+     * )
+     */
+    public function getDiscountStats()
+    {
+        $stats = $this->discountRepository->getDiscountStats();
+        return response()->json(['data' => $stats]);
     }
 }

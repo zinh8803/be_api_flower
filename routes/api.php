@@ -62,6 +62,7 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::put('/{id}', [DiscountController::class, 'update']);
         Route::delete('/{id}', [DiscountController::class, 'destroy']);
         Route::post('/send-discount', [DiscountController::class, 'sendDiscountToSubscribers']);
+        Route::get('/stats', [DiscountController::class, 'getDiscountStats']);
     });
 
     //flower-types
@@ -119,6 +120,7 @@ Route::middleware(['check.role:admin,employee,user'])->group(function () {
 Route::middleware(['check.role:admin,employee'])->group(function () {
     // dashboard
     Route::get('/admin/dashboard/statistics', [DashBoardController::class, 'statistics']);
+    Route::get('/admin/dashboard/export', [DashBoardController::class, 'exportToExcel']);
 
     //orders
     Route::prefix('orders')->group(function () {

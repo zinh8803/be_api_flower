@@ -250,4 +250,165 @@ class DashBoardController extends Controller
 
         return $this->statistics($newRequest);
     }
+    public function exportToExcel(Request $request)
+    {
+        $start = $request->input('start_date');
+        $end = $request->input('end_date');
+
+        if (!$start || !$end) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng cung cấp ngày bắt đầu và ngày kết thúc'
+            ], 400);
+        }
+
+        $response = $this->statistics($request);
+        $stats = json_decode($response->getContent(), true)['stats'];
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1', 'BÁO CÁO THỐNG KÊ');
+        $sheet->setCellValue('A2', 'Từ ngày: ' . Carbon::parse($start)->format('d/m/Y') . ' đến ngày: ' . Carbon::parse($end)->format('d/m/Y'));
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A4', 'THÔNG TIN TỔNG QUAN');
+        $sheet->getStyle('A4')->getFont()->setBold(true);
+
+        $sheet->setCellValue('A5', 'Tổng số đơn hàng:');
+        $sheet->setCellValue('B5', $stats['totalOrders']);
+
+        $sheet->setCellValue('A6', 'Tổng doanh thu:');
+        $sheet->setCellValue('B6', number_format($stats['totalRevenue']) . ' đ');
+
+        $sheet->setCellValue('A7', 'Tổng số khách hàng:');
+        $sheet->setCellValue('B7', $stats['totalCustomers']);
+
+        $sheet->setCellValue('A8', 'Tổng số phiếu nhập:');
+        $sheet->setCellValue('B8', $stats['totalReceipts']);
+
+        $sheet->setCellValue('A9', 'Tổng chi phí nhập:');
+        $sheet->setCellValue('B9', number_format($stats['totalImport']) . ' đ');
+
+        $sheet->setCellValue('A11', 'TOP 5 KHÁCH HÀNG');
+        $sheet->getStyle('A11')->getFont()->setBold(true);
+
+        $sheet->setCellValue('A12', 'Tên');
+        $sheet->setCellValue('B12', 'Email');
+        $sheet->setCellValue('C12', 'Số điện thoại');
+        $sheet->setCellValue('D12', 'Số đơn');
+        $sheet->setCellValue('E12', 'Tổng chi tiêu');
+
+        $sheet->getStyle('A12:E12')->getFont()->setBold(true);
+
+        $row = 13;
+        foreach ($stats['topCustomers'] as $customer) {
+            $sheet->setCellValue('A' . $row, $customer['name']);
+            $sheet->setCellValue('B' . $row, $customer['email']);
+            $sheet->setCellValue('C' . $row, $customer['phone']);
+            $sheet->setCellValue('D' . $row, $customer['total']);
+            $sheet->setCellValue('E' . $row, number_format($customer['spent']) . ' đ');
+            $row++;
+        }
+
+        $sheet->setCellValue('A' . ($row + 1), 'TOP 5 SẢN PHẨM BÁN CHẠY');
+        $sheet->getStyle('A' . ($row + 1))->getFont()->setBold(true);
+
+        $row += 2;
+        $sheet->setCellValue('A' . $row, 'Sản phẩm');
+        $sheet->setCellValue('B' . $row, 'Số lượng đã bán');
+        $sheet->setCellValue('C' . $row, 'Doanh thu');
+
+        $sheet->getStyle('A' . $row . ':C' . $row)->getFont()->setBold(true);
+
+        $row++;
+        foreach ($stats['topProducts'] as $product) {
+            $sheet->setCellValue('A' . $row, $product['name']);
+            $sheet->setCellValue('B' . $row, $product['sold']);
+            $sheet->setCellValue('C' . $row, number_format($product['revenue']) . ' đ');
+            $row++;
+        }
+
+        $sheet->setCellValue('A' . ($row + 1), 'ĐƠN HÀNG GẦN ĐÂY');
+        $sheet->getStyle('A' . ($row + 1))->getFont()->setBold(true);
+
+        $row += 2;
+        $sheet->setCellValue('A' . $row, 'Mã đơn');
+        $sheet->setCellValue('B' . $row, 'Khách hàng');
+        $sheet->setCellValue('C' . $row, 'Ngày đặt');
+        $sheet->setCellValue('D' . $row, 'Trạng thái');
+        $sheet->setCellValue('E' . $row, 'Tổng tiền');
+
+        $sheet->getStyle('A' . $row . ':E' . $row)->getFont()->setBold(true);
+
+        $row++;
+        foreach ($stats['recentOrders'] as $order) {
+            $sheet->setCellValue('A' . $row, $order['code']);
+            $sheet->setCellValue('B' . $row, $order['name']);
+            $sheet->setCellValue('C' . $row, $order['date']);
+            $sheet->setCellValue('D' . $row, $order['status']);
+            $sheet->setCellValue('E' . $row, number_format($order['total']) . ' đ');
+            $row++;
+        }
+
+        $sheet->setCellValue('A' . ($row + 1), 'THỐNG KÊ THEO TRẠNG THÁI ĐƠN HÀNG');
+        $sheet->getStyle('A' . ($row + 1))->getFont()->setBold(true);
+
+        $row += 2;
+        $sheet->setCellValue('A' . $row, 'Trạng thái');
+        $sheet->setCellValue('B' . $row, 'Số lượng');
+
+        $sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
+
+        $row++;
+        foreach ($stats['orderStatusStats'] as $statusStat) {
+            $sheet->setCellValue('A' . $row, $statusStat['status']);
+            $sheet->setCellValue('B' . $row, $statusStat['count']);
+            $row++;
+        }
+
+        $sheet->setCellValue('A' . ($row + 1), 'THỐNG KÊ THEO NGÀY');
+        $sheet->getStyle('A' . ($row + 1))->getFont()->setBold(true);
+
+        $row += 2;
+        $sheet->setCellValue('A' . $row, 'Ngày');
+        $sheet->setCellValue('B' . $row, 'Doanh thu');
+        $sheet->setCellValue('C' . $row, 'Số đơn');
+        $sheet->setCellValue('D' . $row, 'Chi phí nhập');
+
+        $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
+
+        $row++;
+        foreach ($stats['labels'] as $index => $date) {
+            $sheet->setCellValue('A' . $row, $date);
+            $sheet->setCellValue('B' . $row, number_format($stats['revenueByDate'][$index]) . ' đ');
+            $sheet->setCellValue('C' . $row, $stats['orderCountByDate'][$index]);
+            $sheet->setCellValue('D' . $row, number_format($stats['importByDate'][$index]) . ' đ');
+            $row++;
+        }
+
+        foreach (range('A', 'G') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $fileName = 'bao_cao_' . Carbon::parse($start)->format('d_m_Y') . '_den_' . Carbon::parse($end)->format('d_m_Y') . '.xlsx';
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $path = storage_path('app/public/reports/' . $fileName);
+
+        if (!file_exists(storage_path('app/public/reports'))) {
+            mkdir(storage_path('app/public/reports'), 0777, true);
+        }
+
+        $writer->save($path);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Xuất báo cáo thành công',
+            'file' => url('storage/reports/' . $fileName)
+        ]);
+    }
 }

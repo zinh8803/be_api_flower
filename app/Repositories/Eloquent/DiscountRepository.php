@@ -10,10 +10,33 @@ use Illuminate\Support\Facades\Log;
 
 class DiscountRepository implements DiscountRepositoryInterface
 {
-    public function getAll()
+    public function getAll($filters = [])
     {
         $this->updateExpiredStatus();
-        return Discount::orderBy('status', 'desc')
+
+        $query = Discount::query();
+
+        if (!empty($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if (!empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('start_date', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('end_date', '<=', $filters['end_date']);
+        }
+
+        return $query->orderBy('status', 'desc')
             ->orderBy('start_date', 'asc')
             ->paginate(10);
     }
@@ -82,5 +105,24 @@ class DiscountRepository implements DiscountRepositoryInterface
         }
     }
 
-    
+    public function getDiscountStats()
+    {
+        $now = now();
+
+        $total = Discount::count();
+        $active = Discount::where('status', true)
+            ->where('end_date', '>=', $now)
+            ->count();
+        $expired = Discount::where(function ($q) use ($now) {
+            $q->where('status', false)
+                ->orWhere('end_date', '<', $now);
+        })
+            ->count();
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'expired' => $expired,
+        ];
+    }
 }
