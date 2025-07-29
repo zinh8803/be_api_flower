@@ -13,7 +13,7 @@ if (!function_exists('make_cookie')) {
             $minutes,
             '/',
             env('COOKIE_DOMAIN', null),
-            filter_var(env('COOKIE_SECURE', false), FILTER_VALIDATE_BOOLEAN),
+            filter_var(env('COOKIE_SECURE', true), FILTER_VALIDATE_BOOLEAN),
             $httpOnly,
             false, // raw
             env('COOKIE_SAMESITE', 'none')
