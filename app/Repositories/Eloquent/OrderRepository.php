@@ -40,32 +40,59 @@ class OrderRepository implements OrderRepositoryInterface
         $now = Carbon::now();
 
         if ($now->hour > 16 || ($now->hour == 16 && $now->minute > 0)) {
-            $requested = Carbon::parse($data['delivery_date'] . ' ' . ($data['delivery_time'] ?? '08:00'));
-            if (Carbon::parse($data['delivery_date'])->isToday()) {
+            if (!empty($data['delivery_date']) && Carbon::parse($data['delivery_date'])->isToday()) {
                 throw new \Exception('Sau 16h không nhận đơn giao trong ngày hôm nay.');
             }
-            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
-                throw new \Exception('Thời gian giao hàng phải từ 08:00 đến 18:00.');
-            }
-            return;
         }
 
         if (!empty($data['is_express'])) {
             $minExpressTime = $now->copy()->addHours(2);
-            $requested = Carbon::parse($data['delivery_date'] . ' ' . ($data['delivery_time'] ?? '08:00'));
-            if ($requested->lt($minExpressTime)) {
-                throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 2 tiếng.');
+
+            if ($now->hour < 8 || $now->hour >= 18) {
+                throw new \Exception('Giao nhanh chỉ nhận đơn trong khung giờ 08:00 đến 18:00.');
             }
-            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
-                throw new \Exception('Giao nhanh chỉ trong khung giờ 08:00 đến 18:00.');
+
+            $deliveryDate = !empty($data['delivery_date'])
+                ? Carbon::parse($data['delivery_date'])
+                : $now->copy();
+
+            if ($deliveryDate->isToday()) {
+                if ($minExpressTime->hour >= 18) {
+                    throw new \Exception('Giao nhanh phải hoàn thành trước 18:00. Vui lòng chọn ngày giao khác.');
+                }
+
+                $timeSlot = $data['delivery_time_slot'] ?? null;
+                if ($timeSlot) {
+                    $slotStart = $timeSlot === 'Buổi sáng' ? 8 : 13;
+                    $requestedStartTime = $now->copy()->setTime($slotStart, 0, 0);
+
+                    if ($requestedStartTime->lt($minExpressTime)) {
+                        throw new \Exception('Giao nhanh phải cách thời điểm đặt ít nhất 2 tiếng.');
+                    }
+                }
             }
-        } else if (!empty($data['delivery_date']) && !empty($data['delivery_time'])) {
-            $requested = Carbon::parse($data['delivery_date'] . ' ' . $data['delivery_time']);
-            if ($requested->lt(now())) {
-                throw new \Exception('Không thể chọn thời gian giao hàng trong quá khứ.');
+        } else if (!empty($data['delivery_date'])) {
+            $deliveryDate = Carbon::parse($data['delivery_date']);
+
+            if ($deliveryDate->lt(now()->startOfDay())) {
+                throw new \Exception('Không thể chọn ngày giao hàng trong quá khứ.');
             }
-            if ($requested->hour < 8 || $requested->hour > 18 || ($requested->hour == 18 && $requested->minute > 0)) {
-                throw new \Exception('Thời gian giao hàng phải từ 08:00 đến 18:00.');
+
+            if (!empty($data['delivery_time_slot'])) {
+                $validSlots = ['Buổi sáng', 'Buổi chiều'];
+                if (!in_array($data['delivery_time_slot'], $validSlots)) {
+                    throw new \Exception('Khung giờ giao hàng không hợp lệ. Chỉ chấp nhận "Buổi sáng" hoặc "Buổi chiều".');
+                }
+
+                if ($deliveryDate->isToday()) {
+                    if ($data['delivery_time_slot'] === 'Buổi sáng' && $now->hour >= 12) {
+                        throw new \Exception('Đã quá 12h, không thể chọn khung giờ buổi sáng cho hôm nay. Vui lòng chọn buổi chiều hoặc ngày khác.');
+                    }
+
+                    if ($data['delivery_time_slot'] === 'Buổi chiều' && $now->hour >= 18) {
+                        throw new \Exception('Đã quá 18h, không thể chọn khung giờ buổi chiều cho hôm nay. Vui lòng chọn ngày khác.');
+                    }
+                }
             }
         }
     }
@@ -97,11 +124,15 @@ class OrderRepository implements OrderRepositoryInterface
                     if ($stock < $need) {
                         throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
                     }
-                    $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : $data['delivery_date'];
-                    if (Carbon::parse($deliveryDate)->gt(now())) {
-                        continue;
+                    // $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : $data['delivery_date'];
+                    // if (Carbon::parse($deliveryDate)->gt(now())) {
+                    //     continue;
+                    // }
+                    // $this->deductStock($recipe->flower_id, $need);
+                    $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : ($data['delivery_date'] ?? null);
+                    if ($deliveryDate && Carbon::parse($deliveryDate)->isToday()) {
+                        $this->deductStock($recipe->flower_id, $need);
                     }
-                    $this->deductStock($recipe->flower_id, $need);
                 }
 
                 $unitPrice = $productSize->price;
@@ -154,7 +185,7 @@ class OrderRepository implements OrderRepositoryInterface
                 // 'user_id' => $data['user_id'] ?? auth()->id() ?? null,
 
                 'delivery_date' => $data['delivery_date'] ?? null,
-                'delivery_time' => !empty($data['is_express']) ? null : ($data['delivery_time'] ?? null),
+                'delivery_time_slot' => !empty($data['is_express']) ? null : ($data['delivery_time_slot'] ?? null),
                 'is_express' => $data['is_express'] ?? false,
                 'status_stock' => (
                     (!empty($data['delivery_date']) && Carbon::parse($data['delivery_date'])->isToday())

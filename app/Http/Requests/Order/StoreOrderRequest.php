@@ -18,7 +18,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *      @OA\Property(property="user_id", type="integer", example=1, nullable=true),
  *     @OA\Property(property="discount_id", type="integer", example=null, nullable=true),
  *    @OA\Property(property="delivery_date", type="string", format="date", example="2025-07-23", nullable=true),
- *    @OA\Property(property="delivery_time", type="string", format="time", example="14:00", nullable=true),
+ *    @OA\Property(property="delivery_time_slot", type="string", example="Buổi sáng", nullable=true),
  *    @OA\Property(property="is_express", type="boolean", example=false, nullable=true),
  *     @OA\Property(
  *         property="products",
@@ -61,8 +61,8 @@ class StoreOrderRequest extends FormRequest
             'products.*.product_id' => 'required|integer|exists:products,id',
             'products.*.product_size_id' => 'required|integer|exists:product_sizes,id',
             'products.*.quantity' => 'required|integer|min:1',
-            'delivery_date' => 'nullable|date|after_or_equal:today',
-            'delivery_time' => 'nullable|date_format:H:i',
+            'delivery_date' => 'required|date|after_or_equal:today',
+            'delivery_time_slot' => 'nullable|in:Buổi sáng,Buổi chiều',
             'is_express' => 'nullable|boolean',
         ];
     }
@@ -74,9 +74,10 @@ class StoreOrderRequest extends FormRequest
             'phone.required' => 'Số điện thoại là bắt buộc.',
             'address.required' => 'Địa chỉ là bắt buộc.',
             'payment_method.required' => 'Phương thức thanh toán là bắt buộc.',
+            'delivery_date.required' => 'Ngày giao hàng là bắt buộc.',
             'delivery_time.date_format' => 'Giờ nhận hàng phải có định dạng HH:mm (vd: 14:00).',
             'delivery_date.after_or_equal' => 'Ngày giao hàng phải là ngày hôm nay hoặc trong tương lai.',
-            'delivery_time.after_or_equal' => 'Thời gian giao hàng phải là thời gian hiện tại hoặc trong tương lai.',
+
         ];
     }
 }

@@ -6,7 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['name', 'order_code', 'email', 'phone', 'address', 'note', 'total_price', 'status', 'user_id', 'buy_at', 'payment_method', 'discount_id', 'discount_amount', 'delivery_date', 'delivery_time', 'is_express', 'status_stock'];
+    protected $fillable = [
+        'name',
+        'order_code',
+        'email',
+        'phone',
+        'address',
+        'note',
+        'total_price',
+        'status',
+        'user_id',
+        'buy_at',
+        'payment_method',
+        'discount_id',
+        'discount_amount',
+        'delivery_date',
+        'delivery_time_slot',
+        'is_express',
+        'status_stock'
+    ];
 
     public function user()
     {
@@ -38,4 +56,21 @@ class Order extends Model
     // {
     //     return number_format($value, 0, ',', '.');
     // }
+
+    public function getDeliveryTimeDisplayAttribute()
+    {
+        return match ($this->delivery_time_slot) {
+            'Buổi sáng' => '8h - 12h',
+            'Buổi chiều' => '13h - 18h',
+            default => null
+        };
+    }
+
+    public static function getTimeSlots()
+    {
+        return [
+            '8h-12h' => 'Buổi sáng (8h - 12h)',
+            '13h-18h' => 'Buổi chiều (13h - 18h)'
+        ];
+    }
 }
