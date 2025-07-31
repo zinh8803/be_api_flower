@@ -63,6 +63,7 @@ class OrderController extends Controller
         return new OrderResource($order);
     }
 
+    
     /**
      * @OA\Get(
      *     path="/api/orders/details",

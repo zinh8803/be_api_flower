@@ -53,7 +53,9 @@ Route::middleware(['check.role:admin'])->group(function () {
 
     //products
     Route::prefix('products')->group(function () {
+        Route::get('/trash', [ProductController::class, 'getAllProductTrash']);
         Route::post('/', [ProductController::class, 'store']);
+        Route::put('/{id}/restore', [ProductController::class, 'restoreProduct']);
         Route::put('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
     });
@@ -127,11 +129,11 @@ Route::middleware(['check.role:admin,employee'])->group(function () {
 
     //orders
     Route::prefix('orders')->group(function () {
+        Route::put('/product-reports', [ProductReportController::class, 'update']);
         Route::get('/', [OrderController::class, 'index']);
         Route::get('/{order}', [OrderController::class, 'show']);
         Route::put('/{order}', [OrderController::class, 'update']);
         Route::delete('/{order}', [OrderController::class, 'destroy']);
-        Route::put('/product-reports', [ProductReportController::class, 'update']);
         Route::put('/returns/status', [OrderController::class, 'updateStatusOrderReturn']);
     });
 

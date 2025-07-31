@@ -748,8 +748,52 @@ class ProductController extends Controller
     {
         $data = $this->products->getStockById($id);
         if (!$data) {
-            return response()->json(['message' => 'Product not found'], 404);
+            return response()->json(['message' => 'Không có sản phẩm'], 404);
         }
         return response()->json($data);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/trash",
+     *     tags={"Products"},
+     *     summary="Lấy danh sách sản phẩm đã xóa",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Danh sách sản phẩm đã xóa",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/ProductResource"))
+     *     )
+     * )
+     */
+    public function getAllProductTrash()
+    {
+        $products = $this->products->allTrash();
+        return ProductResource::collection($products);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/products/{id}/restore",
+     *     tags={"Products"},
+     *     summary="Khôi phục sản phẩm đã xóa",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product restored successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/ProductResource")
+     *     ),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+    public function restoreProduct($id)
+    {
+        $product = $this->products->restoreTrash($id);
+
+        return (new ProductResource($product))->response()->setStatusCode(200);
     }
 }

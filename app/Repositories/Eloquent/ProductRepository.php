@@ -38,6 +38,33 @@ class ProductRepository implements ProductRepositoryInterface
         return $query->paginate(10);
     }
 
+    public function allTrash()
+    {
+        return $this->model->onlyTrashed()->with(['category', 'productSizes.recipes.flower'])->paginate(10);
+    }
+
+    public function restoreTrash($id)
+    {
+        $product = $this->model->withTrashed()->find($id);
+        if (!$product) {
+            throw new RuntimeException('Không có sản phẩm.');
+        }
+        $product->restore();
+        return $product->load(['category', 'productSizes.recipes.flower']);
+    }
+
+    public function deleteForce($id)
+    {
+        $product = $this->model->withTrashed()->find($id);
+        if (!$product) {
+            throw new RuntimeException('Không có sản phẩm.');
+        }
+
+        ImportReceiptDetail::where('product_id', $id)->delete();
+        $product->forceDelete();
+        return true;
+    }
+
     public function filterTypeColor($filters = [])
     {
         $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType']);

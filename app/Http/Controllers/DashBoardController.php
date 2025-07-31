@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DashBoardController extends Controller
 {
@@ -396,19 +397,20 @@ class DashBoardController extends Controller
 
         $fileName = 'bao_cao_' . Carbon::parse($start)->format('d_m_Y') . '_den_' . Carbon::parse($end)->format('d_m_Y') . '.xlsx';
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $path = storage_path('app/public/reports/' . $fileName);
+        $writer = new Xlsx($spreadsheet);
 
-        if (!file_exists(storage_path('app/public/reports'))) {
-            mkdir(storage_path('app/public/reports'), 0777, true);
-        }
+        ob_start();
+        $writer->save('php://output');
+        $excelOutput = ob_get_clean();
 
-        $writer->save($path);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Xuất báo cáo thành công',
-            'file' => url('storage/reports/' . $fileName)
-        ]);
+        return response($excelOutput)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
+            ->header('Cache-Control', 'max-age=0')
+            ->header('Cache-Control', 'max-age=1')
+            ->header('Expires', 'Mon, 26 Jul 1997 05:00:00 GMT')
+            ->header('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT')
+            ->header('Cache-Control', 'cache, must-revalidate')
+            ->header('Pragma', 'public');
     }
 }

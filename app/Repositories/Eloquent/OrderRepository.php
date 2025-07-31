@@ -96,6 +96,7 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
     }
+
     public function createOrder(array $data)
     {
         $this->validateDeliveryTime($data);
@@ -596,6 +597,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function handleProductReport(array $data)
     {
+        Log::info("1");
         if (empty($data['order_id']) || empty($data['reports']) || !is_array($data['reports'])) {
             throw new \Exception('Thiếu dữ liệu báo cáo!');
         }
@@ -663,27 +665,6 @@ class OrderRepository implements OrderRepositoryInterface
                     }
                 }
             }
-
-            // if ($totalDiscountValue > 0) {
-            //     $discountExists = Discount::where('name', 'like', 'DISCOUNT' . $orderId . '%')->exists();
-            //     if (!$discountExists) {
-            //         $discount = Discount::create([
-            //             'name' => 'DISCOUNT' . $orderId . random_int(1000, 9999),
-            //             'type' => 'fixed',
-            //             'value' => $totalDiscountValue,
-            //             'status' => 1,
-            //             'start_date' => now()->toDateString(),
-            //             'end_date' => now()->addDays(30)->toDateString(),
-            //             'min_total' => 0,
-            //         ]);
-            //         if ($userId && $discount) {
-            //             $user = User::find($userId);
-            //             if ($user && !empty($user->email)) {
-            //                 sendDiscountReport::dispatch($discount, $user->email);
-            //             }
-            //         }
-            //     }
-            // }
 
             if (isset($data['order_status'])) {
                 $order = Order::find($orderId);

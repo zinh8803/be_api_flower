@@ -41,6 +41,7 @@ class ProductReportController extends Controller
     {
         try {
             $this->model->handleProductReport($request->all());
+            
             return response()->json(['message' => 'Cập nhật báo cáo thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error updating product report: ' . $e->getMessage());

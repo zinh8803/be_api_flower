@@ -2071,6 +2071,64 @@
                 }
             }
         },
+        "/api/products/trash": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lấy danh sách sản phẩm đã xóa",
+                "operationId": "45815e92ac35a83171b64a6119267e75",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách sản phẩm đã xóa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{id}/restore": {
+            "put": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Khôi phục sản phẩm đã xóa",
+                "operationId": "3d2bbe87b85675460aafc255b370412d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product restored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                }
+            }
+        },
         "/api/users/getall": {
             "get": {
                 "tags": [
@@ -2758,6 +2816,52 @@
                 ]
             }
         },
+        "/api/users/update-status/{id}": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật trạng thái người dùng",
+                "operationId": "9e1c34cd890f13e240098e72b0f5b203",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật trạng thái thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/payment": {
             "post": {
                 "tags": [
@@ -3253,10 +3357,9 @@
                         "example": "2025-07-23",
                         "nullable": true
                     },
-                    "delivery_time": {
+                    "delivery_time_slot": {
                         "type": "string",
-                        "format": "time",
-                        "example": "14:00",
+                        "example": "Buổi sáng",
                         "nullable": true
                     },
                     "is_express": {

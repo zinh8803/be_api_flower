@@ -5,6 +5,8 @@ namespace App\Repositories\Contracts;
 interface ProductRepositoryInterface
 {
     public function all();
+    public function allTrash();
+    public function restoreTrash($id);
     public function filterTypeColor($filters = []);
     public function find($id);
     public function findById($id);
