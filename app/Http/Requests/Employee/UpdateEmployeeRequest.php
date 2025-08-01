@@ -35,7 +35,7 @@ class UpdateEmployeeRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'password' => 'nullable|string|min:6',
-            'phone' => 'nullable|string|max:15',
+            'phone' => 'nullable|unique:users,phone|max:15',
             'address' => 'nullable|string|max:255',
             'status' => 'nullable|boolean',
         ];
@@ -46,6 +46,7 @@ class UpdateEmployeeRequest extends FormRequest
             'name.required' => 'Tên nhân viên là bắt buộc.',
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
             'phone.max' => 'Số điện thoại không được vượt quá 15 ký tự.',
+            'phone.unique' => 'Số điện thoại đã được sử dụng.',
             'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.',
         ];
     }

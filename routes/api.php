@@ -37,7 +37,6 @@ Route::middleware(['check.role:admin'])->group(function () {
     //nhan vien
     Route::get('/admin/employees', [AdminController::class, 'index']);
     Route::post('admin/create-employee', [AdminController::class, 'createEmployee']);
-    Route::put('admin/update-employee/{id}', [AdminController::class, 'updateEmployee']);
 
     //auth
     Route::put('users/update-status/{id}', [UserController::class, 'updateStatus']);
@@ -151,6 +150,8 @@ Route::middleware(['check.role:admin,employee'])->group(function () {
 
     //users
     Route::get('users/getall', [UserController::class, 'index']);
+
+    Route::put('admin/update-employee/{id}', [AdminController::class, 'updateEmployee']);
 });
 Route::middleware(['checkjwt'])->group(function () {
     Route::get('orders/user/{id}', [OrderController::class, 'OrderDetailById']);

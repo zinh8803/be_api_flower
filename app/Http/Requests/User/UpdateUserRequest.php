@@ -40,4 +40,11 @@ class UpdateUserRequest extends FormRequest
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Tên là bắt buộc.',
+
+        ];
+    }
 }
