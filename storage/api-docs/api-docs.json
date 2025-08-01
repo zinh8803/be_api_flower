@@ -3614,6 +3614,10 @@
                         "type": "boolean",
                         "example": true
                     },
+                    "repeat_daily": {
+                        "type": "boolean",
+                        "example": false
+                    },
                     "run_time": {
                         "type": "string",
                         "format": "time",

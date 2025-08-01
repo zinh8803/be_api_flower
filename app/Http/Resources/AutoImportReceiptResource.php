@@ -20,6 +20,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="import_date", type="string", format="date", example="2025-06-01"),
  *     @OA\Property(property="details", type="array", @OA\Items(type="string"), example={"Detail 1", "Detail 2"}),
  *     @OA\Property(property="enabled", type="boolean", example=true),
+ *     @OA\Property(property="repeat_daily", type="boolean", example=false),
  *     @OA\Property(property="run_time", type="string", format="time", example="12:00:00")
  * )
  */
@@ -38,6 +39,7 @@ class AutoImportReceiptResource extends JsonResource
             'details' => $this->details,
             'enabled' => $this->enabled,
             'run_time' => $this->run_time,
+            'repeat_daily' => $this->repeat_daily,
         ];
     }
 }

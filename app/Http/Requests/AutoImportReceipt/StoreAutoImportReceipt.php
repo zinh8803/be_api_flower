@@ -27,6 +27,7 @@ class StoreAutoImportReceipt extends FormRequest
             'details.*.flower_id' => 'required|exists:flowers,id',
             'details.*.quantity' => 'required|integer|min:1',
             'details.*.import_price' => 'required|numeric|min:0',
+            'repeat_daily' => 'sometimes|boolean',
             'run_time'  => 'required|date_format:H:i',
             'enabled'   => 'required|boolean',
             'note'      => 'nullable|string|max:255',

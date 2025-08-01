@@ -38,7 +38,10 @@ class AutoCreateImportReceipt extends Command
         Log::info("Ngày: $today, Giờ: $nowTime");
 
         $config = AutoImportReceipt::where('enabled', 1)
-            ->where('import_date', $today)
+            ->where(function ($q) use ($today) {
+                $q->where('repeat_daily', true)
+                    ->orWhere('import_date', $today);
+            })
             ->whereRaw("DATE_FORMAT(run_time, '%H:%i') = ?", [$nowTime])
             ->orderByDesc('id')
             ->first();
