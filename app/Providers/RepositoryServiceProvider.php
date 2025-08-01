@@ -11,16 +11,19 @@ use App\Repositories\Eloquent\OrderRepository;
 use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
+use App\Repositories\Contracts\ColorRepositoryInterface;
 use App\Repositories\Contracts\FlowerTypeRepositoryInterface;
 use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
 use App\Repositories\Contracts\ProductReportRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Eloquent\AutoImportReceiptRepository;
+use App\Repositories\Eloquent\ColorRepository;
 use App\Repositories\Eloquent\FlowerTypeRepository;
 use App\Repositories\Eloquent\ImportReceiptRepository;
 use App\Repositories\Eloquent\ProductReportRepository;
 use App\Repositories\Eloquent\ProductRepository;
+use Cloudinary\Transformation\Argument\Color;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -43,6 +46,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(AutoImportReceiptInterface::class, AutoImportReceiptRepository::class);
         // $this->app->bind(ImportReceiptDetailRepositoryInterface::class, ImportReceiptDetailRepository::class);
         $this->app->bind(ProductReportRepositoryInterface::class, ProductReportRepository::class);
+
+        $this->app->bind(ColorRepositoryInterface::class, ColorRepository::class);
     }
 
     /**
