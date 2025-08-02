@@ -187,6 +187,11 @@ Route::prefix('flower-types')->group(function () {
     Route::get('/', [FlowerTypeController::class, 'index']);
     Route::get('/{id}', [FlowerTypeController::class, 'show']);
 });
+//colors
+Route::prefix('colors')->group(function () {
+    Route::get('/', [ColorController::class, 'index']);
+    Route::get('/{id}', [ColorController::class, 'show']);
+});
 
 Route::prefix('flower')->group(function () {
     Route::get('/', [FlowerController::class, 'index']);
@@ -225,10 +230,4 @@ Route::prefix('discounts')->group(function () {
     Route::get('/', [DiscountController::class, 'index']);
     Route::get('/{id}', [DiscountController::class, 'show']);
     Route::post('/check-code', [DiscountController::class, 'checkCode']);
-});
-
-//colors
-Route::prefix('colors')->group(function () {
-    Route::get('/', [ColorController::class, 'index']);
-    Route::get('/{id}', [ColorController::class, 'show']);
 });

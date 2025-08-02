@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class color extends Model
+class Color extends Model
 {
     protected $fillable = ['name', 'hex_code'];
 
