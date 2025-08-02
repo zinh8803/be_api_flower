@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\AutoImportReceiptController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ColorController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
@@ -87,6 +88,13 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::get('/getall-subscribed', [UserController::class, 'getAllUserSubscribed']);
+    });
+    //colors
+    Route::prefix('colors')->group(function () {
+
+        Route::post('/', [ColorController::class, 'store']);
+        Route::put('/{id}', [ColorController::class, 'update']);
+        Route::delete('/{id}', [ColorController::class, 'destroy']);
     });
 });
 
@@ -217,4 +225,10 @@ Route::prefix('discounts')->group(function () {
     Route::get('/', [DiscountController::class, 'index']);
     Route::get('/{id}', [DiscountController::class, 'show']);
     Route::post('/check-code', [DiscountController::class, 'checkCode']);
+});
+
+//colors
+Route::prefix('colors')->group(function () {
+    Route::get('/', [ColorController::class, 'index']);
+    Route::get('/{id}', [ColorController::class, 'show']);
 });

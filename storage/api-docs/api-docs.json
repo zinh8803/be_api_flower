@@ -13,6 +13,7 @@
     ],
     "paths": {
         "/categories": {},
+        "/colors": {},
         "/discounts": {},
         "/flower": {},
         "/flower-types": {},
@@ -436,6 +437,158 @@
                     },
                     "404": {
                         "description": "Danh mục không tồn tại"
+                    }
+                }
+            }
+        },
+        "/api/colors": {
+            "get": {
+                "tags": [
+                    "Color"
+                ],
+                "summary": "Lấy danh sách màu sắc",
+                "operationId": "9af5ded8d7143a0f97e53725eda97464",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách màu sắc",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Color"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Color"
+                ],
+                "summary": "Tạo mới màu sắc",
+                "operationId": "e4d3770c69f36a71c5936b3b35655342",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Color"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Màu sắc được tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Color"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/colors/{id}": {
+            "get": {
+                "tags": [
+                    "Color"
+                ],
+                "summary": "Lấy thông tin màu sắc theo ID",
+                "operationId": "c0e5a39d91e5093e2e0f77823615db5a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin màu sắc",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Color"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Color"
+                ],
+                "summary": "Cập nhật màu sắc",
+                "operationId": "717be7234f38d1fb4ff4678ba4f59581",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Color"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Màu sắc được cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Color"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Color"
+                ],
+                "summary": "Xóa màu sắc",
+                "operationId": "1667d6964960e3a8158e80e50c69f19c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Màu sắc được xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Color"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3173,7 +3326,7 @@
             },
             "FlowerStoreRequest": {
                 "required": [
-                    "color",
+                    "color_id",
                     "status",
                     "price",
                     "flower_type_id"
@@ -3183,9 +3336,9 @@
                         "type": "string",
                         "example": "Hoa hồng đỏ"
                     },
-                    "color": {
-                        "type": "string",
-                        "example": "Đỏ"
+                    "color_id": {
+                        "type": "integer",
+                        "example": 1
                     },
                     "price": {
                         "type": "number",
@@ -3201,7 +3354,7 @@
             },
             "FlowerUpdateRequest": {
                 "required": [
-                    "color",
+                    "color_id",
                     "status",
                     "price",
                     "flower_type_id"
@@ -3211,9 +3364,9 @@
                         "type": "string",
                         "example": "Hoa hồng đỏ"
                     },
-                    "color": {
-                        "type": "string",
-                        "example": "Đỏ"
+                    "color_id": {
+                        "type": "integer",
+                        "example": 1
                     },
                     "price": {
                         "type": "number",
@@ -3742,14 +3895,13 @@
                         "type": "string",
                         "example": "Hoa hồng"
                     },
-                    "color": {
-                        "type": "string",
-                        "example": "Đỏ"
-                    },
                     "price": {
                         "type": "number",
                         "format": "float",
                         "example": 100.5
+                    },
+                    "color": {
+                        "$ref": "#/components/schemas/Color"
                     },
                     "flower_type": {
                         "$ref": "#/components/schemas/FlowerType"
@@ -4117,6 +4269,39 @@
                     }
                 },
                 "type": "object"
+            },
+            "Color": {
+                "title": "Color",
+                "required": [
+                    "id",
+                    "name",
+                    "hex_code"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Red"
+                    },
+                    "hex_code": {
+                        "type": "string",
+                        "example": "#FF0000"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-01T12:00:00Z"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -4134,6 +4319,10 @@
         {
             "name": "Category",
             "description": "Quản lý danh mục hoa"
+        },
+        {
+            "name": "Color",
+            "description": "Quản lý màu sắc"
         },
         {
             "name": "Discount",

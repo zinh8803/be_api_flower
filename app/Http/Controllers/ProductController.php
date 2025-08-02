@@ -248,7 +248,7 @@ class ProductController extends Controller
     {
         $filters = [
             'category_id' => $request->input('category_id'),
-            'color' => $request->input('color'),
+            'color_id' => $request->input('color_id'),
             'flower_type_id' => $request->input('flower_type_id'),
             'price' => $request->input('price'),
         ];

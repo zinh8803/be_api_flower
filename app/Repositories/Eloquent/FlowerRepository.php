@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Flower;
 use App\Repositories\Contracts\FlowerRepositoryInterface;
+
 class FlowerRepository implements FlowerRepositoryInterface
 {
     protected $model;
@@ -15,7 +16,7 @@ class FlowerRepository implements FlowerRepositoryInterface
 
     public function all()
     {
-        return $this->model->with(['flowerType'])->get();
+        return $this->model->with(['flowerType', 'color'])->get();
     }
 
     public function find($id)
@@ -40,4 +41,3 @@ class FlowerRepository implements FlowerRepositoryInterface
         return $this->model->destroy($id);
     }
 }
-
