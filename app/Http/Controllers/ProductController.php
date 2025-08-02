@@ -76,6 +76,12 @@ class ProductController extends Controller
         ];
 
         foreach ($products as $product) {
+            $groupedSizes = [
+                'available' => [],
+                'low' => [],
+                'out' => []
+            ];
+
             foreach ($product->productSizes as $size) {
                 $minStock = PHP_INT_MAX;
                 $limitingFlower = null;
@@ -87,10 +93,6 @@ class ProductController extends Controller
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
                     $possible = $needed > 0 ? floor($stock / $needed) : 0;
-                    // Log::info(
-                    //     "flowerStock",
-                    //     ['flower_id' => $flowerId, 'stock' => $stock, 'needed' => $needed, 'possible' => $possible]
-                    // );
                     if ($possible < $minStock) {
                         $minStock = $possible;
                         $limitingFlower = [
@@ -101,23 +103,30 @@ class ProductController extends Controller
                         ];
                     }
                 }
-                $item = [
-                    'product_id' => $product->id,
-                    'product_image' => $product->image_url,
-                    'product_name' => $product->name,
+                $sizeItem = [
                     'size_id' => $size->id,
                     'size' => $size->size,
                     'max_quantity' => $minStock,
                     'limiting_flower' => $limitingFlower
                 ];
 
-
                 if ($minStock === 0.0) {
-                    $result['out'][] = $item;
+                    $groupedSizes['out'][] = $sizeItem;
                 } elseif ($minStock <= 10) {
-                    $result['low'][] = $item;
+                    $groupedSizes['low'][] = $sizeItem;
                 } else {
-                    $result['available'][] = $item;
+                    $groupedSizes['available'][] = $sizeItem;
+                }
+            }
+
+            foreach (['available', 'low', 'out'] as $group) {
+                if (!empty($groupedSizes[$group])) {
+                    $result[$group][] = [
+                        'product_id' => $product->id,
+                        'product_image' => $product->image_url,
+                        'product_name' => $product->name,
+                        'product_sizes' => $groupedSizes[$group]
+                    ];
                 }
             }
         }
@@ -143,7 +152,7 @@ class ProductController extends Controller
                 'last_page' => $lastPage
             ];
         };
-        //$products->processOrdersForToday();
+
         return response()->json([
             'available' => $paginateGroup($result['available']),
             'low' => $paginateGroup($result['low']),

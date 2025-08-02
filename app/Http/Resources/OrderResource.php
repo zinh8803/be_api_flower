@@ -50,7 +50,7 @@ class OrderResource extends JsonResource
             'buy_at' => $this->buy_at,
             'total_price' => $this->total_price,
             'delivery_date' => $this->delivery_date,
-            'delivery_time' => $this->delivery_time,
+            'delivery_time_slot' => $this->delivery_time_slot,
             'is_express' => $this->is_express,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
