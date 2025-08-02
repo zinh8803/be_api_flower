@@ -67,12 +67,12 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function filterTypeColor($filters = [])
     {
-        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType']);
+        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType', 'productSizes.recipes.flower.color']);
 
-        if (!empty($filters['color'])) {
-            $colors = is_array($filters['color']) ? $filters['color'] : [$filters['color']];
-            $query->whereHas('productSizes.recipes.flower', function ($q) use ($colors) {
-                $q->whereIn('color', $colors);
+        if (!empty($filters['color_id'])) {
+            $colors = is_array($filters['color_id']) ? $filters['color_id'] : [$filters['color_id']];
+            $query->whereHas('productSizes.recipes.flower.color', function ($q) use ($colors) {
+                $q->whereIn('id', $colors);
             });
         }
 

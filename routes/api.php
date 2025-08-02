@@ -91,8 +91,7 @@ Route::middleware(['check.role:admin'])->group(function () {
     });
     //colors
     Route::prefix('colors')->group(function () {
-        Route::get('/', [ColorController::class, 'index']);
-        Route::get('/{id}', [ColorController::class, 'show']);
+
         Route::post('/', [ColorController::class, 'store']);
         Route::put('/{id}', [ColorController::class, 'update']);
         Route::delete('/{id}', [ColorController::class, 'destroy']);
@@ -226,4 +225,10 @@ Route::prefix('discounts')->group(function () {
     Route::get('/', [DiscountController::class, 'index']);
     Route::get('/{id}', [DiscountController::class, 'show']);
     Route::post('/check-code', [DiscountController::class, 'checkCode']);
+});
+
+//colors
+Route::prefix('colors')->group(function () {
+    Route::get('/', [ColorController::class, 'index']);
+    Route::get('/{id}', [ColorController::class, 'show']);
 });
