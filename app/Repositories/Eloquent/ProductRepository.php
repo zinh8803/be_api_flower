@@ -183,6 +183,9 @@ class ProductRepository implements ProductRepositoryInterface
                     Log::error('Image upload failed', ['error' => $e->getMessage()]);
                 }
             }
+            if (!empty($data['description'])) {
+                $data['description'] = $this->handleDescriptionImages($data['description']);
+            }
 
             $sizes = $data['sizes'] ?? $data['productSizes'] ?? [];
             unset($data['sizes'], $data['productSizes']);
@@ -212,7 +215,50 @@ class ProductRepository implements ProductRepositoryInterface
             return $product->load('productSizes.recipes.flower');
         });
     }
+    protected function handleDescriptionImages($html)
+    {
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+        libxml_clear_errors();
 
+        $imgs = $dom->getElementsByTagName('img');
+        foreach ($imgs as $img) {
+            $src = $img->getAttribute('src');
+            if (strpos($src, 'data:image') === 0) {
+                preg_match('/data:image\/(\w+);base64,(.*)/', $src, $matches);
+                $ext = $matches[1] ?? 'png';
+                $base64 = $matches[2] ?? '';
+
+                if ($base64) {
+                    $imageData = base64_decode($base64);
+                    $tmpFile = tmpfile();
+                    $tmpFilePath = stream_get_meta_data($tmpFile)['uri'];
+                    file_put_contents($tmpFilePath, $imageData);
+
+                    $uploadedFile = new UploadedFile(
+                        $tmpFilePath,
+                        'desc_' . uniqid() . '.' . $ext,
+                        'image/' . $ext,
+                        null,
+                        true
+                    );
+
+                    try {
+                        $imageUrl = ImageHelper::uploadImage($uploadedFile, 'products');
+                        if ($imageUrl) {
+                            $img->setAttribute('src', $imageUrl);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Description image upload failed', ['error' => $e->getMessage()]);
+                    }
+
+                    fclose($tmpFile);
+                }
+            }
+        }
+        return $dom->saveHTML();
+    }
     public function updateWithRecipes($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
@@ -228,6 +274,9 @@ class ProductRepository implements ProductRepositoryInterface
                 } catch (\Exception $e) {
                     Log::error('Image upload failed during update', ['error' => $e->getMessage()]);
                 }
+            }
+            if (!empty($data['description'])) {
+                $data['description'] = $this->handleDescriptionImages($data['description']);
             }
 
             if (isset($data['name'])) {
