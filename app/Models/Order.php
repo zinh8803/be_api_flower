@@ -17,6 +17,7 @@ class Order extends Model
         'status',
         'user_id',
         'buy_at',
+        'delivered_at',
         'payment_method',
         'discount_id',
         'discount_amount',

@@ -48,6 +48,7 @@ class OrderResource extends JsonResource
                 'amount_applied' => $this->discount_amount,
             ] : null,
             'buy_at' => $this->buy_at,
+            'delivered_at' => $this->delivered_at,
             'total_price' => $this->total_price,
             'delivery_date' => $this->delivery_date,
             'delivery_time_slot' => $this->delivery_time_slot,

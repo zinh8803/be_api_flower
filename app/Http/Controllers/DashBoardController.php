@@ -60,13 +60,17 @@ class DashBoardController extends Controller
         Log::info("Filtered orders count: " . $orders->count());
         Log::info("Filtered receipts count: " . $receipts->count());
 
-        $totalOrders = $orders->count();
-        $totalRevenue = $orders->sum('total_price');
-        $totalCustomers = $orders->groupBy('email')->count();
+        // Trước khi tính tổng doanh thu, lọc ra các đơn hàng đã hoàn thành
+        $completedOrders = $orders->where('status', 'hoàn thành');
+
+        // Thay thế các biến liên quan đến doanh thu
+        $totalOrders = $orders->count(); // Giữ nguyên tổng số đơn
+        $totalRevenue = $completedOrders->sum('total_price'); // Chỉ tính doanh thu từ đơn hoàn thành
+        $totalCustomers = $orders->groupBy('email')->count(); // Giữ nguyên tổng khách
         $totalReceipts = $receipts->count();
         $totalImport = $receipts->sum('total_price');
 
-        $topCustomers = $orders->groupBy('email')->map(function ($customerOrders, $email) {
+        $topCustomers = $completedOrders->groupBy('email')->map(function ($customerOrders, $email) {
             $first = $customerOrders->first();
             return [
                 'name' => $first->name ?? 'N/A',
@@ -78,7 +82,7 @@ class DashBoardController extends Controller
         })->sortByDesc('spent')->take(5)->values();
 
         $productStats = [];
-        foreach ($orders as $order) {
+        foreach ($completedOrders as $order) {
             foreach ($order->orderDetails as $detail) {
                 $pid = $detail->productSize->product_id;
                 if (!isset($productStats[$pid])) {
@@ -144,7 +148,8 @@ class DashBoardController extends Controller
 
             $dayRevenue = $orders->filter(function ($order) use ($d) {
                 $orderDate = $order->buy_at ?? $order->created_at;
-                return $orderDate && Carbon::parse($orderDate)->format('Y-m-d') === $d;
+                return $order->status === 'hoàn thành' && $orderDate &&
+                    Carbon::parse($orderDate)->format('Y-m-d') === $d;
             })->sum('total_price');
             $revenueByDate[] = (int)$dayRevenue;
 
@@ -161,6 +166,15 @@ class DashBoardController extends Controller
             $importByDate[] = (int)$dayImport;
         }
 
+        // Thêm thống kê doanh thu theo trạng thái đơn hàng
+        $revenueByStatus = $orders->groupBy('status')->map(function ($group, $status) {
+            return [
+                'status' => $status ?? 'unknown',
+                'count' => $group->count(),
+                'revenue' => $group->sum('total_price')
+            ];
+        })->values();
+
         return response()->json([
             'success' => true,
             'stats' => [
@@ -176,7 +190,8 @@ class DashBoardController extends Controller
                 'revenueByDate' => $revenueByDate,
                 'orderCountByDate' => $orderCountByDate,
                 'importByDate' => $importByDate,
-                'labels' => $labels
+                'labels' => $labels,
+                'revenueByStatus' => $revenueByStatus,
             ],
             'period' => [
                 'start_date' => $start,

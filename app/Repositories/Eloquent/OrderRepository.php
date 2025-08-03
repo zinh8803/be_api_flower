@@ -368,7 +368,13 @@ class OrderRepository implements OrderRepositoryInterface
                     throw new \Exception('Không thể chuyển trạng thái đơn hàng không đúng thứ tự.');
                 }
             }
+
+            if ($newStatus === 'hoàn thành' && empty($data['delivered_at'])) {
+                $data['delivered_at'] = now();
+            }
         }
+
+
 
         $order->update($data);
 
@@ -559,6 +565,14 @@ class OrderRepository implements OrderRepositoryInterface
             throw new \Exception('Chỉ báo cáo đơn đã giao thành công!');
         }
 
+        if (empty($order->delivered_at)) {
+            throw new \Exception('Đơn hàng chưa có thời gian giao hàng!');
+        }
+        $deliveredAt = Carbon::parse($order->delivered_at);
+        if (now()->diffInHours($deliveredAt) > 24) {
+            throw new \Exception('Đã quá 24 giờ kể từ khi giao hàng, bạn không thể báo cáo đơn này!');
+        }
+
         $userId = $data['user_id'] ?? auth()->id();
         $toInsert = [];
         foreach ($data['reports'] as $report) {
@@ -588,7 +602,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         return DB::transaction(function () use ($order, $toInsert) {
             ProductReport::insert($toInsert);
-            $order->status = 'đang xử lý báo cáo';
+            $order->status = 'Báo Cáo';
             $order->save();
 
             return true;
@@ -680,7 +694,7 @@ class OrderRepository implements OrderRepositoryInterface
                         ->count();
 
                     if ($pendingReports === 0) {
-                        $order->status = 'Xử Lý Báo Cáo';
+                        $order->status = 'Báo Cáo';
                         $order->save();
                     }
                 }
