@@ -35,7 +35,7 @@ class UpdateEmployeeRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'password' => 'nullable|string|min:6',
-            'phone' => 'nullable|unique:users,phone|max:15',
+            'phone' => 'nullable|unique:users,phone,' . $this->user()->id . '|string|max:15',
             'address' => 'nullable|string|max:255',
             'status' => 'nullable|boolean',
         ];
