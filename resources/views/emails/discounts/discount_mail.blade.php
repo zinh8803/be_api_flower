@@ -56,7 +56,6 @@
                 </tbody>
             </table>
             @elseif(isset($discount) && is_object($discount))
-            <!-- Hiển thị cho trường hợp chỉ có 1 discount -->
             <table style="margin:24px auto;max-width:420px;background:#e3f2fd;border-radius:8px;font-size:16px;width:100%;box-shadow:0 2px 8px rgba(25,118,210,0.08);">
                 <thead>
                     <tr>
