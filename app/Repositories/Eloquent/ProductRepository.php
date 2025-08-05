@@ -411,7 +411,7 @@ class ProductRepository implements ProductRepositoryInterface
             foreach ($productSize->recipes as $recipe) {
                 $need = $recipe->quantity * $quantity;
 
-                // Chỉ kiểm tra tồn kho ngày hôm nay
+                // kiểm tra tồn kho ngày hôm nay
                 $today = now()->format('Y-m-d');
                 $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
                     ->whereDate('import_date', $today)

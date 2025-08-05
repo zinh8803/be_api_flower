@@ -115,7 +115,6 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
                 }
             }
 
-            // Xóa các chi tiết không còn trong danh sách
             $receipt->details()->whereNotIn('flower_id', $processedFlowerIds)->delete();
 
             return $this->find($id);

@@ -85,8 +85,8 @@ class OrderRepository implements OrderRepositoryInterface
                 }
 
                 if ($deliveryDate->isToday()) {
-                    if ($data['delivery_time_slot'] === 'Buổi sáng' && $now->hour >= 12) {
-                        throw new \Exception('Đã quá 12h, không thể chọn khung giờ buổi sáng cho hôm nay. Vui lòng chọn buổi chiều hoặc ngày khác.');
+                    if ($data['delivery_time_slot'] === 'Buổi sáng' && $now->hour >= 10) {
+                        throw new \Exception('Đã quá 10h, không thể chọn khung giờ buổi sáng cho hôm nay. Vui lòng chọn buổi chiều hoặc ngày khác.');
                     }
 
                     if ($data['delivery_time_slot'] === 'Buổi chiều' && $now->hour >= 18) {
