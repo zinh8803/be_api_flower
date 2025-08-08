@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Models\ImportReceiptDetail;
 use App\Models\Product;
 use App\Models\ProductSize;
-use App\Repositories\Contracts\ProductRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,111 +53,10 @@ class ProductController extends Controller
         $query = $request->input('q', '');
         $date = $request->input('date');
         $page = (int) $request->input('page', 1);
-        $perPage = 10;
 
-        if ($date) {
-            $start = Carbon::parse($date)->startOfDay();
-            $end = Carbon::parse($date)->endOfDay();
-        } else {
-            $end = now()->startOfDay()->setTime(23, 59, 59);
-            $start = $end->copy()->subDay()->setTime(0, 0, 0);
-        }
+        $result = $this->products->searchStockWarning($query, $date, $page, 10);
 
-        $productsQuery = Product::with(['productSizes.recipes.flower']);
-        if ($query) {
-            $productsQuery->where('name', 'like', '%' . $query . '%');
-        }
-        $products = $productsQuery->get();
-
-        $result = [
-            'available' => [],
-            'low' => [],
-            'out' => []
-        ];
-
-        foreach ($products as $product) {
-            $groupedSizes = [
-                'available' => [],
-                'low' => [],
-                'out' => []
-            ];
-
-            foreach ($product->productSizes as $size) {
-                $minStock = PHP_INT_MAX;
-                $limitingFlower = null;
-                foreach ($size->recipes as $recipe) {
-                    $flowerId = $recipe->flower_id;
-                    $needed = $recipe->quantity;
-                    $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereBetween('import_date', [$start, $end])
-                        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-                        ->value('remaining') ?? 0;
-                    $possible = $needed > 0 ? floor($stock / $needed) : 0;
-                    if ($possible < $minStock) {
-                        $minStock = $possible;
-                        $limitingFlower = [
-                            'id' => $flowerId,
-                            'name' => $recipe->flower->name,
-                            'available' => $stock,
-                            'needed' => $needed
-                        ];
-                    }
-                }
-                $sizeItem = [
-                    'size_id' => $size->id,
-                    'size' => $size->size,
-                    'max_quantity' => $minStock,
-                    'limiting_flower' => $limitingFlower
-                ];
-
-                if ($minStock === 0.0) {
-                    $groupedSizes['out'][] = $sizeItem;
-                } elseif ($minStock <= 10) {
-                    $groupedSizes['low'][] = $sizeItem;
-                } else {
-                    $groupedSizes['available'][] = $sizeItem;
-                }
-            }
-
-            foreach (['available', 'low', 'out'] as $group) {
-                if (!empty($groupedSizes[$group])) {
-                    $result[$group][] = [
-                        'product_id' => $product->id,
-                        'product_image' => $product->image_url,
-                        'product_name' => $product->name,
-                        'product_sizes' => $groupedSizes[$group]
-                    ];
-                }
-            }
-        }
-
-        foreach ($result as &$group) {
-            usort($group, function ($a, $b) {
-                if ($a['product_id'] === $b['product_id']) {
-                    return $a['size_id'] <=> $b['size_id'];
-                }
-                return $a['product_id'] <=> $b['product_id'];
-            });
-        }
-
-        $paginateGroup = function ($group) use ($page, $perPage) {
-            $total = count($group);
-            $lastPage = ceil($total / $perPage);
-            $paged = array_slice($group, ($page - 1) * $perPage, $perPage);
-            return [
-                'data' => $paged,
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total' => $total,
-                'last_page' => $lastPage
-            ];
-        };
-
-        return response()->json([
-            'available' => $paginateGroup($result['available']),
-            'low' => $paginateGroup($result['low']),
-            'out' => $paginateGroup($result['out']),
-        ]);
+        return response()->json($result);
     }
 
     /**
@@ -174,62 +73,11 @@ class ProductController extends Controller
      */
     public function stockWarning(Request $request)
     {
-        $today = now()->format('Y-m-d');
-        $products = Product::with(['productSizes.recipes.flower'])->paginate(10);
-        $result = [];
+        $page = (int) $request->input('page', 1);
 
-        foreach ($products as $product) {
-            foreach ($product->productSizes as $size) {
-                $minStock = PHP_INT_MAX;
-                $limitingFlower = null;
-                foreach ($size->recipes as $recipe) {
-                    $flowerId = $recipe->flower_id;
-                    $needed = $recipe->quantity;
-                    $stock = ImportReceiptDetail::where('flower_id', $flowerId)
-                        ->whereDate('import_date', $today)
-                        ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
-                        ->value('remaining') ?? 0;
-                    $possible = $needed > 0 ? floor($stock / $needed) : 0;
-                    if ($possible < $minStock) {
-                        $minStock = $possible;
-                        $limitingFlower = [
-                            'id' => $flowerId,
-                            'name' => $recipe->flower->name,
-                            'available' => $stock,
-                            'needed' => $needed
-                        ];
-                    }
-                }
-                $result[] = [
-                    'product_id' => $product->id,
-                    'product_image' => $product->image_url,
-                    'product_name' => $product->name,
-                    'size_id' => $size->id,
-                    'size' => $size->size,
-                    'max_quantity' => $minStock,
-                    'limiting_flower' => $limitingFlower,
-                    'warning' => $minStock <= 3
-                ];
-            }
-        }
+        $result = $this->products->stockWarning($page, 10);
 
-        // Sắp xếp theo max_quantity tăng dần (gần hết lên trên)
-        usort($result, function ($a, $b) {
-            return $a['max_quantity'] <=> $b['max_quantity'];
-        });
-
-        $currentPage = $products->currentPage();
-        $perPage = $products->perPage();
-        $total = $products->total();
-        $lastPage = $products->lastPage();
-
-        return response()->json([
-            'data' => $result,
-            'current_page' => $currentPage,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => $lastPage,
-        ]);
+        return response()->json($result);
     }
 
     /**
