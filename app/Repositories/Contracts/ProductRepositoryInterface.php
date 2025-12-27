@@ -16,6 +16,8 @@ interface ProductRepositoryInterface
     public function hide($id);
     public function getAllStock();
     public function getStockById($id);
+    public function searchStockWarning($query = '', $date = null, $page = 1, $perPage = 10);
+    public function stockWarning($page = 1, $perPage = 10);
     public function search($params);
     public function getProductsByCategoryId($categoryId);
     public function getProductsByCategory($categoryId);
