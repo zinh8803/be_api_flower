@@ -10,8 +10,10 @@ use App\Repositories\Contracts\ProductRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -24,19 +26,73 @@ class ProductRepository implements ProductRepositoryInterface
         $this->model = $product;
     }
 
-    public function all($filters = [])
+    public function all($filters = [], $perPage = 10)
     {
-        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType'])->orderBy('created_at', 'desc');
+        $key = 'products_' . md5(json_encode($filters));
+        $page = request('page', 1);
+        $cacheKey = $key . '_page_' . $page . '_per_' . $perPage;
+
+        // 1) Thử lấy từ Redis (an toàn)
+        $jsonFromRedis = null;
+        try {
+            $redis = \Illuminate\Support\Facades\Redis::connection();
+            $jsonFromRedis = $redis->get($cacheKey);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Redis get failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
+        }
+
+        if ($jsonFromRedis) {
+            \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Redis', ['key' => $cacheKey]);
+            return response()->json(json_decode($jsonFromRedis, true));
+        }
+
+        // 2) Fallback: thử lấy từ Cache database (nếu có)
+        $jsonFromCache = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if ($jsonFromCache) {
+            \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Cache database', ['key' => $cacheKey]);
+            return response()->json($jsonFromCache);
+        }
+
+        // 3) Query DB như cũ
+        \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Database', ['key' => $cacheKey]);
+        $data = $this->model
+            ->with(['category', 'productSizes.recipes.flower.flowerType'])
+            ->orderBy('created_at', 'desc');
 
         if (!empty($filters['name'])) {
-            $query->where('name', 'like', '%' . $filters['name'] . '%');
+            $data->where('name', 'like', '%' . $filters['name'] . '%');
         }
         if (!empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
+            $data->where('category_id', $filters['category_id']);
         }
 
-        return $query->paginate(10);
+        $collection = $data->get();
+
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $collection->forPage($page, $perPage),
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        $json = $paginator->toArray();
+
+        // 4) Ghi cache: ưu tiên Redis, lỗi thì fallback sang Cache database
+        try {
+            $redis = $redis ?? \Illuminate\Support\Facades\Redis::connection();
+            $redis->setex($cacheKey, 600, json_encode($json)); // 10 phút
+            \Illuminate\Support\Facades\Log::info('ProductRepository: Đã lưu dữ liệu vào Redis', ['key' => $cacheKey]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Redis setex failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $json, now()->addMinutes(10));
+            \Illuminate\Support\Facades\Log::info('ProductRepository: Đã lưu dữ liệu vào Cache database', ['key' => $cacheKey]);
+        }
+
+        return response()->json($json);
     }
+
+
 
     public function allTrash()
     {
@@ -67,37 +123,42 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function filterTypeColor($filters = [])
     {
-        $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType', 'productSizes.recipes.flower.color']);
+        $key = 'products_' . md5(json_encode($filters));
 
-        if (!empty($filters['color_id'])) {
-            $colors = is_array($filters['color_id']) ? $filters['color_id'] : [$filters['color_id']];
-            $query->whereHas('productSizes.recipes.flower.color', function ($q) use ($colors) {
-                $q->whereIn('id', $colors);
-            });
-        }
+        // Cache 10 phút (600 giây)
+        return Cache::remember($key, 600, function () use ($filters) {
+            $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType', 'productSizes.recipes.flower.color']);
 
-        if (!empty($filters['flower_type_id'])) {
-            $flowerTypeIds = is_array($filters['flower_type_id']) ? $filters['flower_type_id'] : [$filters['flower_type_id']];
-            $query->whereHas('productSizes.recipes.flower.flowerType', function ($q) use ($flowerTypeIds) {
-                $q->whereIn('id', $flowerTypeIds);
-            });
-        }
+            if (!empty($filters['color_id'])) {
+                $colors = is_array($filters['color_id']) ? $filters['color_id'] : [$filters['color_id']];
+                $query->whereHas('productSizes.recipes.flower.color', function ($q) use ($colors) {
+                    $q->whereIn('id', $colors);
+                });
+            }
 
-        if (!empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
-        }
+            if (!empty($filters['flower_type_id'])) {
+                $flowerTypeIds = is_array($filters['flower_type_id']) ? $filters['flower_type_id'] : [$filters['flower_type_id']];
+                $query->whereHas('productSizes.recipes.flower.flowerType', function ($q) use ($flowerTypeIds) {
+                    $q->whereIn('id', $flowerTypeIds);
+                });
+            }
 
-        if (!empty($filters['price'])) {
-            $minPrice = $filters['price'][0];
-            $maxPrice = $filters['price'][1];
-            $query->whereHas('productSizes', function ($q) use ($minPrice, $maxPrice) {
-                $q->where('size', 'Nhỏ')
-                    ->whereBetween('price', [$minPrice, $maxPrice]);
-            });
-        }
-        Log::info('Product filter applied', ['filters' => $filters]);
+            if (!empty($filters['category_id'])) {
+                $query->where('category_id', $filters['category_id']);
+            }
 
-        return $query->paginate(10);
+            if (!empty($filters['price'])) {
+                $minPrice = $filters['price'][0];
+                $maxPrice = $filters['price'][1];
+                $query->whereHas('productSizes', function ($q) use ($minPrice, $maxPrice) {
+                    $q->where('size', 'Nhỏ')
+                        ->whereBetween('price', [$minPrice, $maxPrice]);
+                });
+            }
+            Log::info('Product filter applied', ['filters' => $filters]);
+
+            return $query->paginate(10);
+        });
     }
 
     public function find($slug)

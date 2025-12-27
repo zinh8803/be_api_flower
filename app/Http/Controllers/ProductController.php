@@ -239,15 +239,14 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        // Lấy các tham số tìm kiếm từ query string
         $filters = [
             'name' => $request->input('name'),
             'category_id' => $request->input('category_id'),
             // Thêm các filter khác nếu cần
         ];
 
-        $products = $this->products->all($filters);
-        return ProductResource::collection($products);
+        // Trả về response từ repository đã phân trang
+        return $this->products->all($filters);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Http\Resources\colorResource;
 use App\Repositories\Contracts\ColorRepositoryInterface;
 use Cloudinary\Transformation\Argument\Color;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -38,8 +39,31 @@ class ColorController extends Controller
      */
     public function index()
     {
+        // $start = microtime(true);
+        // $colors = $this->colorRepository->getAll();
+        // $afterRepo = microtime(true);
+        // $response = colorResource::collection($colors);
+        // $afterResource = microtime(true);
+
+        // $repoMs = round(($afterRepo - $start) * 1000, 2);
+        // $resourceMs = round(($afterResource - $afterRepo) * 1000, 2);
+        // $totalMs = round(($afterResource - $start) * 1000, 2);
+
+        // Log::info('ColorController@index: repo=' . $repoMs . 'ms, resource=' . $resourceMs . 'ms, total=' . $totalMs . 'ms');
+
+        // // Thêm header để xem trực tiếp trên Postman/Network tab
+        // return $response
+        //     ->additional([]) // giữ nguyên payload
+        //     ->response()
+        //     ->withHeaders([
+        //         'Server-Timing' => "repo;dur={$repoMs}, resource;dur={$resourceMs}, controller;dur={$totalMs}",
+        //         'X-Server-Processing-Time' => "{$totalMs}ms",
+        //     ]);
         $colors = $this->colorRepository->getAll();
-        return colorResource::collection($colors);
+        return response()->json([
+            'status' => true,
+            'data' => $colors,
+        ]);
     }
     /**
      * @OA\Get(
