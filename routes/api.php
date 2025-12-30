@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\AutoImportReceiptController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\DiscountController;
@@ -22,9 +23,13 @@ use App\Http\Middleware\CheckRole;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use L5Swagger\Http\Controllers\SwaggerController;
 
 Route::get('/api/documentation', [SwaggerController::class, 'api'])->name('swagger.docs');
+
+// Endpoint cho Echo authorize private channel (chat.{id})
+Broadcast::routes(['middleware' => ['checkjwt']]);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -32,6 +37,7 @@ Route::get('/user', function (Request $request) {
 
 
 //flowers
+
 
 
 Route::middleware(['check.role:admin'])->group(function () {
@@ -127,6 +133,10 @@ Route::middleware(['check.role:admin,employee,user'])->group(function () {
 
     //discounts
     Route::put('/users/update-subscribed', [UserController::class, 'updateUserSubscribed']);
+
+    Route::post('/chat/messages', [ChatController::class, 'store']);
+    Route::get('/chat/messages/history-sender-to-admin', [ChatController::class, 'historySenderToAdmin']);
+    Route::get('/chat/messages/{partnerId}', [ChatController::class, 'index']);
 });
 
 Route::middleware(['check.role:admin,employee'])->group(function () {
