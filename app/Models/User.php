@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use App\Models\ChatMessage;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -83,5 +84,13 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+    public function chatMessagesSent()
+    {
+        return $this->hasMany(ChatMessage::class, 'sender_id');
+    }
+    public function chatMessagesReceived()
+    {
+        return $this->hasMany(ChatMessage::class, 'receiver_id');
     }
 }
