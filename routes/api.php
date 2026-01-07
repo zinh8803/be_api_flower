@@ -184,6 +184,7 @@ Route::post('/refresh-token', [UserController::class, 'refreshToken']);
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
+Route::post('login-google', [UserController::class, 'loginWithGoogle']);
 
 Route::post('/send-otp', [UserController::class, 'sendOtp']);
 Route::post('/send-otp-reset-password', [UserController::class, 'sendOtpResetPassword']);

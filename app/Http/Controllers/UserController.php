@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
+use Laravel\Socialite\Facades\Socialite;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
@@ -198,6 +199,65 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/login-google",
+     *     summary="Đăng nhập người dùng bằng Google",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token", type="string", example="google-oauth-token-here")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đăng nhập thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Đăng nhập thành công")
+     *         )
+     *     )
+     * )
+     */
+    public function loginWithGoogle(Request $request)
+    {
+        $googleUser = Socialite::driver('google')->stateless()->userFromToken($request->token);
+
+        $user = User::firstOrCreate(
+            ['email' => $googleUser->getEmail()],
+            [
+                'name' => $googleUser->getName(),
+                'password' => bcrypt(Str::random(16)), // Tạo mật khẩu ngẫu nhiên
+                'google_id' => $googleUser->getId(),
+                'image_url' => $googleUser->getAvatar(),
+                'provider' => 'google',
+            ]
+        );
+
+        $token = JWTAuth::fromUser($user);
+
+        $refreshToken = Str::random(60);
+
+        RefreshToken::create([
+            'token' => $refreshToken,
+            'user_id' => $user->id,
+            'expires_at' => now()->addDays(30),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->header('User-Agent'),
+        ]);
+
+        $accessCookie = make_cookie('access_token', $token, 60);
+        $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Đăng nhập thành công',
+        ])->withCookie($accessCookie)->withCookie($refreshCookie);
+    }
+
+
+
+    /**
+     * @OA\Post(
      *     path="/api/refresh-token",
      *     summary="Làm mới access token",
      *     tags={"Auth"},
@@ -282,7 +342,8 @@ class UserController extends Controller
 
     public function profile()
     {
-        return new UserResource(auth()->user());
+        $user = Auth::user();
+        return new UserResource($user);
     }
     /**
      * @OA\Post(
@@ -302,7 +363,7 @@ class UserController extends Controller
 
     public function logout()
     {
-        auth()->logout();
+        Auth::logout();
         $accessCookie = make_cookie('access_token', '', -1);
         $refreshCookie = make_cookie('refresh_token', '', -1);
         return response()->json(['message' => 'Đăng xuất thành công'])
@@ -345,8 +406,8 @@ class UserController extends Controller
      */
     public function updateProfile(UpdateUserRequest $request)
     {
-        $user = $this->users->updateUser(auth()->user()->id, $request->validated());
-        Log::info('User profile updated', ['request' => $request->all(), 'user_id' => auth()->user()->id]);
+        $user = $this->users->updateUser(Auth::user()->id, $request->validated());
+        Log::info('User profile updated', ['request' => $request->all(), 'user_id' => Auth::user()->id]);
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật thông tin thành công',
@@ -584,13 +645,13 @@ class UserController extends Controller
      */
     public function updateUserSubscribed(Request $request)
     {
-        $this->users->updateUserSubscribed(auth()->id());
+        $this->users->updateUserSubscribed(Auth::id());
 
 
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật trạng thái đăng ký thành công',
-            'data' => new UserResource(auth()->user())
+            'data' => new UserResource(Auth::user())
         ]);
     }
 

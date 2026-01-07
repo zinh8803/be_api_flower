@@ -13,6 +13,7 @@
         "darkaonline/l5-swagger": "^9.0",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
+        "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.9",
         "phpoffice/phpspreadsheet": "^4.5",
         "predis/predis": "^3.2",
