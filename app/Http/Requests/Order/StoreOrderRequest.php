@@ -28,7 +28,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *             @OA\Property(property="product_size_id", type="integer", example=2),
  *             @OA\Property(property="quantity", type="integer", example=2)
  *         )
- *     ) 
+ *     )
  * )
  */
 class StoreOrderRequest extends FormRequest
@@ -55,7 +55,7 @@ class StoreOrderRequest extends FormRequest
             'address' => 'required|string|max:500',
             'note' => 'nullable|string|max:1000',
             'discount_id' => 'nullable|integer',
-            'payment_method' => 'required|string|in:cod,vnpay',
+            'payment_method' => 'required|string|in:cod,vnpay,zalopay',
             'user_id' => 'nullable|integer|exists:users,id',
             'products' => 'required|array',
             'products.*.product_id' => 'required|integer|exists:products,id',
