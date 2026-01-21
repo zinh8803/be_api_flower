@@ -217,10 +217,10 @@ class OrderRepository implements OrderRepositoryInterface
             $order->load(['user', 'discount']);
             event(new OrderCreated($order));
 
-            $order->load('discount', 'orderDetails.productSize.product');
-            if (!empty($order->email)) {
-                SendOrderMail::dispatch($order, $order->email);
-            }
+            // $order->load('discount', 'orderDetails.productSize.product');
+            // if (!empty($order->email)) {
+            //     SendOrderMail::dispatch($order, $order->email);
+            // }
 
 
             return $order;

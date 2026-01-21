@@ -18,6 +18,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VnPayController;
+use App\Http\Controllers\ZaloPayController;
 use App\Http\Middleware\CheckJWT;
 use App\Http\Middleware\CheckRole;
 use App\Models\Order;
@@ -192,6 +193,8 @@ Route::put('/reset-password', [UserController::class, 'resetPassword']);
 Route::post('/payment', [VnPayController::class, 'createPayment']);
 Route::get('/vnpay_return', [VnPayController::class, 'vnpayReturn']);
 
+Route::post('/zalopay', [ZaloPayController::class, 'createPayment']);
+Route::get('/zalo_return', [ZaloPayController::class, 'zaloReturn']);
 
 //flower-types
 Route::prefix('flower-types')->group(function () {

@@ -3152,6 +3152,62 @@
                     }
                 }
             }
+        },
+        "/api/zalopay": {
+            "post": {
+                "tags": [
+                    "ZaloPay"
+                ],
+                "summary": "Tạo URL thanh toán ZaloPay",
+                "description": "Tạo URL thanh toán dựa trên mã đơn hàng và số tiền.",
+                "operationId": "6e8f07f48677bec503408729e936d556",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order_code",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "example": 150000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "URL thanh toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "returncode": {
+                                            "type": "integer",
+                                            "example": 1000
+                                        },
+                                        "returnmessage": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "orderurl": {
+                                            "type": "string",
+                                            "example": "https://zalopay.vn/..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -4404,6 +4460,10 @@
         {
             "name": "VnPay",
             "description": "VnPay"
+        },
+        {
+            "name": "ZaloPay",
+            "description": "ZaloPay"
         }
     ]
 }
