@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\FlowerType\StoreFlowerTypeRequest;
 use App\Http\Requests\FlowerType\UpdateFlowerTypeRequest;
 use App\Http\Resources\FlowerTypeResource;
-use App\Models\FlowerType;
-use App\Repositories\Eloquent\FlowerTypeRepository;
+use App\Services\FlowerTypeService;
 use Illuminate\Http\Request;
 
 /**
@@ -18,11 +17,11 @@ use Illuminate\Http\Request;
  */
 class FlowerTypeController extends Controller
 {
-    protected $flowerTypeRepository;
+    protected FlowerTypeService $flowerTypeService;
 
-    public function __construct(FlowerTypeRepository $flowerTypeRepository)
+    public function __construct(FlowerTypeService $flowerTypeService)
     {
-        $this->flowerTypeRepository = $flowerTypeRepository;
+        $this->flowerTypeService = $flowerTypeService;
     }
 
     /**
@@ -39,7 +38,7 @@ class FlowerTypeController extends Controller
      */
     public function index()
     {
-        $flowerTypes = $this->flowerTypeRepository->all();
+        $flowerTypes = $this->flowerTypeService->getFlowerTypes();
         return FlowerTypeResource::collection($flowerTypes);
     }
 
@@ -61,7 +60,7 @@ class FlowerTypeController extends Controller
      */
     public function store(StoreFlowerTypeRequest $request)
     {
-        $flowerType = $this->flowerTypeRepository->create($request->validated());
+        $flowerType = $this->flowerTypeService->createFlowerType($request->validated());
         return new FlowerTypeResource($flowerType);
     }
 
@@ -86,7 +85,7 @@ class FlowerTypeController extends Controller
      */
     public function show($id)
     {
-        $flowerType = $this->flowerTypeRepository->find($id);
+        $flowerType = $this->flowerTypeService->getFlowerTypeById($id);
         if (!$flowerType) {
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
@@ -118,12 +117,12 @@ class FlowerTypeController extends Controller
      */
     public function update(UpdateFlowerTypeRequest $request, $id)
     {
-        $flowerType = $this->flowerTypeRepository->find($id);
+        $flowerType = $this->flowerTypeService->getFlowerTypeById($id);
         if (!$flowerType) {
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
-        $flowerType = $this->flowerTypeRepository->update($id, $request->validated());
-        return new FlowerTypeResource($flowerType);
+        $updatedFlowerType = $this->flowerTypeService->updateFlowerType($id, $request->validated());
+        return new FlowerTypeResource($updatedFlowerType);
     }
 
     /**
@@ -146,11 +145,11 @@ class FlowerTypeController extends Controller
      */
     public function destroy($id)
     {
-        $flowerType = $this->flowerTypeRepository->find($id);
+        $flowerType = $this->flowerTypeService->getFlowerTypeById($id);
         if (!$flowerType) {
             return response()->json(['message' => 'Không tìm thấy loại hoa'], 404);
         }
-        $this->flowerTypeRepository->delete($id);
+        $this->flowerTypeService->deleteFlowerType($id);
         return response()->json(['message' => 'Xóa loại hoa thành công'], 200);
     }
 }

@@ -2,15 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
-interface ColorRepositoryInterface
+interface ColorRepositoryInterface extends BaseRepositoryInterface
 {
     public function getAll();
-
-    public function findById($id);
-
-    public function create(array $data);
-
-    public function update($id, array $data);
-
-    public function delete($id);
 }

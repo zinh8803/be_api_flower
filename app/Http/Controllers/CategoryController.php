@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Category\StoreCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
-use App\Models\Category;
-use App\Repositories\Eloquent\CategoryRepository;
+use App\Services\CategoryService;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -18,14 +17,13 @@ use Illuminate\Support\Facades\Log;
  */
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $categoryRepository;
-    public function __construct(CategoryRepository $categoryRepository)
+    protected CategoryService $categoryService;
+
+    public function __construct(CategoryService $categoryService)
     {
-        $this->categoryRepository = $categoryRepository;
+        $this->categoryService = $categoryService;
     }
+
     /**
      * @OA\Get(
      *     path="/api/categories",
@@ -40,13 +38,10 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = $this->categoryRepository->all();
+        $categories = $this->categoryService->getCategories();
         return CategoryResource::collection($categories);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/categories",
@@ -65,10 +60,7 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
-        // $category = $this->categoryRepository->create($request->validated());
-        // return (new CategoryResource($category));
-
-        $category = $this->categoryRepository->create($request->validated());
+        $category = $this->categoryService->createCategory($request->validated());
         return new CategoryResource($category);
     }
 
@@ -88,16 +80,16 @@ class CategoryController extends Controller
      */
     public function show($slug)
     {
-        $category = $this->categoryRepository->find($slug);
+        $category = is_numeric($slug) 
+            ? $this->categoryService->getCategoryById($slug)
+            : $this->categoryService->getCategoryBySlug($slug);
+
         if (!$category) {
             return response()->json(['message' => 'Không có danh mục'], 404);
         }
         return new CategoryResource($category);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/categories/{id}",
@@ -118,17 +110,14 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, $id)
     {
-        $category = $this->categoryRepository->findById($id);
+        $category = $this->categoryService->getCategoryById($id);
         if (!$category) {
             return response()->json(['message' => 'Không có danh mục'], 404);
         }
-        $category = $this->categoryRepository->update($category->id, $request->validated());
-        return new CategoryResource($category);
+        $updatedCategory = $this->categoryService->updateCategory($category->id, $request->validated());
+        return new CategoryResource($updatedCategory);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     /**
      * @OA\Delete(
      *     path="/api/categories/{id}",
@@ -141,11 +130,14 @@ class CategoryController extends Controller
      */
     public function destroy($slug)
     {
-        $category = $this->categoryRepository->findById($slug);
+        $category = is_numeric($slug)
+            ? $this->categoryService->getCategoryById($slug)
+            : $this->categoryService->getCategoryBySlug($slug);
+
         if (!$category) {
             return response()->json(['message' => 'Không có danh mục'], 404);
         }
-        $this->categoryRepository->delete($category->id);
+        $this->categoryService->deleteCategory($category->id);
         return response()->json(['message' => 'Xóa danh mục thành công']);
     }
 }

@@ -4,40 +4,17 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Flower;
 use App\Repositories\Contracts\FlowerRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 
-class FlowerRepository implements FlowerRepositoryInterface
+class FlowerRepository extends BaseRepository implements FlowerRepositoryInterface
 {
-    protected $model;
-
-    public function __construct(Flower $flowerType)
+    public function __construct(Flower $flower)
     {
-        $this->model = $flowerType;
+        parent::__construct($flower);
     }
 
-    public function all()
+    public function all(array $columns = ['*']): Collection
     {
-        return $this->model->with(['flowerType', 'color'])->get();
-    }
-
-    public function find($id)
-    {
-        return $this->model->find($id);
-    }
-
-    public function create(array $data)
-    {
-        return $this->model->create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $record = $this->find($id);
-        $record->update($data);
-        return $record;
-    }
-
-    public function delete($id)
-    {
-        return $this->model->destroy($id);
+        return $this->model->with(['flowerType', 'color'])->get($columns);
     }
 }

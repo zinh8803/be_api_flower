@@ -6,7 +6,7 @@ use App\Http\Requests\Discount\StoreDiscountRequest;
 use App\Http\Requests\Discount\UpdateDiscountRequest;
 use App\Http\Resources\DiscountResource;
 use App\Models\Discount;
-use App\Repositories\Eloquent\DiscountRepository;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
 
 /**
@@ -18,14 +18,13 @@ use Illuminate\Http\Request;
  */
 class DiscountController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $discountRepository;
-    public function __construct(DiscountRepository $discountRepository)
+    protected DiscountService $discountService;
+
+    public function __construct(DiscountService $discountService)
     {
-        $this->discountRepository = $discountRepository;
+        $this->discountService = $discountService;
     }
+
     /**
      * @OA\Get(
      *     path="/api/discounts",
@@ -41,9 +40,8 @@ class DiscountController extends Controller
     public function index()
     {
         $filter = request()->only(['name', 'type', 'status', 'start_date', 'end_date']);
-        return DiscountResource::collection($this->discountRepository->getAll($filter));
+        return DiscountResource::collection($this->discountService->getDiscounts($filter));
     }
-
 
     /**
      * @OA\Post(
@@ -72,7 +70,7 @@ class DiscountController extends Controller
     {
         $code = $request->input('name');
         $userId = $request->input('user_id');
-        $result = $this->discountRepository->checkCodeValidity($code, $userId);
+        $result = $this->discountService->checkCodeValidity($code, $userId);
 
         if (!$result['status']) {
             switch ($result['reason']) {
@@ -92,11 +90,6 @@ class DiscountController extends Controller
         return new DiscountResource($result['discount']);
     }
 
-
-
-    /**
-     * Store a newly created resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/discounts",
@@ -115,13 +108,10 @@ class DiscountController extends Controller
      */
     public function store(StoreDiscountRequest $request)
     {
-        $discount = $this->discountRepository->create($request->validated());
+        $discount = $this->discountService->createDiscount($request->validated());
         return new DiscountResource($discount);
     }
 
-    /**
-     * Display the specified resource.
-     */
     /**
      * @OA\Get(
      *     path="/api/discounts/{id}",
@@ -143,7 +133,7 @@ class DiscountController extends Controller
      */
     public function show($id)
     {
-        $discount = $this->discountRepository->findById($id);
+        $discount = $this->discountService->getDiscountById($id);
         if (!$discount) {
             return response()->json([
                 'message' => 'không tìm thấy mã giảm giá'
@@ -152,9 +142,6 @@ class DiscountController extends Controller
         return new DiscountResource($discount);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     /**
      * @OA\Put(
      *     path="/api/discounts/{id}",
@@ -180,18 +167,15 @@ class DiscountController extends Controller
      */
     public function update(UpdateDiscountRequest $request, $id)
     {
-        $discount = $this->discountRepository->findById($id);
+        $discount = $this->discountService->getDiscountById($id);
         if (!$discount) {
             return response()->json(['message' => 'Không tìm thấy mã giảm giá'], 404);
         }
 
-        $discount->update($request->validated());
-        return new DiscountResource($discount);
+        $updated = $this->discountService->updateDiscount($id, $request->validated());
+        return new DiscountResource($updated);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     /**
      * @OA\Delete(
      *     path="/api/discounts/{id}",
@@ -212,16 +196,15 @@ class DiscountController extends Controller
      */
     public function destroy($id)
     {
-        $discount = $this->discountRepository->findById($id);
+        $discount = $this->discountService->getDiscountById($id);
         if (!$discount) {
             return response()->json(['message' => 'Không tìm thấy mã giảm giá'], 404);
         }
-        $this->discountRepository->delete($id);
+        $this->discountService->deleteDiscount($id);
         return response()->json([
             'message' => 'Xóa mã giảm giá thành công'
         ], 200);
     }
-
 
     /**
      * @OA\Post(
@@ -245,7 +228,7 @@ class DiscountController extends Controller
     {
         $discountIds = $request->input('discount_ids', []);
         $discounts = Discount::whereIn('id', $discountIds)->get();
-        $this->discountRepository->sentDiscountEmail($discounts);
+        $this->discountService->sendDiscountEmail($discounts);
 
         return response()->json(['message' => 'Đã gửi mã giảm giá cho các user đăng ký nhận mail!']);
     }
@@ -264,7 +247,7 @@ class DiscountController extends Controller
      */
     public function getDiscountStats()
     {
-        $stats = $this->discountRepository->getDiscountStats();
+        $stats = $this->discountService->getDiscountStats();
         return response()->json(['data' => $stats]);
     }
 }

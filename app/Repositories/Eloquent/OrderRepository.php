@@ -5,36 +5,29 @@ namespace App\Repositories\Eloquent;
 use App\Events\OrderCreated;
 use App\Helpers\ImageHelper;
 use App\Jobs\sendDiscountReport;
-use App\Jobs\SendOrderMail;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
 use App\Models\ImportReceiptDetail;
 use App\Models\Order;
-use App\Models\Product;
-use App\Repositories\Contracts\OrderRepositoryInterface;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\OrderSuccessMail;
 use App\Models\OrderDetail;
 use App\Models\OrderReturn;
 use App\Models\ProductReport;
 use App\Models\ProductSize;
 use App\Models\User;
 use App\Notifications\OrderPlacedNotification;
+use App\Repositories\Contracts\OrderRepositoryInterface;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-class OrderRepository implements OrderRepositoryInterface
+class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
-    protected $model;
-
     public function __construct(Order $order)
     {
-        $this->model = $order;
+        parent::__construct($order);
     }
+
     protected function validateDeliveryTime(array $data)
     {
         $now = Carbon::now();
@@ -114,10 +107,6 @@ class OrderRepository implements OrderRepositoryInterface
                 $productSize = ProductSize::with(['recipes.flower', 'product'])->findOrFail($item['product_size_id']);
                 $qty = $item['quantity'];
 
-                // if ($this->isForcedFlower($productSize)) {
-                //     throw new \Exception("Sản phẩm {$productSize->product->name} hiện đang ở trạng thái hoa ép, không thể đặt mua.");
-                // }
-
                 foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $qty;
                     $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)->sum(DB::raw('quantity - used_quantity'));
@@ -125,11 +114,6 @@ class OrderRepository implements OrderRepositoryInterface
                     if ($stock < $need) {
                         throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
                     }
-                    // $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : $data['delivery_date'];
-                    // if (Carbon::parse($deliveryDate)->gt(now())) {
-                    //     continue;
-                    // }
-                    // $this->deductStock($recipe->flower_id, $need);
                     $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : ($data['delivery_date'] ?? null);
                     if ($deliveryDate && Carbon::parse($deliveryDate)->isToday()) {
                         $this->deductStock($recipe->flower_id, $need);
@@ -175,6 +159,7 @@ class OrderRepository implements OrderRepositoryInterface
             do {
                 $orderCode = 'SP' . date('YmdHis') . rand(100, 999);
             } while (Order::where('order_code', $orderCode)->exists());
+
             $order = Order::create([
                 'order_code' => $orderCode,
                 'name' => $data['name'],
@@ -183,8 +168,6 @@ class OrderRepository implements OrderRepositoryInterface
                 'address' => $data['address'],
                 'note' => $data['note'] ?? null,
                 'payment_method' => $data['payment_method'],
-                // 'user_id' => $data['user_id'] ?? auth()->id() ?? null,
-
                 'delivery_date' => $data['delivery_date'] ?? null,
                 'delivery_time_slot' => !empty($data['is_express']) ? null : ($data['delivery_time_slot'] ?? null),
                 'is_express' => $data['is_express'] ?? false,
@@ -200,6 +183,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'discount_amount' => $discountAmount,
                 'total_price' => $orderTotal,
             ]);
+
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
             }
@@ -216,12 +200,6 @@ class OrderRepository implements OrderRepositoryInterface
 
             $order->load(['user', 'discount']);
             event(new OrderCreated($order));
-
-            // $order->load('discount', 'orderDetails.productSize.product');
-            // if (!empty($order->email)) {
-            //     SendOrderMail::dispatch($order, $order->email);
-            // }
-
 
             return $order;
         });
@@ -245,31 +223,6 @@ class OrderRepository implements OrderRepositoryInterface
             $order->status_stock = 'đã trừ kho';
             $order->save();
         }
-    }
-
-    protected function isForcedFlower(ProductSize $productSize)
-    {
-        foreach ($productSize->recipes as $recipe) {
-            $importReceiptDetail = $recipe->flower
-                ? $recipe->flower->importReceiptDetails()->orderByDesc('import_date')->first()
-                : null;
-            $status = null;
-            if ($importReceiptDetail && !empty($importReceiptDetail->import_date)) {
-                $importDate = Carbon::parse($importReceiptDetail->import_date);
-                $now = Carbon::now();
-                $nextDayTenPM = $importDate->copy()->addDay()->setTime(22, 0, 0);
-
-                if ($now->lt($nextDayTenPM)) {
-                    $status = 'hoa tươi';
-                } else {
-                    $status = 'hoa ép';
-                }
-            }
-            if ($status === 'hoa ép') {
-                return true;
-            }
-        }
-        return false;
     }
 
     public function deductStock($flowerId, $neededQty)
@@ -315,12 +268,8 @@ class OrderRepository implements OrderRepositoryInterface
             throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
         }
     }
-    public function findById(int $id)
-    {
-        return $this->model->find($id);
-    }
 
-    public function update(int $id, array $data)
+    public function update($id, array $data)
     {
         $order = $this->findById($id);
         $status = $order->status;
@@ -374,8 +323,6 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
 
-
-
         $order->update($data);
 
         if (isset($data['status']) && $data['status'] !== $status && !empty($order->email)) {
@@ -395,7 +342,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function cancelOrderByUser(int $id)
     {
-        $user = Auth()->user();
+        $user = auth()->user();
         if (!$user) {
             throw new \Exception('Bạn cần đăng nhập để hủy đơn hàng.');
         }
@@ -443,7 +390,6 @@ class OrderRepository implements OrderRepositoryInterface
         $order->status_stock = 'đã hủy';
         $order->save();
 
-        // Gửi mail nếu có email
         if (!empty($order->email)) {
             try {
                 SendOrderStatusMailJob::dispatch($order, 'đã hủy');
@@ -459,15 +405,9 @@ class OrderRepository implements OrderRepositoryInterface
         return $order;
     }
 
-    public function delete(int $id)
-    {
-        return $this->model->destroy($id);
-    }
-
     public function all($filters = [])
     {
         $this->processOrdersForToday();
-        // return $this->model->orderBy('id', 'desc')->paginate(10);
         $query = $this->model->with('orderDetails.productSize.product', 'productReports', 'orderReturns')
             ->orderBy('buy_at', 'desc')
             ->orderBy('id', 'desc');
@@ -495,26 +435,19 @@ class OrderRepository implements OrderRepositoryInterface
         return $this->model->where('user_id', $userId)->get();
     }
 
-    //su dung token
-
     public function OrderByUser()
     {
-        $user = Auth()->user();
+        $user = auth()->user();
         if (!$user) {
             abort(401, 'Bạn cần đăng nhập để xem đơn hàng của mình.');
         }
 
-        $orders = $this->model->orderBy('buy_at', 'desc')->where('user_id', $user->id)->paginate(10);
-
-        // Log::info('Lấy danh sách đơn hàng của người dùng', ['user_id' => $user->id]);
-        // Log::info('Danh sách đơn hàng', ['orders' => $orders->toArray()]);
-
-        return $orders;
+        return $this->model->orderBy('buy_at', 'desc')->where('user_id', $user->id)->paginate(10);
     }
 
     public function OrderDetailById(int $id)
     {
-        $user = Auth()->user();
+        $user = auth()->user();
         if (!$user) {
             return response()->json(['message' => 'Bạn cần đăng nhập để xem đơn hàng của mình.'], 401);
         }
@@ -530,6 +463,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         return $order;
     }
+
     public function show(int $id)
     {
         $order = $this->model->with('orderDetails.productSize.product', 'productReports')->find($id);
@@ -538,6 +472,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
         return $order;
     }
+
     protected function handleImageUpload(&$data)
     {
         if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
@@ -553,6 +488,7 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
     }
+
     public function createReport(array $data)
     {
         if (!isset($data['reports']) || !is_array($data['reports']) || count($data['reports']) === 0) {
@@ -597,8 +533,6 @@ class OrderRepository implements OrderRepositoryInterface
                 'updated_at' => now(),
             ];
         }
-
-
 
         return DB::transaction(function () use ($order, $toInsert) {
             ProductReport::insert($toInsert);
@@ -715,14 +649,6 @@ class OrderRepository implements OrderRepositoryInterface
             $orderReturn->status = $status;
             $orderReturn->save();
         }
-
-        // if ($status === 'hoàn thành') {
-        //     $order = Order::find($orderId);
-        //     if ($order) {
-        //         $order->status = 'hoàn thành';
-        //         $order->save();
-        //     }
-        // }
 
         return $orderReturns;
     }

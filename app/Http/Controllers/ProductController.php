@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
-use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Models\ImportReceiptDetail;
 use App\Models\Product;
 use App\Models\ProductSize;
-use Carbon\Carbon;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,14 +18,11 @@ use Illuminate\Support\Facades\Log;
  */
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $products;
+    protected ProductService $productService;
 
-    public function __construct(ProductRepositoryInterface $products)
+    public function __construct(ProductService $productService)
     {
-        $this->products = $products;
+        $this->productService = $productService;
     }
 
     /**
@@ -54,7 +50,7 @@ class ProductController extends Controller
         $date = $request->input('date');
         $page = (int) $request->input('page', 1);
 
-        $result = $this->products->searchStockWarning($query, $date, $page, 10);
+        $result = $this->productService->searchStockWarning($query, $date, $page, 10);
 
         return response()->json($result);
     }
@@ -75,7 +71,7 @@ class ProductController extends Controller
     {
         $page = (int) $request->input('page', 1);
 
-        $result = $this->products->stockWarning($page, 10);
+        $result = $this->productService->stockWarning($page, 10);
 
         return response()->json($result);
     }
@@ -109,10 +105,9 @@ class ProductController extends Controller
             'flower_type_id' => $request->input('flower_type_id'),
             'price' => $request->input('price'),
         ];
-        $products = $this->products->filterTypeColor($filters);
+        $products = $this->productService->filterTypeColor($filters);
         return ProductResource::collection($products);
     }
-
 
     /**
      * @OA\get(
@@ -178,7 +173,6 @@ class ProductController extends Controller
                         ->select(DB::raw('SUM(quantity - used_quantity) as remaining'))
                         ->value('remaining') ?? 0;
 
-                    //   Log::info("flowerStock", ['flower_id' => $flowerId, 'remaining' => $flowerStock]);
                     $remainingStock = $flowerStock - ($usedFlowers[$flowerId] ?? 0);
 
                     $possibleItems = floor($remainingStock / $neededPerItem);
@@ -242,11 +236,9 @@ class ProductController extends Controller
         $filters = [
             'name' => $request->input('name'),
             'category_id' => $request->input('category_id'),
-            // Thêm các filter khác nếu cần
         ];
 
-        // Trả về response từ repository đã phân trang
-        return $this->products->all($filters);
+        return $this->productService->getProducts($filters);
     }
 
     /**
@@ -291,15 +283,10 @@ class ProductController extends Controller
      */
     public function search(Request $request)
     {
-        $products = $this->products->search($request->all());
+        $products = $this->productService->searchProducts($request->all());
         return ProductResource::collection($products);
     }
 
-
-
-    /**
-     * Store a newly created resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/products",
@@ -312,20 +299,17 @@ class ProductController extends Controller
      *             @OA\Schema(
      *                 type="object",
      *                 required={"name", "category_id", "status", "sizes[0][size]", "sizes[0][price]", "sizes[0][recipes][0][flower_id]", "sizes[0][recipes][0][quantity]"},
-     *                 
      *                 @OA\Property(property="name", type="string", example="Bó hoa cưới đẹp", description="Tên sản phẩm"),
      *                 @OA\Property(property="description", type="string", example="Mẫu bó hoa cưới với nhiều hoa baby", description="Mô tả sản phẩm"),
      *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục"),
      *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
      *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm"),
-
      *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ", description="Tên size 1"),
      *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
      *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1, description="ID hoa thứ 1 cho size Nhỏ"),
      *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10, description="Số lượng hoa thứ 1 cho size Nhỏ"),
      *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2, description="ID hoa thứ 2 cho size Nhỏ"),
      *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5, description="Số lượng hoa thứ 2 cho size Nhỏ"),
-
      *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn", description="Tên size 2"),
      *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
      *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1, description="ID hoa cho size Lớn"),
@@ -340,16 +324,11 @@ class ProductController extends Controller
      *     )
      * )
      */
-
     public function store(StoreProductRequest $request)
     {
-        $product = $this->products->createWithRecipes($request->validated());
+        $product = $this->productService->createProductWithRecipes($request->validated());
         return (new ProductResource($product))->response()->setStatusCode(201);
     }
-
-    /**
-     * Display the specified resource.
-     */
 
     /**
      * @OA\Get(
@@ -370,18 +349,18 @@ class ProductController extends Controller
      *     @OA\Response(response=404, description="Product not found")
      * )
      */
-
     public function show($id)
     {
-        $product = $this->products->find($id);
+        $product = $this->productService->getProductByIdOrSlug($id);
         if (!$product) {
             return response()->json(["message" => "Product not found"], 404);
         }
         return new ProductResource($product);
     }
+
     public function showbyId($id)
     {
-        $product = $this->products->findById($id);
+        $product = $this->productService->getProductByIdOrSlug($id);
         if (!$product) {
             return response()->json(["message" => "Product not found"], 404);
         }
@@ -410,7 +389,7 @@ class ProductController extends Controller
     public function getProductsByCategory($categoryId)
     {
         try {
-            $products = $this->products->getProductsByCategory($categoryId);
+            $products = $this->productService->getProductsByCategory($categoryId);
             return ProductResource::collection($products);
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);
@@ -420,17 +399,12 @@ class ProductController extends Controller
     public function getProductsByCategoryId($categoryId)
     {
         try {
-            $products = $this->products->getProductsByCategoryId($categoryId);
+            $products = $this->productService->getProductsByCategory($categoryId);
             return ProductResource::collection($products);
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);
         }
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-
 
     /**
      * @OA\Post(
@@ -457,14 +431,12 @@ class ProductController extends Controller
      *                 @OA\Property(property="image", type="string", format="binary", description="Ảnh sản phẩm (tùy chọn)"),
      *                 @OA\Property(property="status", type="integer", example=1, description="Trạng thái sản phẩm"),
      *                 @OA\Property(property="category_id", type="integer", example=1, description="ID danh mục sản phẩm"),
-
      *                 @OA\Property(property="sizes[0][size]", type="string", example="Nhỏ"),
      *                 @OA\Property(property="sizes[0][price]", type="number", example=150000, description="Giá bán size Nhỏ"),
      *                 @OA\Property(property="sizes[0][recipes][0][flower_id]", type="integer", example=1),
      *                 @OA\Property(property="sizes[0][recipes][0][quantity]", type="integer", example=10),
      *                 @OA\Property(property="sizes[0][recipes][1][flower_id]", type="integer", example=2),
      *                 @OA\Property(property="sizes[0][recipes][1][quantity]", type="integer", example=5),
-
      *                 @OA\Property(property="sizes[1][size]", type="string", example="Lớn"),
      *                 @OA\Property(property="sizes[1][price]", type="number", example=300000, description="Giá bán size Lớn"),
      *                 @OA\Property(property="sizes[1][recipes][0][flower_id]", type="integer", example=1),
@@ -479,32 +451,26 @@ class ProductController extends Controller
      *     )
      * )
      */
-
-
     public function update(UpdateProductRequest $request, $id)
     {
-        //dd($request->all());
         Log::info('Update product request data:', [
             'id' => $id,
             'validated' => $request->validated()
         ]);
 
-        $product = $this->products->findById($id);
+        $product = $this->productService->getProductByIdOrSlug($id);
         if (!$product) {
             Log::info('Product not found for update', ['id' => $id]);
             return response()->json(["message" => "Product not found"], 404);
         }
 
-        $product = $this->products->updateWithRecipes($id, $request->validated());
+        $product = $this->productService->updateProductWithRecipes($id, $request->validated());
 
         Log::info('Product updated successfully', ['id' => $id, 'product' => $product]);
 
         return (new ProductResource($product))->response()->setStatusCode(200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     /**
      * @OA\Delete(
      *     path="/api/products/{id}",
@@ -525,14 +491,15 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = $this->products->findById($id);
+        $product = $this->productService->getProductByIdOrSlug($id);
         if (!$product) {
             return response()->json(["message" => "Product not found"], 404);
         }
 
-        $this->products->delete($id);
+        $this->productService->hideProduct($id);
         return response()->json(["message" => "Product deleted successfully"], 200);
     }
+
     /**
      * @OA\Put(
      *     path="/api/products/{id}/hide",
@@ -555,12 +522,13 @@ class ProductController extends Controller
     public function hide($id)
     {
         try {
-            $this->products->hide($id);
+            $this->productService->hideProduct($id);
             return response()->json(['message' => 'Product hidden successfully'], 200);
         } catch (\RuntimeException $e) {
             return response()->json(["message" => $e->getMessage()], 404);
         }
     }
+
     /**
      * @OA\Get(
      *     path="/api/products/stock",
@@ -575,7 +543,7 @@ class ProductController extends Controller
      */
     public function checkAllStock()
     {
-        $data = $this->products->getAllStock();
+        $data = $this->productService->getAllStock();
         Log::info('Check all stock data:', ['data' => $data]);
         return response()->json(['data' => $data]);
     }
@@ -599,10 +567,9 @@ class ProductController extends Controller
      *     @OA\Response(response=404, description="Product not found")
      * )
      */
-
     public function checkStock($id)
     {
-        $data = $this->products->getStockById($id);
+        $data = $this->productService->getStockById($id);
         if (!$data) {
             return response()->json(['message' => 'Không có sản phẩm'], 404);
         }
@@ -623,7 +590,7 @@ class ProductController extends Controller
      */
     public function getAllProductTrash()
     {
-        $products = $this->products->allTrash();
+        $products = $this->productService->getTrashProducts();
         return ProductResource::collection($products);
     }
 
@@ -648,7 +615,7 @@ class ProductController extends Controller
      */
     public function restoreProduct($id)
     {
-        $product = $this->products->restoreTrash($id);
+        $product = $this->productService->restoreTrashProduct($id);
 
         return (new ProductResource($product))->response()->setStatusCode(200);
     }

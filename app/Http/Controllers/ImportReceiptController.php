@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ImportRecipt\StoreImportReceiptRequest;
 use App\Http\Requests\ImportRecipt\UpdateImportReceiptRequest;
 use App\Http\Resources\ImportReceiptResource;
-use App\Models\ImportReceipt;
-use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
+use App\Services\ImportReceiptService;
 use Illuminate\Http\Request;
+
 /**
  * @OA\Tag(
  *     name="Import Receipts",
@@ -16,16 +16,14 @@ use Illuminate\Http\Request;
  */
 class ImportReceiptController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected ImportReceiptRepositoryInterface $receipts;
+    protected ImportReceiptService $importReceiptService;
 
-    public function __construct(ImportReceiptRepositoryInterface $receipts)
+    public function __construct(ImportReceiptService $importReceiptService)
     {
-        $this->receipts = $receipts;
+        $this->importReceiptService = $importReceiptService;
     }
-  /**
+
+    /**
      * @OA\Get(
      *     path="/api/import-receipts",
      *     tags={"Import Receipts"},
@@ -43,12 +41,11 @@ class ImportReceiptController extends Controller
             'from_date' => $request->input('from_date'),
             'to_date' => $request->input('to_date'),
         ];
-        $data = $this->receipts->all($filters);
+        $data = $this->importReceiptService->getImportReceipts($filters);
         return ImportReceiptResource::collection($data);
     }
 
-
-   /**
+    /**
      * @OA\Post(
      *     path="/api/import-receipts",
      *     tags={"Import Receipts"},
@@ -59,7 +56,7 @@ class ImportReceiptController extends Controller
      */
     public function store(StoreImportReceiptRequest $request)
     {
-        $receipt = $this->receipts->createWithDetails($request->validated());
+        $receipt = $this->importReceiptService->createImportReceiptWithDetails($request->validated());
         return (new ImportReceiptResource($receipt->load('details.flower')))
             ->response()
             ->setStatusCode(201);
@@ -76,7 +73,7 @@ class ImportReceiptController extends Controller
      */
     public function show(int $id)
     {
-        $receipt = $this->receipts->find($id);
+        $receipt = $this->importReceiptService->getImportReceiptById($id);
         return new ImportReceiptResource($receipt->load('details.flower'));
     }
 
@@ -92,7 +89,7 @@ class ImportReceiptController extends Controller
      */
     public function update(UpdateImportReceiptRequest $request, int $id)
     {
-        $receipt = $this->receipts->updateWithDetails($id, $request->validated());
+        $receipt = $this->importReceiptService->updateImportReceiptWithDetails($id, $request->validated());
         return new ImportReceiptResource($receipt->load('details.flower'));
     }
 
@@ -107,12 +104,12 @@ class ImportReceiptController extends Controller
      */
     public function destroy(int $id)
     {
-        $receipt = $this->receipts->find($id);
+        $receipt = $this->importReceiptService->getImportReceiptById($id);
         if (!$receipt) {
             return response()->json(['message' => 'Không tìm thấy phiếu nhập'], 404);
         }
-        $this->receipts->delete($id);
+        $this->importReceiptService->deleteImportReceipt($id);
 
-        return response()->json(['message'=> 'xoá thành công'], 200);
+        return response()->json(['message' => 'xoá thành công'], 200);
     }
 }

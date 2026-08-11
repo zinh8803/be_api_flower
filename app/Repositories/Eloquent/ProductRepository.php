@@ -17,13 +17,11 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-class ProductRepository implements ProductRepositoryInterface
+class ProductRepository extends BaseRepository implements ProductRepositoryInterface
 {
-    protected $model;
-
     public function __construct(Product $product)
     {
-        $this->model = $product;
+        parent::__construct($product);
     }
 
     public function all($filters = [], $perPage = 10)
@@ -32,29 +30,26 @@ class ProductRepository implements ProductRepositoryInterface
         $page = request('page', 1);
         $cacheKey = $key . '_page_' . $page . '_per_' . $perPage;
 
-        // 1) Thử lấy từ Redis (an toàn)
         $jsonFromRedis = null;
         try {
-            $redis = \Illuminate\Support\Facades\Redis::connection();
+            $redis = Redis::connection();
             $jsonFromRedis = $redis->get($cacheKey);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Redis get failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
+            Log::warning('Redis get failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
         }
 
         if ($jsonFromRedis) {
-            \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Redis', ['key' => $cacheKey]);
+            Log::info('ProductRepository: Lấy dữ liệu từ Redis', ['key' => $cacheKey]);
             return response()->json(json_decode($jsonFromRedis, true));
         }
 
-        // 2) Fallback: thử lấy từ Cache database (nếu có)
-        $jsonFromCache = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        $jsonFromCache = Cache::get($cacheKey);
         if ($jsonFromCache) {
-            \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Cache database', ['key' => $cacheKey]);
+            Log::info('ProductRepository: Lấy dữ liệu từ Cache database', ['key' => $cacheKey]);
             return response()->json($jsonFromCache);
         }
 
-        // 3) Query DB như cũ
-        \Illuminate\Support\Facades\Log::info('ProductRepository: Lấy dữ liệu từ Database', ['key' => $cacheKey]);
+        Log::info('ProductRepository: Lấy dữ liệu từ Database', ['key' => $cacheKey]);
         $data = $this->model
             ->with(['category', 'productSizes.recipes.flower.flowerType'])
             ->orderBy('created_at', 'desc');
@@ -78,21 +73,18 @@ class ProductRepository implements ProductRepositoryInterface
 
         $json = $paginator->toArray();
 
-        // 4) Ghi cache: ưu tiên Redis, lỗi thì fallback sang Cache database
         try {
-            $redis = $redis ?? \Illuminate\Support\Facades\Redis::connection();
-            $redis->setex($cacheKey, 600, json_encode($json)); // 10 phút
-            \Illuminate\Support\Facades\Log::info('ProductRepository: Đã lưu dữ liệu vào Redis', ['key' => $cacheKey]);
+            $redis = $redis ?? Redis::connection();
+            $redis->setex($cacheKey, 600, json_encode($json));
+            Log::info('ProductRepository: Đã lưu dữ liệu vào Redis', ['key' => $cacheKey]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Redis setex failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
-            \Illuminate\Support\Facades\Cache::put($cacheKey, $json, now()->addMinutes(10));
-            \Illuminate\Support\Facades\Log::info('ProductRepository: Đã lưu dữ liệu vào Cache database', ['key' => $cacheKey]);
+            Log::warning('Redis setex failed', ['key' => $cacheKey, 'error' => $e->getMessage()]);
+            Cache::put($cacheKey, $json, now()->addMinutes(10));
+            Log::info('ProductRepository: Đã lưu dữ liệu vào Cache database', ['key' => $cacheKey]);
         }
 
         return response()->json($json);
     }
-
-
 
     public function allTrash()
     {
@@ -125,7 +117,6 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $key = 'products_' . md5(json_encode($filters));
 
-        // Cache 10 phút (600 giây)
         return Cache::remember($key, 600, function () use ($filters) {
             $query = $this->model->with(['category', 'productSizes.recipes.flower.flowerType', 'productSizes.recipes.flower.color']);
 
@@ -161,19 +152,17 @@ class ProductRepository implements ProductRepositoryInterface
         });
     }
 
-    public function find($slug)
+    public function findBySlug(string $slug)
     {
         return $this->model->with(['category', 'productSizes.recipes.flower'])->where('slug', $slug)->first();
     }
 
-    public function findById($id)
+    public function find($id, array $columns = ['*']): ?\Illuminate\Database\Eloquent\Model
     {
-        return $this->model->with(['category', 'productSizes.recipes.flower'])->find($id);
-    }
-
-    public function create(array $data)
-    {
-        return $this->model->create($data);
+        if (is_numeric($id)) {
+            return $this->model->with(['category', 'productSizes.recipes.flower'])->find($id, $columns);
+        }
+        return $this->findBySlug($id);
     }
 
     public function getProductsByCategory($categorySlug)
@@ -185,7 +174,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->get();
 
         if ($products->isEmpty()) {
-            throw new \RuntimeException('No products found for the given category.');
+            throw new RuntimeException('No products found for the given category.');
         }
 
         return $products->load(['category', 'productSizes.recipes.flower']);
@@ -198,7 +187,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->get();
 
         if ($products->isEmpty()) {
-            throw new \RuntimeException('No products found for the given category ID.');
+            throw new RuntimeException('No products found for the given category ID.');
         }
 
         return $products->load(['category', 'productSizes.recipes.flower']);
@@ -214,13 +203,9 @@ class ProductRepository implements ProductRepositoryInterface
         return $record;
     }
 
-    public function delete($id)
-    {
-        return $this->model->destroy($id);
-    }
     public function hide($id)
     {
-        $product = $this->find($id);
+        $product = $this->findById($id);
         if (!$product) {
             throw new RuntimeException('Product not found.');
         }
@@ -266,7 +251,6 @@ class ProductRepository implements ProductRepositoryInterface
                         'flower_id' => $recipe['flower_id'],
                         'quantity' => $recipe['quantity'],
                         'product_size_id' => $productSize->id,
-                        // 'product_id' => $product->id,
                     ]);
                 }
             }
@@ -276,6 +260,7 @@ class ProductRepository implements ProductRepositoryInterface
             return $product->load('productSizes.recipes.flower');
         });
     }
+
     protected function handleDescriptionImages($html)
     {
         $dom = new \DOMDocument();
@@ -320,6 +305,7 @@ class ProductRepository implements ProductRepositoryInterface
         }
         return $dom->saveHTML();
     }
+
     public function updateWithRecipes($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
@@ -367,7 +353,6 @@ class ProductRepository implements ProductRepositoryInterface
                         'flower_id' => $recipe['flower_id'],
                         'quantity' => $recipe['quantity'],
                         'product_size_id' => $productSize->id,
-                        // 'product_id' => $product->id,
                     ]);
                 }
             }
@@ -377,6 +362,7 @@ class ProductRepository implements ProductRepositoryInterface
             return $product->load('productSizes.recipes.flower');
         });
     }
+
     public function getAllStock()
     {
         $products = $this->model->all()->map(function ($product) {
@@ -393,6 +379,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $products;
     }
+
     public function getStockById($id)
     {
         $today = Carbon::now()->format('Y-m-d');
@@ -618,50 +605,6 @@ class ProductRepository implements ProductRepositoryInterface
         ];
     }
 
-    public function checkStock(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'product_size_id' => 'required|exists:product_sizes,id',
-            'quantity' => 'required|integer|min:1'
-        ]);
-
-        try {
-            $productSize = ProductSize::with('recipes.flower')->findOrFail($request->product_size_id);
-            $quantity = $request->quantity;
-            $inStock = true;
-            $missingFlowers = [];
-
-            foreach ($productSize->recipes as $recipe) {
-                $need = $recipe->quantity * $quantity;
-
-                // kiểm tra tồn kho ngày hôm nay
-                $today = now()->format('Y-m-d');
-                $stock = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
-                    ->whereDate('import_date', $today)
-                    ->sum(DB::raw('quantity - used_quantity'));
-
-                if ($stock < $need) {
-                    $inStock = false;
-                    $missingFlowers[] = [
-                        'flower' => $recipe->flower->name,
-                        'needed' => $need,
-                        'available' => $stock
-                    ];
-                }
-            }
-
-            return response()->json([
-                'in_stock' => $inStock,
-                'missing_flowers' => $missingFlowers
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'in_stock' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
     public function search($params)
     {
         $query = $this->model->query();
@@ -684,18 +627,6 @@ class ProductRepository implements ProductRepositoryInterface
             })->get();
             return $flowerProducts->load('category', 'productSizes.recipes.flower');
         }
-
-        // if (!empty($params['name'])) {
-        //     $query->where('name', 'like', '%' . $params['name'] . '%');
-        // }
-        // if (!empty($params['category_id'])) {
-        //     $query->where('category_id', $params['category_id']);
-        // }
-        // if (!empty($params['flower_name'])) {
-        //     $query->whereHas('recipes.flower', function ($q) use ($params) {
-        //         $q->where('name', 'like', '%' . $params['flower_name'] . '%');
-        //     });
-        // }
 
         return $query->with([
             'category',
