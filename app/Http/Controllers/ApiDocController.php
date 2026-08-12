@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 /**
  * @OA\Info(
  *     title="Flower Shop API",
- *     version="1.0.0",
+ *     version="2.0.0",
  *     description="API documentation for the Flower Shop system"
  * )
  * 

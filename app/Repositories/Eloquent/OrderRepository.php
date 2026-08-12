@@ -7,6 +7,7 @@ use App\Helpers\ImageHelper;
 use App\Jobs\sendDiscountReport;
 use App\Jobs\SendOrderStatusMailJob;
 use App\Models\Discount;
+use App\Models\FlowerLog;
 use App\Models\ImportReceiptDetail;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -98,7 +99,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 
             $items = $data['products'];
             unset($data['products']);
-
+            $itemsNeedDeduct = [];
             $orderDetails = [];
             $orderSubtotal = 0;
             $discountAmount = 0;
@@ -114,10 +115,10 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                     if ($stock < $need) {
                         throw new \Exception("Không đủ tồn kho cho hoa {$recipe->flower->name}");
                     }
-                    $deliveryDate = !empty($data['is_express']) ? now()->format('Y-m-d') : ($data['delivery_date'] ?? null);
-                    if ($deliveryDate && Carbon::parse($deliveryDate)->isToday()) {
-                        $this->deductStock($recipe->flower_id, $need);
-                    }
+                    $itemsNeedDeduct[] = [
+                        'flower_id' => $recipe->flower_id,
+                        'need' => $need,
+                    ];
                 }
 
                 $unitPrice = $productSize->price;
@@ -171,11 +172,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 'delivery_date' => $data['delivery_date'] ?? null,
                 'delivery_time_slot' => !empty($data['is_express']) ? null : ($data['delivery_time_slot'] ?? null),
                 'is_express' => $data['is_express'] ?? false,
-                'status_stock' => (
-                    (!empty($data['delivery_date']) && Carbon::parse($data['delivery_date'])->isToday())
-                    ? 'đã trừ kho'
-                    : 'chưa trừ kho'
-                ),
+                'status_stock' => 'đã trừ kho',
                 'user_id' => $data['user_id'] ?? auth()->id() ?? 4,
                 'status' => 'đang xử lý',
                 'buy_at' => now(),
@@ -183,6 +180,10 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 'discount_amount' => $discountAmount,
                 'total_price' => $orderTotal,
             ]);
+
+            foreach ($itemsNeedDeduct as $deductItem) {
+                $this->deductStock($deductItem['flower_id'], $deductItem['need'], $order->id, "Trừ hoa cho đơn hàng #{$order->order_code}");
+            }
 
             foreach ($orderDetails as $detail) {
                 $order->orderDetails()->create($detail);
@@ -217,7 +218,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                 $productSize = $detail->productSize;
                 foreach ($productSize->recipes as $recipe) {
                     $need = $recipe->quantity * $detail->quantity;
-                    $this->deductStock($recipe->flower_id, $need);
+                    $this->deductStock($recipe->flower_id, $need, $order->id, "Trừ hoa xử lý đơn hàng hôm nay #{$order->order_code}");
                 }
             }
             $order->status_stock = 'đã trừ kho';
@@ -225,48 +226,51 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         }
     }
 
-    public function deductStock($flowerId, $neededQty)
+    public function deductStock($flowerId, $neededQty, $orderId = null, $note = null)
     {
-        $today = now()->format('Y-m-d');
-        $yesterday = now()->subDay()->format('Y-m-d');
-
-        $detailsYesterday = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->whereDate('import_date', $yesterday)
-            ->orderBy('import_date')
+        $details = ImportReceiptDetail::where('flower_id', $flowerId)
+            ->whereRaw('quantity - used_quantity > 0')
+            ->orderBy('import_date', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
-
-        $detailsToday = ImportReceiptDetail::where('flower_id', $flowerId)
-            ->whereDate('import_date', $today)
-            ->orderBy('import_date')
-            ->get();
-
-        $details = $detailsYesterday->concat($detailsToday);
 
         $stock = $details->sum(function ($detail) {
             return $detail->quantity - $detail->used_quantity;
         });
 
         if ($stock < $neededQty) {
-            throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
+            throw new \Exception("Không đủ tồn kho cho hoa này!");
         }
 
+        $remainingToDeduct = $neededQty;
         foreach ($details as $detail) {
             $available = $detail->quantity - $detail->used_quantity;
-            if ($neededQty <= 0)
+            if ($remainingToDeduct <= 0)
                 break;
             if ($available <= 0)
                 continue;
 
-            $used = min($neededQty, $available);
+            $used = min($remainingToDeduct, $available);
             $detail->used_quantity += $used;
             $detail->save();
 
-            $neededQty -= $used;
+            $remainingToDeduct -= $used;
         }
 
-        if ($neededQty > 0) {
-            throw new \Exception("Không đủ tồn kho cho sản phẩm này!");
+        if ($remainingToDeduct > 0) {
+            throw new \Exception("Không đủ tồn kho cho hoa này!");
         }
+
+        FlowerLog::create([
+            'flower_id' => $flowerId,
+            'type' => 'sale',
+            'change_type' => 'minus',
+            'quantity' => $neededQty,
+            'note' => $note ?? ($orderId ? "Trừ hoa cho đơn hàng ID: {$orderId}" : "Trừ hoa bán hàng"),
+            'reference_type' => 'Order',
+            'reference_id' => $orderId,
+            'user_id' => auth()->id(),
+        ]);
     }
 
     public function update($id, array $data)
@@ -285,28 +289,42 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                     throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
                 }
 
-                foreach ($order->orderDetails as $detail) {
-                    $productSize = $detail->productSize;
-                    if ($productSize && $productSize->recipes) {
-                        foreach ($productSize->recipes as $recipe) {
-                            $qtyReturn = $recipe->quantity * $detail->quantity;
-                            $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
-                                ->orderByDesc('import_date')
-                                ->get();
+                if ($order->status_stock === 'đã trừ kho') {
+                    foreach ($order->orderDetails as $detail) {
+                        $productSize = $detail->productSize;
+                        if ($productSize && $productSize->recipes) {
+                            foreach ($productSize->recipes as $recipe) {
+                                $qtyReturn = $recipe->quantity * $detail->quantity;
+                                $importDetails = ImportReceiptDetail::where('flower_id', $recipe->flower_id)
+                                    ->orderByDesc('import_date')
+                                    ->get();
 
-                            $remain = $qtyReturn;
-                            foreach ($importDetails as $importDetail) {
-                                $used = $importDetail->used_quantity;
-                                if ($used > 0) {
-                                    $returnQty = min($remain, $used);
-                                    $importDetail->used_quantity -= $returnQty;
-                                    $importDetail->save();
-                                    $remain -= $returnQty;
-                                    if ($remain <= 0) break;
+                                $remain = $qtyReturn;
+                                foreach ($importDetails as $importDetail) {
+                                    $used = $importDetail->used_quantity;
+                                    if ($used > 0) {
+                                        $returnQty = min($remain, $used);
+                                        $importDetail->used_quantity -= $returnQty;
+                                        $importDetail->save();
+                                        $remain -= $returnQty;
+                                        if ($remain <= 0) break;
+                                    }
                                 }
+
+                                FlowerLog::create([
+                                    'flower_id' => $recipe->flower_id,
+                                    'type' => 'cancel',
+                                    'change_type' => 'plus',
+                                    'quantity' => $qtyReturn,
+                                    'note' => "Hoàn hoa do hủy đơn hàng #{$order->order_code}",
+                                    'reference_type' => 'Order',
+                                    'reference_id' => $order->id,
+                                    'user_id' => auth()->id(),
+                                ]);
                             }
                         }
                     }
+                    $data['status_stock'] = 'đã hủy';
                 }
             } else {
                 $nextStatus = $currentIndex !== false && $currentIndex < count($statusFlow) - 1
@@ -360,7 +378,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
             throw new \Exception('Chỉ đơn hàng đang xử lý mới được hủy.');
         }
 
-        if (!empty($order->delivery_date) && Carbon::parse($order->delivery_date)->isToday() && $order->status_stock === 'đã trừ kho') {
+        if ($order->status_stock === 'đã trừ kho') {
             foreach ($order->orderDetails as $detail) {
                 $productSize = $detail->productSize;
                 if ($productSize && $productSize->recipes) {
@@ -381,6 +399,17 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                                 if ($remain <= 0) break;
                             }
                         }
+
+                        FlowerLog::create([
+                            'flower_id' => $recipe->flower_id,
+                            'type' => 'cancel',
+                            'change_type' => 'plus',
+                            'quantity' => $qtyReturn,
+                            'note' => "Hoàn hoa do khách hủy đơn hàng #{$order->order_code}",
+                            'reference_type' => 'Order',
+                            'reference_id' => $order->id,
+                            'user_id' => auth()->id(),
+                        ]);
                     }
                 }
             }
@@ -405,7 +434,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
         return $order;
     }
 
-    public function all($filters = [])
+    public function all($filters = [], ...$args)
     {
         $this->processOrdersForToday();
         $query = $this->model->with('orderDetails.productSize.product', 'productReports', 'orderReturns')
@@ -608,7 +637,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
                     if ($productSize && $productSize->recipes) {
                         foreach ($productSize->recipes as $recipe) {
                             $need = $recipe->quantity * $r->quantity;
-                            $this->deductStock($recipe->flower_id, $need);
+                            $this->deductStock($recipe->flower_id, $need, $orderId, "Trừ hoa đổi hàng cho đơn #{$orderId}");
                         }
                     }
                 }

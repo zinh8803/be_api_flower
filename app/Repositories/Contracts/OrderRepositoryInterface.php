@@ -6,7 +6,7 @@ interface OrderRepositoryInterface extends BaseRepositoryInterface
 {
     public function createOrder(array $data);
     public function cancelOrderByUser(int $id);
-    public function all($filters = []);
+    public function all($filters = [], ...$args);
     public function createReport(array $data);
     public function findByUserId(int $userId);
     public function OrderByUser();

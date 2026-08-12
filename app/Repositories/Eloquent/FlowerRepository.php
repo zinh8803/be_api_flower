@@ -13,7 +13,7 @@ class FlowerRepository extends BaseRepository implements FlowerRepositoryInterfa
         parent::__construct($flower);
     }
 
-    public function all(array $columns = ['*']): Collection
+    public function all($columns = ['*'], ...$args)
     {
         return $this->model->with(['flowerType', 'color'])->get($columns);
     }

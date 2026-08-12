@@ -3,7 +3,7 @@
     "info": {
         "title": "Flower Shop API",
         "description": "API documentation for the Flower Shop system",
-        "version": "1.0.0"
+        "version": "2.0.0"
     },
     "servers": [
         {
@@ -258,31 +258,6 @@
                     },
                     "422": {
                         "description": "Validation errors"
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Auto Import Receipts"
-                ],
-                "summary": "Delete an auto import receipt config",
-                "operationId": "5ebb991bb79c9fb42ae07b7f78a881b8",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Auto import receipt deleted"
-                    },
-                    "404": {
-                        "description": "Auto import receipt not found"
                     }
                 }
             }
@@ -992,6 +967,144 @@
                 "responses": {
                     "200": {
                         "description": "Xóa thành công"
+                    }
+                }
+            }
+        },
+        "/api/flower-logs": {
+            "get": {
+                "tags": [
+                    "Flower Logs"
+                ],
+                "summary": "Danh sách log biến động tồn kho hoa",
+                "operationId": "629d1f052adab42457d88773e9270d65",
+                "parameters": [
+                    {
+                        "name": "flower_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "import, sale, cancel, adjustment",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "change_type",
+                        "in": "query",
+                        "description": "plus hoặc minus",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FlowerLog"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flower/{id}/logs": {
+            "get": {
+                "tags": [
+                    "Flower Logs"
+                ],
+                "summary": "Danh sách log biến động tồn kho của 1 loại hoa",
+                "operationId": "5720d791428c2ff148bbf6822e59a2f2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "change_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FlowerLog"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3983,6 +4096,66 @@
                 },
                 "type": "object"
             },
+            "FlowerLog": {
+                "title": "FlowerLog",
+                "required": [
+                    "id",
+                    "flower_id",
+                    "type",
+                    "change_type",
+                    "quantity"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "flower_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "type": {
+                        "description": "import, sale, cancel, adjustment",
+                        "type": "string",
+                        "example": "import"
+                    },
+                    "change_type": {
+                        "description": "plus hoặc minus",
+                        "type": "string",
+                        "example": "plus"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 50
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Nhập hoa theo phiếu HD001"
+                    },
+                    "reference_type": {
+                        "type": "string",
+                        "example": "ImportReceipt"
+                    },
+                    "reference_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "flower": {
+                        "$ref": "#/components/schemas/Flower"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-12T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-12T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
             "Flower": {
                 "title": "Flower",
                 "required": [
@@ -4424,6 +4597,10 @@
         {
             "name": "Flower",
             "description": "Quản lý hoa"
+        },
+        {
+            "name": "Flower Logs",
+            "description": "Quản lý log biến động tồn kho hoa (cộng / trừ hoa)"
         },
         {
             "name": "Flower Types",

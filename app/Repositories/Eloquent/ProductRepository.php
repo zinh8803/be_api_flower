@@ -24,7 +24,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         parent::__construct($product);
     }
 
-    public function all($filters = [], $perPage = 10)
+    public function all($filters = [], $perPage = 10, ...$args)
     {
         $key = 'products_' . md5(json_encode($filters));
         $page = request('page', 1);

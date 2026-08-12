@@ -27,8 +27,12 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * {@inheritdoc}
      */
-    public function all(array $columns = ['*']): Collection
+    public function all(...$args)
     {
+        $columns = $args[0] ?? ['*'];
+        if (is_array($columns) && !empty($columns) && !is_numeric(key($columns))) {
+            return $this->model->all();
+        }
         return $this->model->all($columns);
     }
 

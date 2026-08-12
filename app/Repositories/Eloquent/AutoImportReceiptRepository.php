@@ -13,7 +13,7 @@ class AutoImportReceiptRepository extends BaseRepository implements AutoImportRe
         parent::__construct($autoImportReceipt);
     }
 
-    public function all(array $columns = ['*']): \Illuminate\Database\Eloquent\Collection
+    public function all($columns = ['*'], ...$args)
     {
         $latest = $this->model->latest('id')->first();
         return $latest ? new \Illuminate\Database\Eloquent\Collection([$latest]) : new \Illuminate\Database\Eloquent\Collection();

@@ -13,7 +13,7 @@ class ProductSizeRepository extends BaseRepository implements ProductSizeReposit
         parent::__construct($productSize);
     }
 
-    public function all(array $columns = ['*']): Collection
+    public function all($columns = ['*'], ...$args)
     {
         return $this->model->with(['product', 'recipes'])->get($columns);
     }

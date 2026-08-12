@@ -10,6 +10,7 @@ use App\Http\Controllers\ColorController;
 use App\Http\Controllers\DashBoardController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FlowerController;
+use App\Http\Controllers\FlowerLogController;
 use App\Http\Controllers\FlowerTypeController;
 use App\Http\Controllers\ImportReceiptController;
 use App\Http\Controllers\MoMoController;
@@ -167,6 +168,10 @@ Route::middleware(['check.role:admin,employee'])->group(function () {
 
     //import-receipts
     Route::apiResource('import-receipts', ImportReceiptController::class);
+
+    //flower-logs
+    Route::get('/flower-logs', [FlowerLogController::class, 'index']);
+    Route::get('/flower/{id}/logs', [FlowerLogController::class, 'getLogsByFlower']);
 
     //users
     Route::get('users/getall', [UserController::class, 'index']);

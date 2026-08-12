@@ -19,4 +19,8 @@ class Flower extends Model
     {
         return $this->belongsTo(Color::class);
     }
+    public function logs()
+    {
+        return $this->hasMany(FlowerLog::class);
+    }
 }

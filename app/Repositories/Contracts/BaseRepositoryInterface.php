@@ -11,10 +11,10 @@ interface BaseRepositoryInterface
     /**
      * Get all records.
      *
-     * @param array $columns
-     * @return Collection
+     * @param mixed ...$args
+     * @return mixed
      */
-    public function all(array $columns = ['*']): Collection;
+    public function all(...$args);
 
     /**
      * Get paginated records.

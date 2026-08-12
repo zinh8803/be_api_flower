@@ -13,7 +13,7 @@ class ProductReportRepository extends BaseRepository implements ProductReportRep
         parent::__construct($model);
     }
 
-    public function all(array $columns = ['*']): Collection
+    public function all($columns = ['*'], ...$args)
     {
         return $this->model->with(['order', 'orderDetail'])->get($columns);
     }
