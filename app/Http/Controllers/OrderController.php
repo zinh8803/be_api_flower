@@ -4,27 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderRequest;
-use App\Http\Requests\ProductReport\StoreProductReportRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
-use App\Repositories\Eloquent\OrderRepository;
+use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $orderRepository;
+    protected OrderService $orderService;
 
-    public function __construct(OrderRepository $orderRepository)
+    public function __construct(OrderService $orderService)
     {
-        $this->orderRepository = $orderRepository;
+        $this->orderService = $orderService;
     }
 
-    //swagger
     /**
      * @OA\Get(
      *     path="/api/orders",
@@ -33,16 +28,12 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Danh sách đơn hàng", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Order"))),
      * )
      */
-
     public function index(Request $request)
     {
         $filters = $request->only(['from_date', 'to_date', 'status', 'has_report', 'order_code']);
-        return OrderResource::collection($this->orderRepository->all($filters));
+        return OrderResource::collection($this->orderService->getOrders($filters));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/orders",
@@ -59,11 +50,10 @@ class OrderController extends Controller
      */
     public function store(StoreOrderRequest $request)
     {
-        $order = $this->orderRepository->createOrder($request->validated());
+        $order = $this->orderService->createOrder($request->validated(), $request);
         return new OrderResource($order);
     }
 
-    
     /**
      * @OA\Get(
      *     path="/api/orders/details",
@@ -75,13 +65,14 @@ class OrderController extends Controller
      */
     public function OrderDetailUser()
     {
-        $orders = $this->orderRepository->OrderByUser();
+        $orders = $this->orderService->getUserOrders();
         Log::info('orders', ['orders' => $orders->toArray()]);
         if ($orders->isEmpty()) {
             return response()->json(['message' => 'Bạn chưa có đơn hàng nào.'], 404);
         }
         return OrderResource::collection($orders);
     }
+
     /**
      * @OA\Get(
      *     path="/api/orders/user/{id}",
@@ -95,7 +86,7 @@ class OrderController extends Controller
      */
     public function OrderDetailById(int $id)
     {
-        $order = $this->orderRepository->OrderDetailById($id);
+        $order = $this->orderService->getUserOrderDetail($id);
 
         if ($order instanceof JsonResponse) {
             return $order;
@@ -104,10 +95,6 @@ class OrderController extends Controller
         return new OrderResource($order);
     }
 
-
-    /**
-     * Display the specified resource.
-     */
     /**
      * @OA\Get(
      *     path="/api/admin/orders/details/{id}",
@@ -121,16 +108,13 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        $order = $this->orderRepository->show($id);
+        $order = $this->orderService->getOrderDetails($id);
         if ($order instanceof JsonResponse) {
             return $order;
         }
         return new OrderResource($order);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     /**
      * @OA\Put(
      *     path="/api/orders/{id}",
@@ -149,15 +133,16 @@ class OrderController extends Controller
      */
     public function update(UpdateOrderRequest $request, $id)
     {
-        $order = $this->orderRepository->findById($id);
+        $order = $this->orderService->getOrderDetails($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại'], 404);
         }
-        $order = $this->orderRepository->update($id, $request->validated());
+        $this->orderService->updateOrderStatus($id, $request->validated());
         return response()->json([
             'message' => 'Cập nhật đơn hàng thành công',
         ], 200);
     }
+
     /**
      * @OA\Put(
      *     path="/api/orders/cancel/{id}",
@@ -169,34 +154,18 @@ class OrderController extends Controller
      *     @OA\Response(response=404, description="Đơn hàng không tồn tại")
      * )
      */
-
     public function cancelOrder($id)
     {
-        $order = $this->orderRepository->findById($id);
+        $order = $this->orderService->getOrderDetails($id);
         if (!$order) {
             return response()->json(['message' => 'Đơn hàng không tồn tại'], 404);
         }
-        $this->orderRepository->cancelOrderByUser($id);
+        $this->orderService->cancelOrder($id);
         return response()->json([
             'message' => 'Đơn hàng đã được hủy thành công',
         ], 200);
     }
 
-
-    /**
-     * @OA\Delete(
-     *     path="/api/orders/{id}",
-     *     tags={"Orders"},
-     *     summary="Xóa đơn hàng",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Đơn hàng đã được xóa thành công"),
-     *     @OA\Response(response=404, description="Đơn hàng không tồn tại")
-     * )
-     */
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Order $order)
     {
         //
@@ -229,7 +198,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            $this->orderRepository->createReport($data);
+            $this->orderService->createProductReport($data);
             return response()->json(['message' => 'Báo cáo sản phẩm thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error creating product report: ' . $e->getMessage());
@@ -243,7 +212,7 @@ class OrderController extends Controller
         $status = $request->input('status');
 
         try {
-            $this->orderRepository->updateStatusOrderReturn($orderId, $status);
+            $this->orderService->updateStatusOrderReturn($orderId, $status);
             return response()->json(['message' => 'Cập nhật trạng thái đơn hàng trả hàng thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error updating order return status: ' . $e->getMessage());

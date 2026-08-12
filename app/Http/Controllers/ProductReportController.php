@@ -3,33 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductReport\StoreProductReportRequest;
-use App\Http\Resources\ProductReportResource;
-use App\Models\Order;
-use App\Models\OrderDetail;
-use App\Models\ProductReport;
-use App\Repositories\Eloquent\OrderRepository;
-use App\Repositories\Eloquent\ProductReportRepository;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ProductReportController extends Controller
 {
-    protected $model;
-    public function __construct(OrderRepository $model)
+    protected OrderService $orderService;
+
+    public function __construct(OrderService $orderService)
     {
-        $this->model = $model;
+        $this->orderService = $orderService;
     }
 
     public function store(StoreProductReportRequest $request)
     {
-        //dd(1);
         Log::info('Creating product report', ['data' => $request->all()]);
 
         $data = $request->validated();
 
-
         try {
-            $this->model->createReport($data);
+            $this->orderService->createProductReport($data);
             return response()->json(['message' => 'Báo cáo sản phẩm thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error creating product report: ' . $e->getMessage());
@@ -40,8 +34,7 @@ class ProductReportController extends Controller
     public function update(Request $request)
     {
         try {
-            $this->model->handleProductReport($request->all());
-            
+            $this->orderService->handleProductReport($request->all());
             return response()->json(['message' => 'Cập nhật báo cáo thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error updating product report: ' . $e->getMessage());
@@ -51,13 +44,8 @@ class ProductReportController extends Controller
 
     public function delete($id)
     {
-        // $report = ProductReport::find($id);
-        // if (!$report) {
-        //     return response()->json(['message' => 'Báo cáo không tồn tại'], 404);
-        // }
-
         try {
-            $this->model->deleteReport($id);
+            $this->orderService->deleteReport($id);
             return response()->json(['message' => 'Xóa báo cáo thành công'], 200);
         } catch (\Exception $e) {
             Log::error('Error deleting product report: ' . $e->getMessage());

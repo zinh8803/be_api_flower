@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdatePasswordRequest;
 use App\Http\Requests\User\UpdateResetPassword;
@@ -12,24 +11,21 @@ use App\Jobs\SendOtpMail;
 use App\Models\EmailOtp;
 use App\Models\RefreshToken;
 use App\Models\User;
-use App\Repositories\Contracts\UserRepositoryInterface;
-use Crypt;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-
 use Laravel\Socialite\Facades\Socialite;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
-    protected $users;
+    protected UserService $userService;
 
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserService $userService)
     {
-        $this->users = $users;
+        $this->userService = $userService;
     }
 
     /**
@@ -51,7 +47,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return UserResource::collection($this->users->getAll());
+        return UserResource::collection($this->userService->getAllUsers());
     }
 
     /**
@@ -73,7 +69,7 @@ class UserController extends Controller
      */
     public function getAllUserSubscribed()
     {
-        return UserResource::collection($this->users->getAllUserSubscribed());
+        return UserResource::collection($this->userService->getAllUserSubscribed());
     }
 
     /**
@@ -97,7 +93,6 @@ class UserController extends Controller
      *     )
      * )
      */
-
     public function register(StoreUserRequest $request)
     {
         $otpRecord = EmailOtp::where('email', $request->email)->first();
@@ -109,7 +104,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user = $this->users->create($request->validated());
+        $user = $this->userService->createUser($request->validated());
         $otpRecord->delete();
         $token = JWTAuth::fromUser($user);
 
@@ -131,6 +126,7 @@ class UserController extends Controller
             'message' => 'Đăng ký thành công',
         ])->withCookie($accessCookie)->withCookie($refreshCookie);
     }
+
     /**
      * @OA\Post(
      *     path="/api/login",
@@ -160,7 +156,6 @@ class UserController extends Controller
      *     )
      * )
      */
-
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
@@ -187,7 +182,6 @@ class UserController extends Controller
             'user_agent' => request()->header('User-Agent'),
         ]);
 
-        // Set cookie HttpOnly
         $accessCookie = make_cookie('access_token', $token, 60);
         $refreshCookie = make_cookie('refresh_token', $refreshToken, 20160, true);
 
@@ -226,7 +220,7 @@ class UserController extends Controller
             ['email' => $googleUser->getEmail()],
             [
                 'name' => $googleUser->getName(),
-                'password' => bcrypt(Str::random(16)), // Tạo mật khẩu ngẫu nhiên
+                'password' => bcrypt(Str::random(16)),
                 'google_id' => $googleUser->getId(),
                 'image_url' => $googleUser->getAvatar(),
                 'provider' => 'google',
@@ -234,7 +228,6 @@ class UserController extends Controller
         );
 
         $token = JWTAuth::fromUser($user);
-
         $refreshToken = Str::random(60);
 
         RefreshToken::create([
@@ -253,8 +246,6 @@ class UserController extends Controller
             'message' => 'Đăng nhập thành công',
         ])->withCookie($accessCookie)->withCookie($refreshCookie);
     }
-
-
 
     /**
      * @OA\Post(
@@ -287,7 +278,6 @@ class UserController extends Controller
      */
     public function refreshToken(Request $request)
     {
-        // Lấy refresh_token từ cookie
         $refreshToken = $request->cookie('refresh_token');
         if (!$refreshToken) {
             return response()->json([
@@ -315,7 +305,6 @@ class UserController extends Controller
         $user = User::find($tokenRecord->user_id);
 
         $newToken = JWTAuth::fromUser($user);
-
         $accessCookie = make_cookie('access_token', $newToken, 60);
 
         return response()->json([
@@ -326,6 +315,7 @@ class UserController extends Controller
             ]
         ])->withCookie($accessCookie);
     }
+
     /**
      * @OA\Get(
      *     path="/api/profile",
@@ -339,12 +329,12 @@ class UserController extends Controller
      *     )
      * )
      */
-
     public function profile()
     {
         $user = Auth::user();
         return new UserResource($user);
     }
+
     /**
      * @OA\Post(
      *     path="/api/logout",
@@ -360,7 +350,6 @@ class UserController extends Controller
      *     )
      * )
      */
-
     public function logout()
     {
         Auth::logout();
@@ -370,7 +359,6 @@ class UserController extends Controller
             ->withCookie($accessCookie)
             ->withCookie($refreshCookie);
     }
-
 
     /**
      * @OA\Post(
@@ -406,7 +394,7 @@ class UserController extends Controller
      */
     public function updateProfile(UpdateUserRequest $request)
     {
-        $user = $this->users->updateUser(Auth::user()->id, $request->validated());
+        $user = $this->userService->updateUser(Auth::user()->id, $request->validated());
         Log::info('User profile updated', ['request' => $request->all(), 'user_id' => Auth::user()->id]);
         return response()->json([
             'status' => true,
@@ -414,7 +402,6 @@ class UserController extends Controller
             'data' => new UserResource($user),
         ]);
     }
-
 
     /**
      * @OA\Post(
@@ -527,6 +514,7 @@ class UserController extends Controller
             'message' => 'OTP đã được gửi đến email',
         ]);
     }
+
     /**
      * @OA\Put(
      *     path="/api/change-password",
@@ -553,7 +541,6 @@ class UserController extends Controller
      *     )
      * )
      */
-
     public function changePassword(UpdatePasswordRequest $request)
     {
         $request->validate([
@@ -561,12 +548,7 @@ class UserController extends Controller
             'new_password' => 'required|string|min:6|confirmed',
         ]);
 
-        // $user = auth()->user();
-        // if (!password_verify($request->old_password, $user->password)) {
-        //     return response()->json(['message' => 'Mật khẩu cũ không đúng'], 422);
-        // }
-
-        $this->users->changePassword($request->old_password, $request->new_password);
+        $this->userService->changePassword($request->old_password, $request->new_password);
 
         return response()->json(['message' => 'Đổi mật khẩu thành công']);
     }
@@ -609,12 +591,6 @@ class UserController extends Controller
         ]);
 
         $otpRecord = EmailOtp::where('email', $request->email)->first();
-        // Log::info('otpRecord', [
-        //     'otpRecord' => $otpRecord,
-        //     'email' => $request->email,
-        //     'otp' => $request->otp,
-        //     'expires_at' => $otpRecord ? $otpRecord->expires_at : null
-        // ]);
         if (!$otpRecord || $otpRecord->otp !== $request->otp || $otpRecord->expires_at < now()) {
             return response()->json([
                 'status' => false,
@@ -622,7 +598,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $this->users->resetPassword($request->email, $request->new_password);
+        $this->userService->resetPassword($request->email, $request->new_password);
         $otpRecord->delete();
         return response()->json(['message' => 'Mật khẩu đã được cập nhật thành công']);
     }
@@ -645,8 +621,7 @@ class UserController extends Controller
      */
     public function updateUserSubscribed(Request $request)
     {
-        $this->users->updateUserSubscribed(Auth::id());
-
+        $this->userService->updateUserSubscribed(Auth::id());
 
         return response()->json([
             'status' => true,
@@ -679,7 +654,7 @@ class UserController extends Controller
      */
     public function updateStatus(int $id)
     {
-        $user = $this->users->handleUpdateStatus($id);
+        $user = $this->userService->handleUpdateStatus($id);
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật trạng thái thành công',

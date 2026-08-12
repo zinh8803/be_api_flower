@@ -8,13 +8,18 @@ use App\Models\User;
 use App\Repositories\Contracts\DiscountRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
-class DiscountRepository implements DiscountRepositoryInterface
+class DiscountRepository extends BaseRepository implements DiscountRepositoryInterface
 {
+    public function __construct(Discount $discount)
+    {
+        parent::__construct($discount);
+    }
+
     public function getAll($filters = [])
     {
         $this->updateExpiredStatus();
 
-        $query = Discount::query();
+        $query = $this->model->newQuery();
 
         if (!empty($filters['name'])) {
             $query->where('name', 'like', '%' . $filters['name'] . '%');
@@ -40,42 +45,21 @@ class DiscountRepository implements DiscountRepositoryInterface
             ->orderBy('start_date', 'asc')
             ->paginate(10);
     }
+
     public function updateExpiredStatus()
     {
-        Discount::where('end_date', '<', now())
+        $this->model->where('end_date', '<', now())
             ->where('status', true)
             ->update(['status' => false]);
-        Discount::whereNotNull('usage_limit')
+        $this->model->whereNotNull('usage_limit')
             ->whereColumn('usage_count', '>=', 'usage_limit')
             ->where('status', true)
             ->update(['status' => false]);
     }
 
-    public function findById($id)
-    {
-        return Discount::find($id);
-    }
-
-    public function create(array $data)
-    {
-        return Discount::create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $discount = Discount::find($id);
-        $discount->update($data);
-        return $discount;
-    }
-
-    public function delete($id)
-    {
-        return Discount::destroy($id);
-    }
-
     public function checkCodeValidity($code, $userId = null)
     {
-        $discount = Discount::where('name', $code)->first();
+        $discount = $this->model->where('name', $code)->first();
         Log::info('discounts', ['code' => $code, 'discount' => $discount]);
         if (!$discount) {
             return ['status' => false, 'reason' => 'not_found'];
@@ -109,11 +93,11 @@ class DiscountRepository implements DiscountRepositoryInterface
     {
         $now = now();
 
-        $total = Discount::count();
-        $active = Discount::where('status', true)
+        $total = $this->model->count();
+        $active = $this->model->where('status', true)
             ->where('end_date', '>=', $now)
             ->count();
-        $expired = Discount::where(function ($q) use ($now) {
+        $expired = $this->model->where(function ($q) use ($now) {
             $q->where('status', false)
                 ->orWhere('end_date', '<', $now);
         })

@@ -8,23 +8,25 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\ImageHelper;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
 
-class UserRepository implements UserRepositoryInterface
+class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
+    public function __construct(User $user)
+    {
+        parent::__construct($user);
+    }
 
     public function getAllEmployees()
     {
-        return User::where('role', 'employee')->paginate(10);
+        return $this->model->where('role', 'employee')->paginate(10);
     }
 
-
-    public function create(array $data)
+    public function create(array $data): \Illuminate\Database\Eloquent\Model
     {
         $data['password'] = bcrypt($data['password']);
         $data['role'] = $data['role'] ?? 'user';
         $data['status'] = $data['status'] ?? 1;
-        return User::create($data);
+        return parent::create($data);
     }
 
     public function createEmployee(array $data)
@@ -32,36 +34,34 @@ class UserRepository implements UserRepositoryInterface
         $data['password'] = bcrypt('admin123');
         $data['role'] = $data['role'] ?? 'employee';
         $data['status'] = $data['status'] ?? 1;
-        return User::create($data);
+        return parent::create($data);
     }
 
     public function updateEmployee(int $id, array $data)
     {
-        $user = User::findOrFail($id);
+        $user = $this->model->findOrFail($id);
         $data['name'] = $data['name'] ?? $user->name;
         $data['phone'] = $data['phone'] ?? $user->phone;
         $data['address'] = $data['address'] ?? $user->address;
         $data['status'] = $data['status'] ?? $user->status;
+
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         }
+
         $user->fill($data);
         $user->save();
         return $user;
     }
-    public function findById(int $id)
-    {
-        return User::findOrFail($id);
-    }
 
     public function findByEmail(string $email)
     {
-        return User::where('email', $email)->first();
+        return $this->model->where('email', $email)->first();
     }
 
     public function updateUser(int $id, array $data)
     {
-        $user = User::find($id);
+        $user = $this->model->find($id);
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile && $data['image']->isValid()) {
             try {
@@ -86,6 +86,7 @@ class UserRepository implements UserRepositoryInterface
 
         return $user;
     }
+
     public function changePassword(string $oldPassword, string $newPassword)
     {
         $user = Auth::user();
@@ -100,26 +101,29 @@ class UserRepository implements UserRepositoryInterface
 
     public function resetPassword(string $email, string $newPassword)
     {
-        $user = User::where('email', $email)->first();
+        $user = $this->model->where('email', $email)->first();
         if (!$user) {
             throw new \Exception('Người dùng không tồn tại');
         }
+
         $user->password = bcrypt($newPassword);
         $user->save();
         return $user;
     }
+
     public function getAll()
     {
-        return User::where('role', '=', 'user',)->paginate(10);
+        return $this->model->where('role', '=', 'user')->paginate(10);
     }
+
     public function getAllUserSubscribed()
     {
-        return User::where('role', '=', 'user')->where('is_subscribe', '=', true)->paginate(10);
+        return $this->model->where('role', '=', 'user')->where('is_subscribe', '=', true)->paginate(10);
     }
 
     public function updateUserSubscribed(int $id)
     {
-        $user = User::findOrFail($id);
+        $user = $this->model->findOrFail($id);
         $user->is_subscribe = !$user->is_subscribe;
         $user->save();
         return $user;
@@ -127,7 +131,7 @@ class UserRepository implements UserRepositoryInterface
 
     public function handleUpdateStatus(int $id)
     {
-        $user = User::findOrFail($id);
+        $user = $this->model->findOrFail($id);
         $user->status = !$user->status;
         $user->save();
         return $user;

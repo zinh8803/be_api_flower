@@ -4,33 +4,22 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\ProductSize;
 use App\Repositories\Contracts\ProductSizeRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 
-class ProductSizeRepository implements ProductSizeRepositoryInterface
+class ProductSizeRepository extends BaseRepository implements ProductSizeRepositoryInterface
 {
-    public function all()
+    public function __construct(ProductSize $productSize)
     {
-        return ProductSize::with(['product', 'recipes'])->get();
+        parent::__construct($productSize);
     }
 
-    public function find($id)
+    public function all(array $columns = ['*']): Collection
     {
-        return ProductSize::with(['product', 'recipes'])->findOrFail($id);
+        return $this->model->with(['product', 'recipes'])->get($columns);
     }
 
-    public function create(array $data)
+    public function find($id, array $columns = ['*']): ?\Illuminate\Database\Eloquent\Model
     {
-        return ProductSize::create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $item = ProductSize::findOrFail($id);
-        $item->update($data);
-        return $item;
-    }
-
-    public function delete($id)
-    {
-        return ProductSize::destroy($id);
+        return $this->model->with(['product', 'recipes'])->find($id, $columns);
     }
 }

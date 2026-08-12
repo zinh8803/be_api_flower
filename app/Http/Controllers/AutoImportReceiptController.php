@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\AutoImportReceiptResource;
-use Illuminate\Http\Request;
-use App\Repositories\Contracts\AutoImportReceiptInterface;
 use App\Http\Requests\AutoImportReceipt\StoreAutoImportReceipt;
 use App\Http\Requests\AutoImportReceipt\UpdateAutoImportReceipt;
+use App\Http\Resources\AutoImportReceiptResource;
+use App\Services\AutoImportReceiptService;
+use Illuminate\Http\Request;
 
 class AutoImportReceiptController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $autoImportReceiptRepository;
+    protected AutoImportReceiptService $autoImportReceiptService;
 
-    public function __construct(AutoImportReceiptInterface $autoImportReceiptRepository)
+    public function __construct(AutoImportReceiptService $autoImportReceiptService)
     {
-        $this->autoImportReceiptRepository = $autoImportReceiptRepository;
+        $this->autoImportReceiptService = $autoImportReceiptService;
     }
 
     /**
@@ -34,13 +31,10 @@ class AutoImportReceiptController extends Controller
      */
     public function index()
     {
-        $receipts = $this->autoImportReceiptRepository->all();
+        $receipts = $this->autoImportReceiptService->getAutoImportReceipts();
         return new AutoImportReceiptResource($receipts);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     /**
      * @OA\Post(
      *     path="/api/auto-import-receipts",
@@ -64,14 +58,12 @@ class AutoImportReceiptController extends Controller
     public function store(StoreAutoImportReceipt $request)
     {
         $data = $request->validated();
-        $data['import_date'] = $data['import_date'] ?? now()->format('Y-m-d');
-        $data['run_time'] = $data['run_time'] ?? now()->format('H:i');
 
         if (empty($data['details'])) {
             return response()->json(['message' => 'Phải có ít nhất một sản phẩm để nhập'], 422);
         }
 
-        $autoImport = $this->autoImportReceiptRepository->create($data);
+        $autoImport = $this->autoImportReceiptService->createAutoImportReceipt($data);
         return new AutoImportReceiptResource($autoImport);
     }
 
@@ -80,13 +72,10 @@ class AutoImportReceiptController extends Controller
      */
     public function show($id)
     {
-        $receipt = $this->autoImportReceiptRepository->find($id);
+        $receipt = $this->autoImportReceiptService->getAutoImportReceiptById($id);
         return new AutoImportReceiptResource($receipt);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     /**
      * @OA\Put(
      *     path="/api/auto-import-receipts/{id}",
@@ -121,38 +110,26 @@ class AutoImportReceiptController extends Controller
     {
         $data = $request->validated();
 
-        $autoImport = $this->autoImportReceiptRepository->find($id);
+        $autoImport = $this->autoImportReceiptService->getAutoImportReceiptById($id);
         if (!$autoImport) {
             return response()->json(['message' => 'Cấu hình tự động nhập không tồn tại'], 404);
         }
 
-        $autoImport = $this->autoImportReceiptRepository->update($id, $data);
-        return new AutoImportReceiptResource($autoImport);
+        $updated = $this->autoImportReceiptService->updateAutoImportReceipt($id, $data);
+        return new AutoImportReceiptResource($updated);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    /**
-     * @OA\Delete(
-     *     path="/api/auto-import-receipts/{id}",
-     *     tags={"Auto Import Receipts"},
-     *     summary="Delete an auto import receipt config",
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Auto import receipt deleted"
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Auto import receipt not found"
-     *     )
-     * )
-     */
-    public function destroy($id) {}
+    public function destroy($id)
+    {
+        $autoImport = $this->autoImportReceiptService->getAutoImportReceiptById($id);
+        if (!$autoImport) {
+            return response()->json(['message' => 'Cấu hình tự động nhập không tồn tại'], 404);
+        }
+
+        $this->autoImportReceiptService->deleteAutoImportReceipt($id);
+        return response()->json(['message' => 'Xóa thành công']);
+    }
 }

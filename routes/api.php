@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\AutoImportReceiptController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\DashBoardController;
@@ -234,6 +235,14 @@ Route::prefix('products')->group(function () {
     Route::get('/detailId/{id}', [ProductController::class, 'showbyId']);
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::get('/check-available-products', [ProductController::class, 'checkAvailableProducts']);
+});
+
+Route::prefix('cart')->group(function () {
+    Route::get('/', [CartController::class, 'index']);
+    Route::post('/items', [CartController::class, 'store']);
+    Route::put('/items/{itemId}', [CartController::class, 'update']);
+    Route::delete('/items/{itemId}', [CartController::class, 'destroy']);
+    Route::delete('/clear', [CartController::class, 'clear']);
 });
 
 //orders

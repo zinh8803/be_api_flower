@@ -5,20 +5,17 @@ namespace App\Repositories\Eloquent;
 use App\Models\ImportReceipt;
 use App\Repositories\Contracts\ImportReceiptRepositoryInterface;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
-class ImportReceiptRepository implements ImportReceiptRepositoryInterface
+class ImportReceiptRepository extends BaseRepository implements ImportReceiptRepositoryInterface
 {
-    protected $model;
-
     public function __construct(ImportReceipt $importReceipt)
     {
-        $this->model = $importReceipt;
+        parent::__construct($importReceipt);
     }
 
     public function all($filters = [])
     {
-        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc')->orderBy('id', 'desc');;
+        $query = $this->model->with('details.flower')->orderBy('import_date', 'desc')->orderBy('id', 'desc');
 
         if (!empty($filters['from_date'])) {
             $query->whereDate('import_date', '>=', $filters['from_date']);
@@ -30,27 +27,11 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
         return $query->paginate(10);
     }
 
-    public function find($id)
+    public function find($id, array $columns = ['*']): ?\Illuminate\Database\Eloquent\Model
     {
-        return $this->model->with('details.flower')->find($id);
+        return $this->model->with('details.flower')->find($id, $columns);
     }
 
-    public function create(array $data)
-    {
-        return $this->model->create($data);
-    }
-
-    public function update($id, array $data)
-    {
-        $record = $this->find($id);
-        $record->update($data);
-        return $record;
-    }
-
-    public function delete($id)
-    {
-        return $this->model->destroy($id);
-    }
     public function createWithDetails(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -62,7 +43,7 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
             });
             $data['total_price'] = $total;
 
-            $receipt = $this->create($data);
+            $receipt = parent::create($data);
 
             foreach ($details as $detail) {
                 $detail['import_date'] = $data['import_date'];
@@ -74,7 +55,6 @@ class ImportReceiptRepository implements ImportReceiptRepositoryInterface
             return $this->find($receipt->id);
         });
     }
-
 
     public function updateWithDetails($id, array $data)
     {

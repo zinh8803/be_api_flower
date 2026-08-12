@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Http\Resources\UserResource;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
+    protected UserService $userService;
 
-    protected $users;
-    public function __construct(UserRepositoryInterface $users)
+    public function __construct(UserService $userService)
     {
-        $this->users = $users;
+        $this->userService = $userService;
     }
 
     /**
@@ -48,7 +48,7 @@ class AdminController extends Controller
      */
     public function createEmployee(StoreEmployeeRequest $request)
     {
-        $this->users->createEmployee($request->validated());
+        $this->userService->createEmployee($request->validated());
         return response()->json([
             'status' => true,
             'message' => 'Tạo nhân viên thành công',
@@ -83,7 +83,7 @@ class AdminController extends Controller
      */
     public function updateEmployee(UpdateEmployeeRequest $request, int $id)
     {
-        $this->users->updateEmployee($id, $request->validated());
+        $this->userService->updateEmployee($id, $request->validated());
         return response()->json([
             'status' => true,
             'message' => 'Cập nhật nhân viên thành công',
@@ -108,7 +108,7 @@ class AdminController extends Controller
      */
     public function index()
     {
-        $employees = $this->users->getAllEmployees();
+        $employees = $this->userService->getAllEmployees();
         return UserResource::collection($employees);
     }
 }

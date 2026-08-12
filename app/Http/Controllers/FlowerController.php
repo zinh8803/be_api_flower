@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Flower\StoreFlowerRequest;
 use App\Http\Requests\Flower\UpdateFlowerRequest;
 use App\Http\Resources\FlowerResource;
-use App\Models\Flower;
-use App\Repositories\Eloquent\FlowerRepository;
+use App\Services\FlowerService;
 use Illuminate\Http\Request;
 
 /**
@@ -18,16 +17,14 @@ use Illuminate\Http\Request;
  */
 class FlowerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    protected $flowerRepository;
+    protected FlowerService $flowerService;
 
-    public function __construct(FlowerRepository $flowerRepository)
+    public function __construct(FlowerService $flowerService)
     {
-        $this->flowerRepository = $flowerRepository;
+        $this->flowerService = $flowerService;
     }
-      /**
+
+    /**
      * @OA\Get(
      *     path="/api/flower",
      *     tags={"Flower"},
@@ -41,14 +38,11 @@ class FlowerController extends Controller
      */
     public function index()
     {
-        $flowers = $this->flowerRepository->all();
+        $flowers = $this->flowerService->getFlowers();
         return FlowerResource::collection($flowers);
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-       /**
      * @OA\Post(
      *     path="/api/flower",
      *     tags={"Flower"},
@@ -66,14 +60,11 @@ class FlowerController extends Controller
      */
     public function store(StoreFlowerRequest $request)
     {
-        $flower = $this->flowerRepository->create($request->validated());
+        $flower = $this->flowerService->createFlower($request->validated());
         return new FlowerResource($flower);
     }
 
     /**
-     * Display the specified resource.
-     */
-        /**
      * @OA\Get(
      *     path="/api/flower/{id}",
      *     tags={"Flower"},
@@ -94,18 +85,13 @@ class FlowerController extends Controller
      */
     public function show($id)
     {
-        $flower = $this->flowerRepository->find($id);
+        $flower = $this->flowerService->getFlowerById($id);
         if (!$flower) {
             return response()->json(['message' => 'Không tìm thấy hoa'], 404);
         }
         return new FlowerResource($flower);
     }
 
-   
-
-    /**
-     * Update the specified resource in storage.
-     */
     /**
      * @OA\Put(
      *     path="/api/flower/{id}",
@@ -131,19 +117,16 @@ class FlowerController extends Controller
      */
     public function update(UpdateFlowerRequest $request, $id)
     {
-        $flower = $this->flowerRepository->find($id);
+        $flower = $this->flowerService->getFlowerById($id);
         if (!$flower) {
             return response()->json(['message' => 'Không tìm thấy hoa'], 404);
         }
 
-        $flower->update($request->validated());
-        return new FlowerResource($flower);
+        $updatedFlower = $this->flowerService->updateFlower($id, $request->validated());
+        return new FlowerResource($updatedFlower);
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-      /**
      * @OA\Delete(
      *     path="/api/flower/{id}",
      *     tags={"Flower"},
@@ -163,13 +146,12 @@ class FlowerController extends Controller
      */
     public function destroy($id)
     {
-        $flower = $this->flowerRepository->find($id);
+        $flower = $this->flowerService->getFlowerById($id);
         if (!$flower) {
             return response()->json(['message' => 'Không tìm thấy hoa'], 404);
         }
 
-        $this->flowerRepository->delete($id);
+        $this->flowerService->deleteFlower($id);
         return response()->json(['message' => 'Xóa hoa thành công'], 200);
     }
-    
 }

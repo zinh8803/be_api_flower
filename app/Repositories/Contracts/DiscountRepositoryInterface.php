@@ -2,18 +2,11 @@
 
 namespace App\Repositories\Contracts;
 
-interface DiscountRepositoryInterface
+interface DiscountRepositoryInterface extends BaseRepositoryInterface
 {
-    public function getAll();
-
-    public function findById($id);
-
-    public function create(array $data);
-
-    public function update($id, array $data);
-
-    public function delete($id);
+    public function getAll($filters = []);
     public function checkCodeValidity($code, $userId = null);
     public function sentDiscountEmail($discount);
     public function getDiscountStats();
+    public function updateExpiredStatus();
 }

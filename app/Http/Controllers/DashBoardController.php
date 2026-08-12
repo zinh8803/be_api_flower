@@ -2,202 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Order;
 use App\Models\ImportReceipt;
-use App\Models\OrderDetail;
-use App\Models\Product;
-use App\Models\User;
+use App\Models\Order;
+use App\Services\DashBoardService;
 use Carbon\Carbon;
-use DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DashBoardController extends Controller
 {
+    protected DashBoardService $dashBoardService;
+
+    public function __construct(DashBoardService $dashBoardService)
+    {
+        $this->dashBoardService = $dashBoardService;
+    }
+
     public function statistics(Request $request)
     {
         $start = $request->input('start_date');
         $end = $request->input('end_date');
 
-        if (!$start && !$end) {
-            $orders = Order::with('orderDetails.product', 'orderDetails.productSize')
-                ->where('status', '!=', 'đã hủy')
-                ->get();
-            $receipts = ImportReceipt::with('details.flower')->get();
-            Log::info("No date filter - getting all data");
-        } else {
-            $startDateTime = Carbon::parse($start)->startOfDay();
-            $endDateTime = Carbon::parse($end)->endOfDay();
-
-            Log::info("DateTime range - Start: {$startDateTime}, End: {$endDateTime}");
-
-            $orders = Order::where(function ($query) use ($startDateTime, $endDateTime) {
-                $query->whereBetween('buy_at', [$startDateTime, $endDateTime])
-                    ->orWhere(function ($q) use ($startDateTime, $endDateTime) {
-                        $q->whereNull('buy_at')
-                            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
-                    });
-            })
-                ->where('status', '!=', 'đã hủy')
-                ->with('orderDetails.productSize.product', 'orderDetails.productSize')
-                ->get();
-
-            $receipts = ImportReceipt::where(function ($query) use ($startDateTime, $endDateTime) {
-                $query->whereBetween('import_date', [$startDateTime, $endDateTime])
-                    ->orWhere(function ($q) use ($startDateTime, $endDateTime) {
-                        $q->whereNull('import_date')
-                            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
-                    });
-            })->with('details.flower')->get();
-        }
+        $stats = $this->dashBoardService->getStatistics($start, $end);
 
         $sampleOrders = Order::select('id', 'order_code', 'buy_at', 'created_at')
             ->take(3)
             ->get();
-        Log::info("Sample orders dates:", $sampleOrders->toArray());
-
-        Log::info("Filtered orders count: " . $orders->count());
-        Log::info("Filtered receipts count: " . $receipts->count());
-
-        // $completedOrders = $orders->whereIn('status', ['hoàn thành', 'Báo Cáo']);
-        $completedOrders = $orders;
-        $totalOrders = $orders->count();
-        $totalRevenue = $completedOrders->sum('total_price');
-        $totalCustomers = $orders->groupBy('email')->count();
-        $totalReceipts = $receipts->count();
-        $totalImport = $receipts->sum('total_price');
-
-        $topCustomers = $completedOrders->groupBy('email')->map(function ($customerOrders, $email) {
-            $first = $customerOrders->first();
-            return [
-                'name' => $first->name ?? 'N/A',
-                'email' => $email,
-                'phone' => $first->phone ?? 'N/A',
-                'total' => $customerOrders->count(),
-                'spent' => $customerOrders->sum('total_price'),
-            ];
-        })->sortByDesc('spent')->take(5)->values();
-
-        $productStats = [];
-        foreach ($completedOrders as $order) {
-            foreach ($order->orderDetails as $detail) {
-                $pid = $detail->productSize->product_id;
-                if (!isset($productStats[$pid])) {
-                    $productStats[$pid] = [
-                        'name' => $detail->productSize->product->name ?? 'Sản phẩm',
-                        'image' => $detail->productSize->product->image_url ?? null,
-                        'sold' => 0,
-                        'revenue' => 0
-                    ];
-                }
-                $productStats[$pid]['sold'] += $detail->quantity;
-                $productStats[$pid]['revenue'] += $detail->subtotal ?? ($detail->quantity * ($detail->price ?? 0));
-            }
-        }
-        $topProducts = collect($productStats)->sortByDesc('sold')->take(5)->values();
-
-        $recentOrders = $orders->sortByDesc(function ($order) {
-            return $order->buy_at ?? $order->created_at;
-        })->take(10)->map(function ($o) {
-            $date = $o->buy_at ?? $o->created_at;
-            return [
-                'code' => $o->order_code ?? 'N/A',
-                'name' => $o->name ?? 'N/A',
-                'date' => $date ? Carbon::parse($date)->format('Y-m-d H:i') : 'N/A',
-                'status' => $o->status ?? 'unknown',
-                'total' => $o->total_price ?? 0
-            ];
-        })->values();
-
-        $orderStatusStats = $orders->groupBy('status')->map(function ($group, $status) {
-            return [
-                'status' => $status ?? 'unknown',
-                'count' => $group->count()
-            ];
-        })->values();
-
-        if ($start && $end) {
-            $startDateTime = Carbon::parse($start)->startOfDay();
-            $endDateTime = Carbon::parse($end)->endOfDay();
-            $period = new \DatePeriod(
-                $startDateTime,
-                new \DateInterval('P1D'),
-                $endDateTime->copy()->addDay()
-            );
-        } else {
-            $startDateTime = Carbon::now()->subDays(6)->startOfDay();
-            $endDateTime = Carbon::now()->endOfDay();
-            $period = new \DatePeriod(
-                $startDateTime,
-                new \DateInterval('P1D'),
-                $endDateTime->copy()->addDay()
-            );
-        }
-
-        $labels = [];
-        $revenueByDate = [];
-        $orderCountByDate = [];
-        $importByDate = [];
-
-        foreach ($period as $date) {
-            $d = $date->format('Y-m-d');
-            $labels[] = $d;
-
-            $dayRevenue = $orders->filter(function ($order) use ($d) {
-                $orderDate = $order->buy_at ?? $order->created_at;
-                return $order->status === 'hoàn thành' && $orderDate &&
-                    Carbon::parse($orderDate)->format('Y-m-d') === $d;
-            })->sum('total_price');
-            $revenueByDate[] = (int)$dayRevenue;
-
-            $dayOrderCount = $orders->filter(function ($order) use ($d) {
-                $orderDate = $order->buy_at ?? $order->created_at;
-                return $orderDate && Carbon::parse($orderDate)->format('Y-m-d') === $d;
-            })->count();
-            $orderCountByDate[] = $dayOrderCount;
-
-            $dayImport = $receipts->filter(function ($receipt) use ($d) {
-                $receiptDate = $receipt->import_date ?? $receipt->created_at;
-                return $receiptDate && Carbon::parse($receiptDate)->format('Y-m-d') === $d;
-            })->sum('total_price');
-            $importByDate[] = (int)$dayImport;
-        }
-
-        // thống kê doanh thu theo trạng thái đơn hàng
-        $revenueByStatus = $orders->groupBy('status')->map(function ($group, $status) {
-            return [
-                'status' => $status ?? 'unknown',
-                'count' => $group->count(),
-                'revenue' => $group->sum('total_price')
-            ];
-        })->values();
 
         return response()->json([
             'success' => true,
-            'stats' => [
-                'totalOrders' => $totalOrders,
-                'totalRevenue' => (int)$totalRevenue,
-                'totalCustomers' => $totalCustomers,
-                'totalReceipts' => $totalReceipts,
-                'totalImport' => (int)$totalImport,
-                'topCustomers' => $topCustomers,
-                'topProducts' => $topProducts,
-                'recentOrders' => $recentOrders,
-                'orderStatusStats' => $orderStatusStats,
-                'revenueByDate' => $revenueByDate,
-                'orderCountByDate' => $orderCountByDate,
-                'importByDate' => $importByDate,
-                'labels' => $labels,
-                'revenueByStatus' => $revenueByStatus,
-            ],
+            'stats' => $stats,
             'period' => [
                 'start_date' => $start,
                 'end_date' => $end
             ],
             'debug' => [
                 'total_orders_in_db' => Order::count(),
-                'filtered_orders' => $totalOrders,
+                'filtered_orders' => $stats['totalOrders'],
                 'sample_order_dates' => $sampleOrders->pluck('buy_at', 'created_at')
             ]
         ]);
@@ -264,6 +105,7 @@ class DashBoardController extends Controller
 
         return $this->statistics($newRequest);
     }
+
     public function exportToExcel(Request $request)
     {
         $start = $request->input('start_date');
